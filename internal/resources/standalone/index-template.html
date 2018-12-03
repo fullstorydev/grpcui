@@ -1,0 +1,112 @@
+<html>
+  <head>
+    <title>gRPC UI</title>
+
+    <link rel="icon" type="image/png" href="favicon.png">
+
+    <script src="jquery-3.3.1.min.js"></script>
+
+    <link rel="stylesheet" href="jquery-ui-1.12.1.min.css">
+    <script src="jquery-ui-1.12.1.min.js"></script>
+
+    <link rel="stylesheet" href="grpc-web-form.css">
+    <script src="grpc-web-form.js"></script>
+
+    <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :after, :before {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 20px;
+      color: #333;
+      display: inline-block;
+      min-width: 100%;
+    }
+
+    button, input, select, textarea {
+      line-height: inherit;
+      font: inherit;
+      color: inherit;
+    }
+
+    img {
+      border: 0;
+      vertical-align: middle;
+    }
+
+    h1, h2, h3, h4, h5 {
+      line-height: 1.1;
+    }
+
+    table {
+      border-spacing: 0;
+      border-collapse: collapse;
+    }
+
+    .full-width-heading {
+      width: 100%;
+      background-color: #4ca0ac;
+    }
+
+    .heading {
+      max-width: 2560px;
+      margin: 0;
+      padding: 32px 24px;
+      color: white;
+      background: #4ca0ac url("grpc-bg.png") no-repeat center/cover;
+    }
+
+    .heading h1 {
+      font-weight: normal;
+      font-size: 35px;
+      margin: 0 0 12px 0;
+      padding: 0;
+    }
+
+    .heading h2 {
+      font-weight: normal;
+      font-size: 24px;
+      color: #c0f0ff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .target {
+      font-style: italic;
+      color: #9ff;
+      padding-left: 4px;
+    }
+
+    img.grpc-logo {
+      width: 80px;
+      margin-bottom: 6px;
+      margin-right: 10px;
+    }
+
+    #grpc-form {
+      margin: 0;
+      padding: 24px;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="full-width-heading">
+      <div class="heading">
+        <h1><img class="grpc-logo" src="grpc-logo.svg" alt="GRPC"/> Web UI</h1>
+        {{ if not (eq .Target "") }}
+          <h2>Connected to <span class="target">{{ .Target }}</span></h2>
+        {{ end }}
+      </div>
+    </div>
+    {{.WebFormContents}}
+  </body>
+</html>

@@ -1,0 +1,264 @@
+syntax = "proto2";
+
+package test;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "main";
+
+// A service that allows testing all kinds of permutations of message
+// and field types in the grpcui web form.
+
+service KitchenSink {
+    rpc Ping (google.protobuf.Empty) returns (google.protobuf.Empty);
+    rpc Exchange (TestMessage) returns (TestMessage);
+    rpc UploadMany (stream TestMessage) returns (TestMessage);
+    rpc DownloadMany (TestMessage) returns (stream TestMessage);
+    rpc DoManyThings (stream TestMessage) returns (stream TestMessage);
+
+    rpc SendTimestamp(google.protobuf.Timestamp) returns (google.protobuf.Empty);
+    rpc SendDuration(google.protobuf.Duration) returns (google.protobuf.Empty);
+    rpc SendAny(google.protobuf.Any) returns (google.protobuf.Empty);
+    rpc SendStruct(google.protobuf.Struct) returns (google.protobuf.Empty);
+    rpc SendValue(google.protobuf.Value) returns (google.protobuf.Empty);
+    rpc SendListValue(google.protobuf.ListValue) returns (google.protobuf.Empty);
+    rpc SendBytes(google.protobuf.BytesValue) returns (google.protobuf.Empty);
+    rpc SendString(google.protobuf.StringValue) returns (google.protobuf.Empty);
+    rpc SendBool(google.protobuf.BoolValue) returns (google.protobuf.Empty);
+    rpc SendDouble(google.protobuf.DoubleValue) returns (google.protobuf.Empty);
+    rpc SendFloat(google.protobuf.FloatValue) returns (google.protobuf.Empty);
+    rpc SendInt32(google.protobuf.Int32Value) returns (google.protobuf.Empty);
+    rpc SendInt64(google.protobuf.Int64Value) returns (google.protobuf.Empty);
+    rpc SendUInt32(google.protobuf.UInt32Value) returns (google.protobuf.Empty);
+    rpc SendUInt64(google.protobuf.UInt64Value) returns (google.protobuf.Empty);
+
+    rpc SendMultipleTimestamp(stream google.protobuf.Timestamp) returns (google.protobuf.Empty);
+    rpc SendMultipleDuration(stream google.protobuf.Duration) returns (google.protobuf.Empty);
+    rpc SendMultipleAny(stream google.protobuf.Any) returns (google.protobuf.Empty);
+    rpc SendMultipleStruct(stream google.protobuf.Struct) returns (google.protobuf.Empty);
+    rpc SendMultipleValue(stream google.protobuf.Value) returns (google.protobuf.Empty);
+    rpc SendMultipleListValue(stream google.protobuf.ListValue) returns (google.protobuf.Empty);
+    rpc SendMultipleBytes(stream google.protobuf.BytesValue) returns (google.protobuf.Empty);
+    rpc SendMultipleString(stream google.protobuf.StringValue) returns (google.protobuf.Empty);
+    rpc SendMultipleBool(stream google.protobuf.BoolValue) returns (google.protobuf.Empty);
+    rpc SendMultipleDouble(stream google.protobuf.DoubleValue) returns (google.protobuf.Empty);
+    rpc SendMultipleFloat(stream google.protobuf.FloatValue) returns (google.protobuf.Empty);
+    rpc SendMultipleInt32(stream google.protobuf.Int32Value) returns (google.protobuf.Empty);
+    rpc SendMultipleInt64(stream google.protobuf.Int64Value) returns (google.protobuf.Empty);
+    rpc SendMultipleUInt32(stream google.protobuf.UInt32Value) returns (google.protobuf.Empty);
+    rpc SendMultipleUInt64(stream google.protobuf.UInt64Value) returns (google.protobuf.Empty);
+}
+
+enum State {
+    INVALID = 0;
+    INITIAL = 1;
+    PENDING = 2;
+    RUNNING = 3;
+    PAUSED = 4;
+    AWAITING_INPUT = 5;
+    CANCELLING = 6;
+    COMPLETE = 7;
+    CANCELLED = 8;
+    FAILED = 9;
+}
+
+enum Void {
+    VOID = 0;
+}
+
+message Person {
+    required uint64 id = 1;
+    required string name = 2;
+    optional Address address = 3;
+    optional double xyz = 4 [default = 3.14159];
+    optional string title = 5 [default = "overseer"];
+    repeated string labels = 6;
+    optional bool is_real = 7 [default = true];
+    optional bytes opaque = 8 [default = "\01\02\03\04"];
+
+    oneof relative {
+        Person parent = 9;
+        Person sibling = 10;
+        Person child = 11;
+        Void none = 12;
+    }
+}
+
+message Address {
+    required string line1 = 1;
+    optional string line2 = 2;
+    required string city = 3;
+    required string state = 4;
+    required uint32 zip = 5;
+}
+
+message WellKnowns {
+    required google.protobuf.Timestamp now = 1;
+    optional google.protobuf.Timestamp past = 2;
+    repeated google.protobuf.Timestamp futures = 3;
+
+    required google.protobuf.Duration period = 4;
+    optional google.protobuf.Duration next_interval = 5;
+    repeated google.protobuf.Duration history_intervals = 6;
+
+    required google.protobuf.Any neat = 7;
+    optional google.protobuf.Any extra = 8;
+    repeated google.protobuf.Any extensions = 9;
+
+    required google.protobuf.Struct object = 10;
+    optional google.protobuf.Struct optional_object = 11;
+    repeated google.protobuf.Struct objects = 12;
+
+    required google.protobuf.Value value = 13;
+    optional google.protobuf.Value optional_value = 14;
+    repeated google.protobuf.Value values = 15;
+
+    required google.protobuf.ListValue list = 16;
+    optional google.protobuf.ListValue optional_list = 17;
+    repeated google.protobuf.ListValue lists = 18;
+
+    required google.protobuf.BytesValue bytes = 19;
+    optional google.protobuf.BytesValue optional_bytes = 20;
+    repeated google.protobuf.BytesValue list_o_bytes = 21;
+
+    required google.protobuf.StringValue string = 22;
+    optional google.protobuf.StringValue optional_string = 23;
+    repeated google.protobuf.StringValue list_o_strings = 24;
+
+    required google.protobuf.BoolValue bool = 25;
+    optional google.protobuf.BoolValue optional_bool = 26;
+    repeated google.protobuf.BoolValue list_o_bools = 27;
+
+    required google.protobuf.DoubleValue double = 28;
+    optional google.protobuf.DoubleValue optional_double = 29;
+    repeated google.protobuf.DoubleValue list_o_doubles = 30;
+
+    required google.protobuf.FloatValue float = 31;
+    optional google.protobuf.FloatValue optional_float = 32;
+    repeated google.protobuf.FloatValue list_o_floats = 33;
+
+    required google.protobuf.Int32Value small_int = 34;
+    optional google.protobuf.Int32Value optional_small_int = 35;
+    repeated google.protobuf.Int32Value list_o_small_ints = 36;
+
+    required google.protobuf.Int64Value big_int = 37;
+    optional google.protobuf.Int64Value optional_big_int = 38;
+    repeated google.protobuf.Int64Value list_o_big_ints = 39;
+
+    required google.protobuf.UInt32Value small_id = 40;
+    optional google.protobuf.UInt32Value optional_small_id = 41;
+    repeated google.protobuf.UInt32Value list_o_small_ids = 42;
+
+    required google.protobuf.UInt64Value big_id = 43;
+    optional google.protobuf.UInt64Value optional_big_id = 44;
+    repeated google.protobuf.UInt64Value list_o_big_ids = 45;
+}
+
+message NumbersNumbersNumbers {
+    optional int32 usually_1 = 1 [default = 1];
+    optional int32 some_num_1 = 2;
+    required int32 needed_num_1 = 3;
+
+    optional int64 usually_2 = 4 [default = 2];
+    optional int64 some_num_2 = 5;
+    required int64 needed_num_2 = 6;
+
+    optional uint32 usually_3 = 7 [default = 3];
+    optional uint32 some_num_3 = 8;
+    required uint32 needed_num_3 = 9;
+
+    optional uint64 usually_4 = 10 [default = 4];
+    optional uint64 some_num_4 = 11;
+    required uint64 needed_num_4 = 12;
+
+    optional sint32 usually_5 = 13 [default = 5];
+    optional sint32 some_num_5 = 14;
+    required sint32 needed_num_5 = 15;
+
+    optional sint64 usually_6 = 16 [default = 6];
+    optional sint64 some_num_6 = 17;
+    required sint64 needed_num_6 = 18;
+
+    optional fixed32 usually_7 = 19 [default = 7];
+    optional fixed32 some_num_7 = 20;
+    required fixed32 needed_num_7 = 21;
+
+    optional fixed64 usually_8 = 22 [default = 8];
+    optional fixed64 some_num_8 = 23;
+    required fixed64 needed_num_8 = 24;
+
+    optional sfixed32 usually_9 = 25 [default = 9];
+    optional sfixed32 some_num_9 = 26;
+    required sfixed32 needed_num_9 = 27;
+
+    optional sfixed64 usually_10 = 28 [default = 10];
+    optional sfixed64 some_num_10 = 29;
+    required sfixed64 needed_num_10 = 30;
+}
+
+message Arrays {
+    repeated string names = 1;
+    repeated bytes data = 2;
+    repeated Person relatives = 3;
+    repeated State other_states = 14;
+}
+
+message Maps {
+    map<string, Void> string_set = 1;
+    map<int32, Void> int32_set = 2;
+    map<int64, Void> int64_set = 3;
+    map<uint32, Void> uint32_set = 4;
+    map<uint64, Void> uint64_set = 5;
+    map<sint32, Void> sint32_set = 6;
+    map<sint64, Void> sint64_set = 7;
+    map<fixed32, google.protobuf.Empty> fixed32_set = 8;
+    map<fixed64, google.protobuf.Empty> fixed64_set = 9;
+    map<sfixed32, google.protobuf.Empty> sfixed32_set = 10;
+    map<sfixed64, google.protobuf.Empty> sfixed64_set = 11;
+
+    map<int32, Person> people_by_employee_num = 12;
+    map<int32, State> states = 13;
+
+    map<string, string> string_names = 14;
+    map<string, bytes> bytes_names = 15;
+    map<string, bool> bool_names = 16;
+    map<string, double> double_names = 17;
+    map<string, float> float_names = 18;
+}
+
+message TestMessage {
+    optional TestMessage recurse = 2;
+    repeated TestMessage repeated_recurse = 3;
+
+    required Person person = 4;
+    required State state = 5;
+
+    optional NumbersNumbersNumbers numbers = 6;
+
+    optional float usually_4242 = 7 [default = 4242];
+    optional float some_num_a = 8;
+    required float needed_num_a = 9;
+
+    optional double usually_9999 = 10 [default = 9999];
+    optional double some_num_b = 11;
+    required double needed_num_b = 12;
+
+    optional State next_state = 13 [default = PENDING];
+
+    optional bytes base64_stuff = 14;
+    required bytes opaque_id = 15;
+
+    optional WellKnowns wk = 16;
+    optional Arrays arrays = 17;
+    optional Maps maps = 18;
+
+    optional group Misc = 19 {
+        optional string foo = 1;
+        optional int32 bar = 2;
+    }
+}

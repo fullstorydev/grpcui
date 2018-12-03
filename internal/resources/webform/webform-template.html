@@ -1,0 +1,77 @@
+<div id="grpc-form">
+  <div class="grpc-select" id="grpc-service-select"><span class="grpc-form-label">Service name:</span>
+    <select name="grpc-service" id="grpc-service">
+      {{ range .Services }}
+      <option value="{{.}}">{{.}}</option>
+      {{ end }}
+    </select>
+  </div>
+
+  <div class="grpc-select" id="grpc-method-select"><span class="grpc-form-label">Method name:</span>
+    <select name="grpc-method" id="grpc-method">
+      <!-- populated by JavaScript when grpc-service is selected -->
+    </select>
+  </div>
+
+  <div id="grpc-request-response">
+    <ul>
+        <li id="#grpc-request-tab-button"><a href="#grpc-request-tab">Request Form</a></li>
+        <li id="#grpc-request-raw-tab-button"><a href="#grpc-request-raw-tab">Raw Request (JSON)</a></li>
+        <li id="#grpc-response-tab-button"><a href="#grpc-response-tab">Response</a></li>
+    </ul>
+    <div class="grpc-tabcontent" id="grpc-request-tab">
+      <h3>Request Metadata</h3>
+      <div id="grpc-request-metadata">
+        <table class="grpc-request-table" id="grpc-request-metadata-form">
+            <tr><th></th><th class="name">Name</th><th class="value">Value</th></tr>
+            <tr><td><button id="grpc-request-metadata-add-row" class="add">+</button></td><td colspan="2"><span class="add-row-label">Add item</span></td></tr>
+        </table>
+      </div>
+
+      <h3>Request Data</h3>
+      <div id="grpc-request-form"></div>
+
+      <button class="grpc-invoke" disabled>Invoke</button>
+    </div>
+    <div class="grpc-tabcontent" id="grpc-request-raw-tab">
+      <textarea id="grpc-request-raw-text"></textarea><br/>
+      <button class="grpc-invoke" disabled>Invoke</button>
+    </div>
+    <div class="grpc-tabcontent" id="grpc-response-tab">
+      <h3>Response Headers</h3>
+      <table class="grpc-metadata-table" id="grpc-response-headers"></table>
+      <h3>Response Data</h3>
+      <div id="grpc-response-req-stats"></div>
+      <div id="grpc-response-data"></div>
+      <div id="grpc-response-error">
+        <div id="grpc-response-error-summary">
+            <span id="grpc-response-error-desc"></span> <span id="grpc-response-error-num"></span>
+        </div>
+        <div id = "response-error-extra">
+          <span id="grpc-response-error-msg"></span>
+          <table class="grpc-errors-table" id="grpc-response-error-details"></table>
+        </div>
+      </div>
+      <h3>Response Trailers</h3>
+      <table class="grpc-metadata-table" id="grpc-response-trailers"></table>
+    </div>
+  </div>
+</div>
+
+<datalist id="grpc-message-types"></datalist>
+
+<script type="application/javascript">
+(function() {
+    var services = {
+    {{- range .Services}}
+        "{{.}}": [
+        {{- range $i, $elt := index $.Methods .}}
+            "{{$elt}}",
+        {{- end}}
+        ],
+    {{- end}}
+    };
+
+    initGRPCForm(services, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }});
+})();
+</script>

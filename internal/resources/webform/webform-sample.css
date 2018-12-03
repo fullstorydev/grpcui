@@ -1,0 +1,478 @@
+#grpc-form {
+    font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1.0em;
+}
+
+.grpc-select {
+    margin-bottom: 8px;
+    margin-left: 16px;
+}
+
+.grpc-select span.grpc-form-label {
+    font-size: 125%;
+    width: 130px;
+    float: left;
+    line-height: 30px;
+}
+
+.grpc-select select {
+    height: 30px;
+}
+
+#grpc-request-response {
+    margin-top: 24px;
+    border: none;
+    padding: 0;
+}
+
+#grpc-request-response ul.ui-tabs-nav {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+#grpc-request-response li.ui-tabs-tab {
+    border: 1px solid #ccc;
+    margin: 0;
+    margin-right: -1px;
+    padding: 4px 8px;
+    border-top-right-radius: 6px;
+    border-top-left-radius: 6px;
+}
+
+#grpc-request-response li.ui-tabs-tab a:active {
+    outline: 0;
+}
+
+#grpc-request-response li.ui-tabs-tab a:focus {
+    outline: 0;
+}
+
+#grpc-request-response li.ui-tabs-active {
+    background: none;
+    z-index: 1;
+    border: 1px solid #ccc;
+    border-bottom: 1px solid white;
+    color: black;
+}
+
+#grpc-request-response li.ui-tabs-active a {
+    color: black;
+}
+
+#grpc-request-response .grpc-tabcontent.ui-tabs-panel {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    position: relative;
+    top: -1px;
+    z-index: 0;
+    border: 1px solid #ccc;
+    margin: 0;
+    padding: 20px;
+}
+
+#grpc-request-response .grpc-tabcontent.ui-tabs-panel h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#grpc-form button {
+    border-radius: 3px;
+    background: #f0f0f0;
+    border-top: 1px solid #ccc;
+    border-right: 1px solid #bbb;
+    border-bottom: 1px solid #aaa;
+    border-left: 1px solid #ccc;
+    padding: 10px 20px;
+    font-size: 110%;
+}
+
+#grpc-form button:disabled {
+    border: 1px solid #ddd;
+    color: #ccc;
+    background: #f8f8f8;
+}
+
+#grpc-form textarea {
+    width: 100%;
+    border: 1px solid #aaa;
+    margin-bottom: 16px;
+}
+
+textarea#grpc-request-raw-text {
+    height: 200px;
+}
+
+table#grpc-request-metadata-form {
+    margin: 0;
+    margin-left: 4px;
+    border-collapse: collapse;
+}
+
+#grpc-request-metadata-form th {
+    background-color: #eee;
+    border-bottom: 1px solid #ddd;
+    color: #222;
+    padding: 4px;
+    text-align: center;
+    font-size: 80%;
+}
+
+#grpc-request-metadata-form td {
+    padding: 8px 0 0 8px;
+}
+
+#grpc-request-metadata-form td:first-child {
+    padding-left: 0;
+}
+
+#grpc-request-metadata-form th.name {
+    min-width: 208px;
+}
+
+#grpc-request-metadata-form th.value {
+    min-width: 328px;
+}
+
+#grpc-request-metadata-form input {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+    border: 1px solid #888;
+}
+
+#grpc-request-metadata {
+    margin-bottom: 20px;
+}
+
+#grpc-request-form {
+    margin-bottom: 20px;
+}
+
+#grpc-request-form div#root {
+    margin-left: 4px;
+}
+
+#grpc-request-form div.input_container {
+    padding: 16px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+#grpc-request-form td {
+    padding: 16px 0 0 16px;
+    font-size: 13.2px;
+}
+
+#grpc-request-form td:first-of-type {
+    padding-left: 0;
+}
+
+#grpc-request-form tr:first-of-type > td {
+    padding-top: 0;
+}
+
+#grpc-request-form th {
+    padding: 16px 0 0 16px;
+    text-align: left;
+    color: #888;
+    font-weight: normal;
+}
+
+#grpc-request-form th:first-of-type {
+    padding-left: 0;
+}
+
+#grpc-request-form tr:first-of-type > th {
+    padding-top: 0;
+}
+
+#grpc-request-form h4 {
+    padding: 0 0 3px 0;
+    margin: 0;
+    font-size: 95%;
+    font-weight: bold;
+    text-align: center;
+    font-style: italic;
+}
+
+#grpc-request-form textarea {
+    margin: 0;
+    width: auto;
+}
+
+#grpc-request-form td.toggle_presence span.required {
+    margin: 0 8px 0 18px;
+    color: #aaa;
+}
+
+#grpc-request-form td.toggle_presence {
+    text-align: center;
+}
+
+#grpc-request-form td input[type=checkbox] {
+    margin: 0 8px 0 18px;
+}
+
+#grpc-request-form td input[type=radio] {
+    margin: 0;
+}
+
+#grpc-request-form td.empty_message {
+    text-align: center;
+    font-style: italic;
+}
+
+#grpc-request-form td.name {
+    text-align: right;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 75%;
+}
+
+#grpc-request-form td.oneof_none {
+    text-align: right;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 90%;
+    font-style: italic;
+    font-weight: bold;
+}
+
+#grpc-request-form td.name strong {
+    font-size: 120%;
+}
+
+#grpc-request-form td.toggle_presence {
+    width: 1px;
+}
+
+#grpc-request-form td.array_button {
+    width: 1px;
+}
+
+#grpc-request-form div.json-entry {
+    display: inline-block;
+}
+
+#grpc-request-form div.oneof {
+    border-left: 2px dotted #ddd;
+    border-radius: 8px;
+    padding: 12px 0 12px 16px;
+}
+
+#grpc-request-form div.one-of-3 {
+    border: 1px dashed #ccc;
+}
+
+#grpc-request-form div.two-of-3 {
+    border: 1px dotted #d0d0d0;
+}
+
+#grpc-request-form div.three-of-3 {
+    border: 1px solid #ddd;
+}
+
+#grpc-form .grpc-request-table button {
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: "Courier New", Courier, monospace;
+}
+
+#grpc-form .grpc-request-table button.delete {
+    background-color: #f66;
+    color: white;
+    border: 1px solid #c44;
+}
+
+#grpc-form .grpc-request-table button.add {
+    background-color: #0c0;
+    color: white;
+    border: 1px solid #090;
+}
+
+#grpc-request-form textarea:disabled {
+    color: #ccc;
+    border: 1px solid #ddd;
+}
+
+#grpc-request-form select:disabled {
+    color: #ccc;
+}
+
+#grpc-request-form input[type=text]:disabled {
+    color: #ccc;
+    border: 1px solid #ccc;
+}
+
+#grpc-request-form input[type=text] {
+    border: 1px solid #aaa;
+}
+
+#grpc-request-form .unknown {
+    color: #fa6;
+    font-style: italic;
+    font-size: 90%;
+}
+
+#grpc-request-form tr.unknown td {
+    padding-top: 0;
+}
+
+#grpc-request-form .null {
+    color: #ccc;
+    font-style: italic;
+}
+
+#grpc-request-form .duration-unit {
+    font-style: italic;
+    margin-left: 6px;
+}
+
+#grpc-request-form div.grpc-timestamp {
+    display: inline-block;
+}
+
+#grpc-request-form div.grpc-timestamp > input {
+    margin: 4px;
+}
+
+#grpc-request-form .invalid-input {
+    border: 3px dotted #f46;
+    background-color: #ffe0e8;
+}
+
+#grpc-request-form input[type=text].invalid-input {
+    border: 3px dotted #f46;
+}
+
+#grpc-request-form textarea.invalid-input {
+    border: 3px dotted #f46;
+}
+
+#grpc-request-form div.invalid-input input {
+    background-color: #ffe0e8;
+}
+
+.grpc-timestamp-picker.ui-datepicker span.ui-icon {
+    background: none;
+    text-indent: 0;
+    font-size: 12px;
+    font-weight: normal;
+    text-align: center;
+}
+
+#grpc-request-form .bool-input {
+    padding: 3px;
+    display: inline-block;
+}
+
+#grpc-request-form label {
+    font-weight: normal;
+    margin: 0 15px 0 8px;
+}
+
+#grpc-request-form label.disabled {
+    color: #ccc;
+}
+
+#grpc-form span.add-row-label {
+    font-size: 13.2px;
+    margin: 2px;
+}
+
+.grpc-metadata-table td, .grpc-metadata-table th {
+    padding: 8px;
+    border: 1px solid #eee;
+    font-family: "courier new", courier, monospace;
+    font-size: 14px;
+}
+
+.grpc-metadata-table td.none {
+    border: none;
+    font-style: italic;
+    padding: 0;
+}
+
+#grpc-response-req-stats {
+    font-size: 110%;
+    padding-bottom: 8px;
+    color: #800;
+    font-style: italic;
+}
+
+#grpc-response-headers {
+    margin-bottom: 16px;
+}
+
+#grpc-response-data {
+    padding-bottom: 16px;
+}
+
+#grpc-response-data td {
+    padding: 12px 0 0 12px;
+    font-size: 13.2px;
+    font-family: "courier new", courier, monospace;
+}
+
+#grpc-response-data td.name {
+    text-align: right;
+    font-weight: bold;
+}
+
+#grpc-response-data tr:first-of-type > td {
+    padding-top: 0;
+}
+
+#grpc-response-data td:first-of-type {
+    padding-left: 0;
+}
+
+#grpc-response-data div.output_container.root {
+    display: inline-block;
+    margin-top: 16px;
+}
+
+#grpc-response-data div.output_container.root:first-of-type {
+    margin-top: 0;
+}
+
+#grpc-response-data div.output_container {
+    padding: 16px;
+    border-radius: 2px;
+}
+
+#grpc-response-data .null {
+    color: #ccc;
+    font-style: italic;
+}
+
+#grpc-response-data div.one-of-3 {
+    border: 1px dashed #ccc;
+}
+
+#grpc-response-data div.two-of-3 {
+    border: 1px dotted #d0d0d0;
+}
+
+#grpc-response-data div.three-of-3 {
+    border: 1px solid #ddd;
+}
+
+#grpc-response-error {
+    font-size: 120%;
+    color: #f44;
+    padding-bottom: 16px;
+}
+
+#grpc-response-error #grpc-response-error-num {
+    color: #faa;
+}
+
+#grpc-response-error #grpc-response-error-msg {
+    font-size: 14px;
+    font-family: "Courier New", Courier, monospace;
+    color: #c00;
+}
