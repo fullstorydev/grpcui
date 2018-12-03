@@ -1,4 +1,5 @@
 # gRPC UI
+[![Build Status](https://travis-ci.org/fullstorydev/grpcui.svg?branch=master)](https://travis-ci.org/fullstorydev/grpcui/branches)
 [![Go Report Card](https://goreportcard.com/badge/github.com/fullstorydev/grpcui)](https://goreportcard.com/report/github.com/fullstorydev/grpcui)
 
 `grpcui` is a command-line tool that lets you interact with gRPC servers via a browser.
