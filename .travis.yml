@@ -14,4 +14,4 @@ matrix:
     - go: tip
 
 script:
-  - if [[ "$VET" = 1 ]]; then make; else make deps test; fi
+  - if [[ "$VET" = 1 ]]; then make ci; else make deps test; fi
