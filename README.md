@@ -90,13 +90,126 @@ no port is specified, an ephemeral port will be used (so likely a different port
 time it is run, allocated by the operating system).
 
 ### Web Form
-*TODO(jhump)*: Describe how to define requests; include screenshots
+When you run `grpcui`, it will show you a URL to put into a browser in order to access
+the web UI.
 
-### Raw JSON Requests
-*TODO(jhump)*: Describe how to examine and even edit the raw JSON for requests; include screenshots
+```
+$ grpcui -plaintext localhost:12345
+gRPC Web UI available at http://127.0.0.1:60551/...
 
-### RPC Results
-*TODO(jhump)*: Describe how results are presented; include screenshots
+```
+
+When you navigate to this URL, you are presented with the user interface:
+
+<p align="center">
+  <img alt="web UI screenshots" src="doc-images/grpc-web-ui.png">
+</p>
+
+The top two listboxes allow you to select the service and method of the RPC to issue.
+Once a selection is made, the panel below will show a form that allows you to define an
+RPC request. The form is constructed, dynamically, based on the actual request message
+structure of the selected RPC.
+
+You'll notice a second tab that lets you view (and edit) the raw JSON value for the
+request data. This can be useful to copy+paste a large request message, without having
+to point-and-click to define each field value, one at a time.
+
+The third tab shows the response data. This tab is grayed out and disabled until you
+actually click the "Invoke" button, which can be found at the bottom of the page.
+
+### Request Form
+The first thing to note about the form is that it will generally be a table, where each row
+is a field. The table has three important columns:
+
+1. The first column shows the name and type of the field.
+2. The second columns indicates the "cardinality" of the field. Typical fields are
+   optional. The second column for optional fields is a checkbox indicating whether the
+   field is present or not. If the field is not present, its default value is assumed.
+   Repeated fields show buttons in this column for adding and deletig values. The green
+   "+" allows you to add values to the repeated field. The red "x" next to a value will
+   remove that value. Finally, if the field is required (only supported in syntax
+   "proto2"), the column will contain only an asterisk.
+3. The third column shows the value of the field. If the field is absent, this will show
+   the default value for the field. Fields that are nested messages show "unset", but
+   scalar types show their default (usually the type's zero value, but default values are
+   configurable when using syntax "proto2"). Absent fields are also not editable -- you
+   must first check the box in column two to make the field present before editing its
+   value. Repeated fields show a nested table that occupies columns two and three and
+   allows for adding and removing values.
+
+Fields whose type is a nested message will include a nested table in column three. This
+nested table has its own three columns and one row per field therein.
+
+One-ofs are rendered a little differently. Instead of two columns indicating the presence
+and value of the field, they include a nested table showing all of the possible fields
+in the one-of. However, the middle column is a radio button instead of a checkbox, so that
+only one of the fields can be present at any given time. In addition to a row for each
+field in the one-of, there is also an option named *None*, which indicates a one-of where
+no value is set.
+
+Here's an example form for a message that has two required fields (`id` and `name`), one
+repeated field (`labels`), a handful of normal optional fields, and a single one-of that
+has four options. In the first image, no values are present (except, of course, for the
+required fields at the top). In the second, several field values are present.
+
+<p align="center">
+  <img alt="web UI message fields" src="doc-images/fields.png">
+  <img alt="web UI message fields, with some values" src="doc-images/fields-filled-out.png">
+</p>
+
+For RPCs that accept a *stream* of requests, the web form allows the user to define multiple
+messages in the stream. It defaults to a single request, but the user can remove it to send none
+or can send many. A stream resembles a repeated field, but the repeated "thing" is the entire
+request:
+
+<p align="center">
+  <img alt="web UI request stream" src="doc-images/streams-repeated.png">
+</p>
+
+That last example also shows how well-known message types get special treatment. In that example,
+the request type is `google.protobuf.StringValue`. Instead of showing a form for a message with a
+single field named `value` with type `string`, the UI is simple and the "boxing" ceremony is
+elided. It instead just shows a simple textbox for entering the string value.
+
+A more interesting example of how well-known message types are treated is `google.protobuf.Timestamp`,
+where a date picker is shown:
+
+<p align="center">
+  <img alt="web UI request stream" src="doc-images/timestamp.png">
+</p>
+
+### Raw Request JSON
+The second tab lets you view the JSON representation of the request data you have defined on the
+first tab. You can also directly edit the JSON data -- including pasting in an entire JSON message.
+
+The JSON representation uses the standard [JSON mapping for Protocol Buffers](https://developers.google.com/protocol-buffers/docs/proto3#json).
+
+<p align="center">
+  <img alt="web UI request JSON" src="doc-images/raw-json.png">
+</p>
+
+When working with an RPC that has a streaming request, the JSON data will be a JSON array, where
+each element is a single message in the stream.
+
+### Responses
+When the "Invoke" button is pressed, the request data is sent to the server and the selected RPC
+method is invoked. The web form will then navigate to the third tab to show the server's response.
+
+The response tab has three sections:
+
+1. Response Headers: Any response header metadata is shown here.
+2. Response Data: Any response messages are shown here as are any error messages. RPC methods with
+   a streaming response may show both message data *and* an error. Error messages show the gRPC
+   status code and the server-defined message text.
+3. Response Trailers: Finally, any response trailer metadata is shown.
+
+<p align="center">
+  <img alt="web UI response" src="doc-images/response.png">
+</p>
+
+Each of these three sections is a table of data. Response messages are the most interesting, and
+their structure closely resembles how messages are structured on the "Request Form" tab. Fields that
+have nested messages will include a nested table.
 
 ## Descriptor Sources
 The `grpcui` tool can operate on a variety of sources for descriptors. The descriptors
@@ -106,7 +219,6 @@ into text. The sections below document the supported sources and what command-li
 are needed to use them.
 
 ### Server Reflection
-
 Without any additional command-line flags, `grpcui` will try to use [server reflection](https://github.com/grpc/grpc/blob/master/src/proto/grpc/reflection/v1alpha/reflection.proto).
 
 Examples for how to set up server reflection can be found [here](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md#known-implementations).
