@@ -102,7 +102,7 @@ gRPC Web UI available at http://127.0.0.1:60551/...
 When you navigate to this URL, you are presented with the user interface:
 
 <p align="center">
-  <img alt="web UI screenshots" src="doc-images/grpc-web-ui.png">
+  <img alt="web UI screenshots" width="888" src="doc-images/grpc-web-ui.png">
 </p>
 
 The top two listboxes allow you to select the service and method of the RPC to issue.
@@ -153,8 +153,8 @@ has four options. In the first image, no values are present (except, of course, 
 required fields at the top). In the second, several field values are present.
 
 <p align="center">
-  <img alt="web UI message fields" src="doc-images/fields.png">
-  <img alt="web UI message fields, with some values" src="doc-images/fields-filled-out.png">
+  <img alt="web UI message fields" width="408" align="top" src="doc-images/fields.png">
+  <img alt="web UI message fields, with some values" width="420" align="top" src="doc-images/fields-filled-out.png">
 </p>
 
 For RPCs that accept a *stream* of requests, the web form allows the user to define multiple
@@ -163,7 +163,7 @@ or can send many. A stream resembles a repeated field, but the repeated "thing" 
 request:
 
 <p align="center">
-  <img alt="web UI request stream" src="doc-images/streams-repeated.png">
+  <img alt="web UI request stream" width="380" src="doc-images/streams-repeated.png">
 </p>
 
 That last example also shows how well-known message types get special treatment. In that example,
@@ -175,7 +175,7 @@ A more interesting example of how well-known message types are treated is `googl
 where a date picker is shown:
 
 <p align="center">
-  <img alt="web UI request stream" src="doc-images/timestamp.png">
+  <img alt="web UI request stream" width="640" src="doc-images/timestamp.png">
 </p>
 
 ### Raw Request JSON
@@ -185,7 +185,7 @@ first tab. You can also directly edit the JSON data -- including pasting in an e
 The JSON representation uses the standard [JSON mapping for Protocol Buffers](https://developers.google.com/protocol-buffers/docs/proto3#json).
 
 <p align="center">
-  <img alt="web UI request JSON" src="doc-images/raw-json.png">
+  <img alt="web UI request JSON" width="600" src="doc-images/raw-json.png">
 </p>
 
 When working with an RPC that has a streaming request, the JSON data will be a JSON array, where
@@ -204,7 +204,7 @@ The response tab has three sections:
 3. Response Trailers: Finally, any response trailer metadata is shown.
 
 <p align="center">
-  <img alt="web UI response" src="doc-images/response.png">
+  <img alt="web UI response" width="500" src="doc-images/response.png">
 </p>
 
 Each of these three sections is a table of data. Response messages are the most interesting, and
