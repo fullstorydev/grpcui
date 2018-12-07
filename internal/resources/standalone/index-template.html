@@ -97,6 +97,16 @@
       padding: 24px;
     }
     </style>
+    <script>
+    // ZOMG this is awful. This beast comes from https://developer.mozilla.org/en-US/docs/Web/API/document/cookie
+    var cookieValue = document.cookie.replace(/(?:(?:^|.*;\s*)_grpcui_csrf_token\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+    // add CSRF token to all non-GET requests
+    $(document).ajaxSend(function(event, request, settings) {
+        if (settings.method !== "GET") {
+            request.setRequestHeader("x-grpcui-csrf-token", cookieValue);
+        }
+    });
+    </script>
   </head>
   <body>
     <div class="full-width-heading">
