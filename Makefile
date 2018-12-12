@@ -20,11 +20,6 @@ updatedeps:
 install:
 	go install -ldflags '-X "main.version=dev build $(dev_build_version)"' ./...
 
-.PHONY: release
-release:
-	@GO111MODULE=off go get github.com/goreleaser/goreleaser
-	goreleaser --rm-dist
-
 .PHONY: checkgofmt
 checkgofmt:
 	gofmt -s -l .
@@ -63,7 +58,7 @@ golint:
 	golint -min_confidence 0.9 -set_exit_status ./...
 
 # Intentionally omitted from CI, but target here for ad-hoc reports.
-.PHONY: errchack
+.PHONY: errcheck
 errcheck:
 	@go get github.com/kisielk/errcheck
 	errcheck ./...
