@@ -88,6 +88,8 @@ var (
 
 	port = flags.Int("port", 0, prettify(`
 		The port on which the web UI is exposed.`))
+	bind = flags.String("bind", "127.0.0.1", prettify(`
+		The address on which the web UI is exposed.`))
 	services multiString
 	methods  multiString
 )
@@ -358,11 +360,11 @@ func main() {
 		})
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", *port))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *bind, *port))
 	if err != nil {
 		fail(err, "Failed to listen on port %d", *port)
 	}
-	fmt.Printf("gRPC Web UI available at http://127.0.0.1:%d/...\n", listener.Addr().(*net.TCPAddr).Port)
+	fmt.Printf("gRPC Web UI available at http://%s:%d/...\n", *bind, listener.Addr().(*net.TCPAddr).Port)
 
 	if err := http.Serve(listener, handler); err != nil {
 		fail(err, "Failed to serve web UI")
