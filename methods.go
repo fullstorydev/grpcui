@@ -19,9 +19,7 @@ func AllMethodsForServices(descs []*desc.ServiceDescriptor) []*desc.MethodDescri
 			continue
 		}
 		seen[sd.GetFullyQualifiedName()] = struct{}{}
-		for _, md := range sd.GetMethods() {
-			allMethods = append(allMethods, md)
-		}
+		allMethods = append(allMethods, sd.GetMethods()...)
 	}
 	return allMethods
 }
