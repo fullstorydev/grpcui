@@ -20,6 +20,11 @@ updatedeps:
 install:
 	go install -ldflags '-X "main.version=dev build $(dev_build_version)"' ./...
 
+.PHONY: release
+release:
+	@GO111MODULE=off go get github.com/goreleaser/goreleaser
+	goreleaser --rm-dist
+
 .PHONY: checkgofmt
 checkgofmt:
 	gofmt -s -l .
