@@ -16,7 +16,6 @@ import (
 	"net/http/httputil"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -68,14 +67,20 @@ var (
 	authority   = flags.String("authority", "", prettify(`
 		Value of :authority pseudo-header to be use with underlying HTTP/2
 		requests. It defaults to the given address.`))
-	connectTimeout = flags.String("connect-timeout", "", prettify(`
+	connectTimeout = flags.Float64("connect-timeout", 0, prettify(`
 		The maximum time, in seconds, to wait for connection to be established.
 		Defaults to 10 seconds.`))
-	keepaliveTime = flags.String("keepalive-time", "", prettify(`
+	keepaliveTime = flags.Float64("keepalive-time", 0, prettify(`
 		If present, the maximum idle time in seconds, after which a keepalive
 		probe is sent. If the connection remains idle and no keepalive response
 		is received for this same period then the connection is closed and the
 		operation fails.`))
+	maxTime = flags.Float64("max-time", 0, prettify(`
+		The maximum total time a single RPC invocation is allowed to take, in
+		seconds.`))
+	maxMsgSz = flags.Int("max-msg-sz", 0, prettify(`
+		The maximum encoded size of a message that grpcui will accept. If not
+		specified, defaults to 4mb.`))
 	verbose = flags.Bool("v", false, prettify(`
 		Enable verbose output.`))
 	veryVerbose = flags.Bool("vv", false, prettify(`
@@ -164,6 +169,18 @@ func main() {
 	}
 
 	// Do extra validation on arguments and figure out what user asked us to do.
+	if *connectTimeout < 0 {
+		fail(nil, "The -connect-timeout argument must not be negative.")
+	}
+	if *keepaliveTime < 0 {
+		fail(nil, "The -keepalive-time argument must not be negative.")
+	}
+	if *maxTime < 0 {
+		fail(nil, "The -max-time argument must not be negative.")
+	}
+	if *maxMsgSz < 0 {
+		fail(nil, "The -max-msg-sz argument must not be negative.")
+	}
 	if *plaintext && *insecure {
 		fail(nil, "The -plaintext and -insecure arguments are mutually exclusive.")
 	}
@@ -220,26 +237,21 @@ func main() {
 
 	ctx := context.Background()
 	dialTime := 10 * time.Second
-	if *connectTimeout != "" {
-		t, err := strconv.ParseFloat(*connectTimeout, 64)
-		if err != nil {
-			fail(nil, "The -connect-timeout argument must be a valid number.")
-		}
-		dialTime = time.Duration(t * float64(time.Second))
+	if *connectTimeout > 0 {
+		dialTime = time.Duration(*connectTimeout * float64(time.Second))
 	}
 	ctx, cancel := context.WithTimeout(ctx, dialTime)
 	defer cancel()
 	var opts []grpc.DialOption
-	if *keepaliveTime != "" {
-		t, err := strconv.ParseFloat(*keepaliveTime, 64)
-		if err != nil {
-			fail(nil, "The -keepalive-time argument must be a valid number.")
-		}
-		timeout := time.Duration(t * float64(time.Second))
+	if *keepaliveTime > 0 {
+		timeout := time.Duration(*keepaliveTime * float64(time.Second))
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:    timeout,
 			Timeout: timeout,
 		}))
+	}
+	if *maxMsgSz > 0 {
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(*maxMsgSz)))
 	}
 	if *authority != "" {
 		opts = append(opts, grpc.WithAuthority(*authority))
@@ -321,6 +333,20 @@ func main() {
 	}
 
 	handler := standalone.Handler(cc, target, methods, allFiles)
+	if *maxTime > 0 {
+		timeout := time.Duration(*maxTime * float64(time.Second))
+		// enforce the timeout by wrapping the handler and inserting a
+		// context timeout for invocation calls
+		orig := handler
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasPrefix(r.URL.Path, "/invoke/") {
+				ctx, cancel := context.WithTimeout(r.Context(), timeout)
+				defer cancel()
+				r = r.WithContext(ctx)
+			}
+			orig.ServeHTTP(w, r)
+		})
+	}
 
 	if *verbose {
 		// wrap the handler with one that performs more logging of what's going on
