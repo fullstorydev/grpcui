@@ -2,10 +2,8 @@
 
 package main
 
-import "flag"
-
 var (
-	unix = flag.Bool("unix", false,
+	unix = flags.Bool("unix", false,
 		`Indicates that the server address is the path to a Unix domain socket.`)
 )
 
