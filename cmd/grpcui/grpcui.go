@@ -390,7 +390,7 @@ func main() {
 	if err != nil {
 		fail(err, "Failed to listen on port %d", *port)
 	}
-	fmt.Printf("gRPC Web UI available at http://%s:%d/...\n", *bind, listener.Addr().(*net.TCPAddr).Port)
+	fmt.Printf("gRPC Web UI available at http://%s:%d/\n", *bind, listener.Addr().(*net.TCPAddr).Port)
 
 	if err := http.Serve(listener, handler); err != nil {
 		fail(err, "Failed to serve web UI")
