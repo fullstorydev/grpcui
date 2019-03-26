@@ -2,6 +2,7 @@ package grpcui
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -455,6 +457,9 @@ func responseMetadata(md metadata.MD) []rpcMetadata {
 	for _, k := range keys {
 		vals := md[k]
 		for _, v := range vals {
+			if strings.HasSuffix(k, "-bin") {
+				v = base64.StdEncoding.EncodeToString([]byte(v))
+			}
 			ret = append(ret, rpcMetadata{Name: k, Value: v})
 		}
 	}
