@@ -1181,6 +1181,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 return 1;
             }
         }
+        var sgn = aNeg ? -1 : 1;
         var padLen = a.length - b.length;
         if (padLen > 0) {
             // a longer than b: pad b
@@ -1191,9 +1192,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         }
         // now we can safely use lexical compare
         if (a < b) {
-            return -1;
+            return -sgn;
         } else if (a > b) {
-            return 1;
+            return sgn;
         }
         return 0;
     }
