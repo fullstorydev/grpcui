@@ -43,6 +43,8 @@ func AllMethodsForServer(svr *grpc.Server) ([]*desc.MethodDescriptor, error) {
 // connection. This returns an error if the server does not support service
 // reflection. (See "google.golang.org/grpc/reflection" for more on service
 // reflection.)
+// This automatically skips the reflection service, since it is assumed this is not
+// a desired inclusion.
 func AllMethodsViaReflection(ctx context.Context, cc *grpc.ClientConn) ([]*desc.MethodDescriptor, error) {
 	stub := rpb.NewServerReflectionClient(cc)
 	cli := grpcreflect.NewClient(ctx, stub)
@@ -55,6 +57,9 @@ func AllMethodsViaReflection(ctx context.Context, cc *grpc.ClientConn) ([]*desc.
 		sd, err := cli.ResolveService(svcName)
 		if err != nil {
 			return nil, err
+		}
+		if sd.GetFullyQualifiedName() == "grpc.reflection.v1alpha.ServerReflection" {
+			continue // skip reflection service
 		}
 		descs = append(descs, sd)
 	}
