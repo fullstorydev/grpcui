@@ -2,6 +2,7 @@ package standalone
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
+	"google.golang.org/grpc"
 
 	"github.com/fullstorydev/grpcui"
 	"github.com/fullstorydev/grpcui/internal/resources/standalone"
@@ -161,4 +163,22 @@ func computeETag(contents []byte) string {
 	hasher := sha256.New()
 	hasher.Write(contents)
 	return base64.RawURLEncoding.EncodeToString(hasher.Sum(nil))
+}
+
+// HandlerViaReflection tries to query the provided connection for all services
+// and methods supported by the server, and constructs a handler to serve the UI.
+//
+// The handler has the same properties as the one returned by Handler.
+func HandlerViaReflection(ctx context.Context, cc *grpc.ClientConn, target string) (http.Handler, error) {
+	m, err := grpcui.AllMethodsViaReflection(ctx, cc)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := grpcui.AllFilesViaReflection(ctx, cc)
+	if err != nil {
+		return nil, err
+	}
+
+	return Handler(cc, target, m, f), nil
 }

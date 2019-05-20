@@ -90,8 +90,8 @@ func RPCInvokeHandler(ch grpcdynamic.Channel, descs []*desc.MethodDescriptor) ht
 	})
 }
 
-// RPCInvokeHandler returns an HTTP handler that can be used to invoke RPCs. The
-// request includes request data, header metadata, and an optional timeout.
+// RPCMetadataHandler returns an HTTP handler that can be used to get metadata
+// for a specified method.
 //
 // The handler accepts GET requests, using a query parameter to indicate the
 // method whose schema metadata should be fetched. The response payload will be

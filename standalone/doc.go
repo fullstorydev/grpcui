@@ -13,4 +13,16 @@
 //
 // Note that this package bundles the JS dependencies of the web form. It
 // provides jQuery 3.3.1 and jQuery-UI 1.12.1.
+//
+// An example of using the package with a server supporting reflection:
+//
+//	cc, err := grpc.DialContext(ctx, "dns:///my-grpc-server:8080", grpc.WithBlock())
+//	if err != nil {
+//		return err
+//	}
+//	h, err := standalone.HandlerViaReflection(ctx, cc, "dns:///my-grpc-server:8080")
+//	if err != nil {
+//		return err
+//	}
+//	http.ListenAndServe(":8080", h)
 package standalone
