@@ -385,7 +385,8 @@ func invokeRPC(ctx context.Context, methodName string, ch grpcdynamic.Channel, d
 	}
 
 	result := rpcResult{
-		Requests: &reqStats,
+		descSource: descSource,
+		Requests:   &reqStats,
 	}
 	if err := grpcurl.InvokeRPC(ctx, descSource, ch, methodName, hdrs, &result, requestFunc); err != nil {
 		return nil, err
@@ -423,11 +424,12 @@ type rpcError struct {
 }
 
 type rpcResult struct {
-	Headers   []rpcMetadata        `json:"headers"`
-	Error     *rpcError            `json:"error"`
-	Responses []rpcResponseElement `json:"responses"`
-	Requests  *rpcRequestStats     `json:"requests"`
-	Trailers  []rpcMetadata        `json:"trailers"`
+	descSource grpcurl.DescriptorSource
+	Headers    []rpcMetadata        `json:"headers"`
+	Error      *rpcError            `json:"error"`
+	Responses  []rpcResponseElement `json:"responses"`
+	Requests   *rpcRequestStats     `json:"requests"`
+	Trailers   []rpcMetadata        `json:"trailers"`
 }
 
 func (*rpcResult) OnResolveMethod(*desc.MethodDescriptor) {}
@@ -439,12 +441,12 @@ func (r *rpcResult) OnReceiveHeaders(md metadata.MD) {
 }
 
 func (r *rpcResult) OnReceiveResponse(m proto.Message) {
-	r.Responses = append(r.Responses, responseToJSON(m))
+	r.Responses = append(r.Responses, responseToJSON(r.descSource, m))
 }
 
 func (r *rpcResult) OnReceiveTrailers(stat *status.Status, md metadata.MD) {
 	r.Trailers = responseMetadata(md)
-	r.Error = toRpcError(stat)
+	r.Error = toRpcError(r.descSource, stat)
 }
 
 func responseMetadata(md metadata.MD) []rpcMetadata {
@@ -466,7 +468,7 @@ func responseMetadata(md metadata.MD) []rpcMetadata {
 	return ret
 }
 
-func toRpcError(stat *status.Status) *rpcError {
+func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status) *rpcError {
 	if stat.Code() == codes.OK {
 		return nil
 	}
@@ -474,7 +476,7 @@ func toRpcError(stat *status.Status) *rpcError {
 	details := stat.Proto().Details
 	msgs := make([]rpcResponseElement, len(details))
 	for i, d := range details {
-		msgs[i] = responseToJSON(d)
+		msgs[i] = responseToJSON(descSource, d)
 	}
 	return &rpcError{
 		Code:    uint32(stat.Code()),
@@ -484,8 +486,9 @@ func toRpcError(stat *status.Status) *rpcError {
 	}
 }
 
-func responseToJSON(msg proto.Message) rpcResponseElement {
-	jsm := jsonpb.Marshaler{EmitDefaults: true, OrigName: true, Indent: "  "}
+func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message) rpcResponseElement {
+	anyResolver := grpcurl.AnyResolverFromDescriptorSourceWithFallback(descSource)
+	jsm := jsonpb.Marshaler{EmitDefaults: true, OrigName: true, Indent: "  ", AnyResolver: anyResolver}
 	var b bytes.Buffer
 	if err := jsm.Marshal(&b, msg); err == nil {
 		return rpcResponseElement{Data: json.RawMessage(b.Bytes())}
