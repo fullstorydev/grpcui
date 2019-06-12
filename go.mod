@@ -1,9 +1,9 @@
 module github.com/fullstorydev/grpcui
 
 require (
-	github.com/fullstorydev/grpcurl v1.2.1
-	github.com/golang/protobuf v1.2.0
-	github.com/jhump/protoreflect v1.3.0
-	golang.org/x/net v0.0.0-20180826012351-8a410e7b638d
-	google.golang.org/grpc v1.19.0
+	github.com/fullstorydev/grpcurl v1.3.0
+	github.com/golang/protobuf v1.3.1
+	github.com/jhump/protoreflect v1.4.1
+	golang.org/x/net v0.0.0-20190522155817-f3200d17e092
+	google.golang.org/grpc v1.21.0
 )
