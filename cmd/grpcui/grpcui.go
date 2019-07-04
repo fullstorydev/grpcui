@@ -470,6 +470,9 @@ func getMethods(source grpcurl.DescriptorSource, configs map[string]*svcConfig) 
 
 	var descs []*desc.MethodDescriptor
 	for _, svc := range allServices {
+		if svc == "grpc.reflection.v1alpha.ServerReflection" {
+			continue
+		}
 		d, err := source.FindSymbol(svc)
 		if err != nil {
 			return nil, err
