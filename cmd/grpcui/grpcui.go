@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -62,6 +63,7 @@ var (
 		with -plaintext option. Must also provide -cert option.`))
 	protoset    multiString
 	protoFiles  multiString
+	targets     multiString
 	importPaths multiString
 	reflHeaders multiString
 	authority   = flags.String("authority", "", prettify(`
@@ -119,6 +121,9 @@ func init() {
 		-import-path flags. Multiple proto files can be specified by specifying
 		multiple -proto flags. It is an error to use both -protoset and -proto
 		flags.`))
+	flags.Var(&targets, "t", prettify(`
+		Target Endpoints. Grpcui can connect to multiple targets endpoints for given protos.
+		For reflection, it connects to first service endpoint only and load the methods. Multiple targets can be specied`))
 	flags.Var(&importPaths, "import-path", prettify(`
 		The path to a directory from which proto sources can be imported,
 		for use with -proto flags. Multiple import paths can be configured by
@@ -193,17 +198,14 @@ func main() {
 	if (*key == "") != (*cert == "") {
 		fail(nil, "The -cert and -key arguments must be used together and both be present.")
 	}
-
-	if flags.NArg() != 1 {
-		fail(nil, "This program requires exactly one arg: the host:port of gRPC server.")
-	}
-	target := flags.Arg(0)
-
 	if len(protoset) > 0 && len(reflHeaders) > 0 {
 		warn("The -reflect-header argument is not used when -protoset files are used.")
 	}
 	if len(protoset) > 0 && len(protoFiles) > 0 {
 		fail(nil, "Use either -protoset files or -proto files, but not both.")
+	}
+	if len(targets) == 0 {
+		fail(nil, "Atlease one service endpoint should be specified in form of path=host:port")
 	}
 	if len(importPaths) > 0 && len(protoFiles) == 0 {
 		warn("The -import-path argument is not used unless -proto files are used.")
@@ -273,11 +275,48 @@ func main() {
 	if isUnixSocket != nil && isUnixSocket() {
 		network = "unix"
 	}
-	cc, err := grpcurl.BlockingDial(ctx, network, target, creds, opts...)
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *bind, *port))
 	if err != nil {
-		fail(err, "Failed to dial target host %q", target)
+		fail(err, "Failed to listen on port %d", *port)
 	}
+	fmt.Printf("gRPC Web UI available at http://%s:%d/\n", *bind, listener.Addr().(*net.TCPAddr).Port)
 
+	//Handler map with all the paths and handlers themselves
+	var handlerMap = make(map[string]http.Handler)
+	//root handler
+	var rootHandler http.Handler
+	//anchor tag list targets at  /list enpoint
+	var sb strings.Builder
+	for i, target := range targets {
+		path := strings.Split(target, "=")[0]
+		turl := strings.Split(target, "=")[1]
+		sb.WriteString("<a href=\"/" + path + "\">Connect to: <b>" + path + "</b>  at:<b> " + turl + "</b></a><br/><br/>")
+		fmt.Println("Creating Handler to connect to: ", target, " and register path: "+path)
+		h := routeSpecificHandler(ctx, network, turl, opts, creds, configs)
+		handlerMap[path] = h
+		//assign the first target handler as root handler
+		if i == 0 {
+			rootHandler = h
+		}
+		http.Handle("/"+path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var lh = handlerMap[path]
+			rootHandler = lh
+			http.StripPrefix("/"+path, lh).ServeHTTP(w, r)
+		}))
+		fmt.Println("Sucessfully created handler  to :", target, "at ", i)
+	}
+	http.Handle("/list", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "<html><br/><br/>"+sb.String()+"</html>")
+	}))
+	http.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rootHandler.ServeHTTP(w, r)
+	}))
+
+	if err := http.Serve(listener, nil); err != nil {
+		fail(err, "Failed to serve web UI")
+	}
+}
+func routeSpecificHandler(ctx context.Context, network string, targeturl string, opts []grpc.DialOption, creds credentials.TransportCredentials, configs map[string]*svcConfig) http.Handler {
 	var descSource grpcurl.DescriptorSource
 	var refClient *grpcreflect.Client
 	if len(protoset) > 0 {
@@ -295,28 +334,14 @@ func main() {
 	} else {
 		md := grpcurl.MetadataFromHeaders(reflHeaders)
 		refCtx := metadata.NewOutgoingContext(ctx, md)
+		//loadthe methods by reflection from ffirst target url. TODO this hsould loop thru all the targets and collect the descSources.
+		cc, err := grpcurl.BlockingDial(ctx, network, strings.Split(targets[0], "=")[1], creds, opts...)
+		if err != nil {
+			fail(err, "Failed to dial target host %q", strings.Split(targets[0], "=")[1])
+		}
 		refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
 		descSource = grpcurl.DescriptorSourceFromServer(ctx, refClient)
 	}
-
-	// arrange for the RPCs to be cleanly shutdown
-	reset := func() {
-		if refClient != nil {
-			refClient.Reset()
-			refClient = nil
-		}
-		if cc != nil {
-			cc.Close()
-			cc = nil
-		}
-	}
-	defer reset()
-	exit = func(code int) {
-		// since defers aren't run by os.Exit...
-		reset()
-		os.Exit(code)
-	}
-
 	methods, err := getMethods(descSource, configs)
 	if err != nil {
 		fail(err, "Failed to compute set of methods to expose")
@@ -332,7 +357,12 @@ func main() {
 		refClient = nil
 	}
 
-	handler := standalone.Handler(cc, target, methods, allFiles)
+	fmt.Println("Connecting to : " + targeturl)
+	cc, err := grpcurl.BlockingDial(ctx, network, targeturl, creds, opts...)
+	if err != nil {
+		fail(err, "Failed to dial target host %q", targeturl)
+	}
+	handler := standalone.Handler(cc, targeturl, methods, allFiles)
 	if *maxTime > 0 {
 		timeout := time.Duration(*maxTime * float64(time.Second))
 		// enforce the timeout by wrapping the handler and inserting a
@@ -385,16 +415,24 @@ func main() {
 			logInfof("%s %s %s %d %dms %dbytes", r.RemoteAddr, r.Method, r.RequestURI, cs.code, millis, cs.size)
 		})
 	}
-
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *bind, *port))
-	if err != nil {
-		fail(err, "Failed to listen on port %d", *port)
+	// arrange for the RPCs to be cleanly shutdown
+	reset := func() {
+		if refClient != nil {
+			refClient.Reset()
+			refClient = nil
+		}
+		//if cc != nil {
+		//	cc.Close()
+		///	cc = nil
+		//}
 	}
-	fmt.Printf("gRPC Web UI available at http://%s:%d/\n", *bind, listener.Addr().(*net.TCPAddr).Port)
-
-	if err := http.Serve(listener, handler); err != nil {
-		fail(err, "Failed to serve web UI")
+	defer reset()
+	exit = func(code int) {
+		// since defers aren't run by os.Exit...
+		reset()
+		os.Exit(code)
 	}
+	return handler
 }
 
 func usage() {
