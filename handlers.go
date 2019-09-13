@@ -40,7 +40,7 @@ import (
 // Note that the returned handler does not implement any CSRF protection. To
 // provide that, you will need to wrap the returned handler with one that first
 // enforces CSRF checks.
-func RPCInvokeHandler(ch grpcdynamic.Channel, descs []*desc.MethodDescriptor) http.Handler {
+func RPCInvokeHandler(chMap map[string]grpcdynamic.Channel, descs []*desc.MethodDescriptor) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.Header().Set("Allow", "POST")
@@ -59,6 +59,8 @@ func RPCInvokeHandler(ch grpcdynamic.Channel, descs []*desc.MethodDescriptor) ht
 		}
 
 		for _, md := range descs {
+			ch := chMap[md.GetService().GetFullyQualifiedName()]
+			fmt.Println("Using Full qualified service name: " + md.GetService().GetFullyQualifiedName())
 			if md.GetFullyQualifiedName() == method {
 				descSource, err := grpcurl.DescriptorSourceFromFileDescriptors(md.GetFile())
 				if err != nil {

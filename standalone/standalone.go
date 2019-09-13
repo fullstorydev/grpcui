@@ -2,7 +2,6 @@ package standalone
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
-	"google.golang.org/grpc"
 
 	"github.com/fullstorydev/grpcui"
 	"github.com/fullstorydev/grpcui/internal/resources/standalone"
@@ -35,7 +33,7 @@ const csrfHeaderName = "x-grpcui-csrf-token"
 //
 // The returned handler expects to serve resources from "/". If it will instead
 // be handling a sub-path (e.g. handling "/rpc-ui/") then use http.StripPrefix.
-func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescriptor, files []*desc.FileDescriptor) http.Handler {
+func Handler(chMap map[string]grpcdynamic.Channel, target string, methods []*desc.MethodDescriptor, files []*desc.FileDescriptor) http.Handler {
 	webFormHTML := grpcui.WebFormContents("invoke", "metadata", methods)
 	webFormJS := grpcui.WebFormScript()
 	webFormCSS := grpcui.WebFormSampleCSS()
@@ -82,7 +80,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 		}
 	})
 
-	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandler(ch, methods))
+	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandler(chMap, methods))
 	mux.HandleFunc("/invoke/", func(w http.ResponseWriter, r *http.Request) {
 		// CSRF protection
 		c, _ := r.Cookie(csrfCookieName)
@@ -169,6 +167,7 @@ func computeETag(contents []byte) string {
 // and methods supported by the server, and constructs a handler to serve the UI.
 //
 // The handler has the same properties as the one returned by Handler.
+/*
 func HandlerViaReflection(ctx context.Context, cc *grpc.ClientConn, target string) (http.Handler, error) {
 	m, err := grpcui.AllMethodsViaReflection(ctx, cc)
 	if err != nil {
@@ -182,3 +181,4 @@ func HandlerViaReflection(ctx context.Context, cc *grpc.ClientConn, target strin
 
 	return Handler(cc, target, m, f), nil
 }
+*/
