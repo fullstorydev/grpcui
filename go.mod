@@ -1,4 +1,4 @@
-module github.com/fullstorydev/grpcui
+module github.com/pradeepmvn/grpcui
 
 require (
 	github.com/fullstorydev/grpcurl v1.3.2
