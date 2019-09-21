@@ -56,19 +56,19 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	}
 
 	mux.Handle("/grpc-web-form.js", &resource{
-		Data: webFormJS,
+		Data:        webFormJS,
 		ContentType: "text/javascript; charset=UTF-8",
 		ETag:        computeETag(webFormJS),
 	})
 	mux.Handle("/grpc-web-form.css", &resource{
-		Data: webFormCSS,
+		Data:        webFormCSS,
 		ContentType: "text/css; charset=utf-8",
 		ETag:        computeETag(webFormCSS),
 	})
 
 	indexContents := getIndexContents(target, webFormHTML)
 	indexResource := &resource{
-		Data: indexContents,
+		Data:        indexContents,
 		ContentType: "text/html; charset=utf-8",
 		ETag:        computeETag(indexContents),
 	}
