@@ -10,7 +10,7 @@ RUN addgroup -S grpcui && adduser -S grpcui -G grpcui
 
 WORKDIR /tmp/fullstorydev/grpcui
 # copy just the files/sources we need to build grpcui
-COPY VERSION *.go go.* /tmp/fullstorydev/grpcui/
+COPY *.go go.* /tmp/fullstorydev/grpcui/
 COPY cmd /tmp/fullstorydev/grpcui/cmd
 COPY internal /tmp/fullstorydev/grpcui/internal
 COPY standalone /tmp/fullstorydev/grpcui/standalone
