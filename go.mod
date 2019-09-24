@@ -1,4 +1,4 @@
-module github.com/pradeepmvn/grpcui
+module github.com/fullstorydev/grpcui
 
 require (
 	github.com/fullstorydev/grpcurl v1.3.2
@@ -7,3 +7,5 @@ require (
 	golang.org/x/net v0.0.0-20190522155817-f3200d17e092
 	google.golang.org/grpc v1.21.0
 )
+
+go 1.13
