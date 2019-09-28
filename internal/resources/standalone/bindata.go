@@ -325,13 +325,13 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"favicon.png":              &bintree{faviconPng, map[string]*bintree{}},
-	"grpc-bg.png":              &bintree{grpcBgPng, map[string]*bintree{}},
-	"grpc-logo.svg":            &bintree{grpcLogoSvg, map[string]*bintree{}},
-	"index-template.html":      &bintree{indexTemplateHtml, map[string]*bintree{}},
-	"jquery-3.3.1.min.js":      &bintree{jquery331MinJs, map[string]*bintree{}},
-	"jquery-ui-1.12.1.min.css": &bintree{jqueryUi1121MinCss, map[string]*bintree{}},
-	"jquery-ui-1.12.1.min.js":  &bintree{jqueryUi1121MinJs, map[string]*bintree{}},
+	"favicon.png":              {faviconPng, map[string]*bintree{}},
+	"grpc-bg.png":              {grpcBgPng, map[string]*bintree{}},
+	"grpc-logo.svg":            {grpcLogoSvg, map[string]*bintree{}},
+	"index-template.html":      {indexTemplateHtml, map[string]*bintree{}},
+	"jquery-3.3.1.min.js":      {jquery331MinJs, map[string]*bintree{}},
+	"jquery-ui-1.12.1.min.css": {jqueryUi1121MinCss, map[string]*bintree{}},
+	"jquery-ui-1.12.1.min.js":  {jqueryUi1121MinJs, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory

@@ -237,9 +237,9 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"webform-sample.css":    &bintree{webformSampleCss, map[string]*bintree{}},
-	"webform-template.html": &bintree{webformTemplateHtml, map[string]*bintree{}},
-	"webform.js":            &bintree{webformJs, map[string]*bintree{}},
+	"webform-sample.css":    {webformSampleCss, map[string]*bintree{}},
+	"webform-template.html": {webformTemplateHtml, map[string]*bintree{}},
+	"webform.js":            {webformJs, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory
