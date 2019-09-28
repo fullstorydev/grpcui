@@ -42,34 +42,33 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 
 	var mux http.ServeMux
 
-	for resourcePath, val := range standalone.GetResources() {
+	for _, assetName := range standalone.AssetNames() {
+		// the index file will be handled separately
+		if assetName == standalone.IndexTemplateName {
+			continue
+		}
+		resourcePath := "/" + assetName
 		mux.Handle(resourcePath, &resource{
-			Data:        val,
+			Data:        standalone.MustAsset(assetName),
 			ContentType: mime.TypeByExtension(path.Ext(resourcePath)),
 			ETag:        resourceETags[resourcePath],
 		})
 	}
 
 	mux.Handle("/grpc-web-form.js", &resource{
-		Data: func() []byte {
-			return webFormJS
-		},
+		Data:        webFormJS,
 		ContentType: "text/javascript; charset=UTF-8",
 		ETag:        computeETag(webFormJS),
 	})
 	mux.Handle("/grpc-web-form.css", &resource{
-		Data: func() []byte {
-			return webFormCSS
-		},
+		Data:        webFormCSS,
 		ContentType: "text/css; charset=utf-8",
 		ETag:        computeETag(webFormCSS),
 	})
 
 	indexContents := getIndexContents(target, webFormHTML)
 	indexResource := &resource{
-		Data: func() []byte {
-			return indexContents
-		},
+		Data:        indexContents,
 		ContentType: "text/html; charset=utf-8",
 		ETag:        computeETag(indexContents),
 	}
@@ -116,7 +115,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	})
 }
 
-var indexTemplate = template.Must(template.New("index.html").Parse(string(standalone.GetIndexTemplate())))
+var indexTemplate = template.Must(template.New("index.html").Parse(string(standalone.IndexTemplate())))
 
 func getIndexContents(target string, webForm []byte) []byte {
 	data := struct {
@@ -134,7 +133,7 @@ func getIndexContents(target string, webForm []byte) []byte {
 }
 
 type resource struct {
-	Data        func() []byte
+	Data        []byte
 	ContentType string
 	ETag        string
 }
@@ -148,14 +147,15 @@ func (res *resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", res.ContentType)
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	w.Header().Set("ETag", res.ETag)
-	w.Write(res.Data())
+	w.Write(res.Data)
 }
 
 var resourceETags = map[string]string{}
 
 func init() {
-	for k, v := range standalone.GetResources() {
-		resourceETags[k] = computeETag(v())
+	for _, assetName := range standalone.AssetNames() {
+		resourcePath := "/" + assetName
+		resourceETags[resourcePath] = computeETag(standalone.MustAsset(assetName))
 	}
 }
 

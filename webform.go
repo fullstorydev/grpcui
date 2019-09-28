@@ -11,7 +11,7 @@ import (
 	"github.com/fullstorydev/grpcui/internal/resources/webform"
 )
 
-var webFormTemplate = template.Must(template.New("grpc web form").Parse(string(webform.WebFormTemplate())))
+var webFormTemplate = template.Must(template.New("grpc web form").Parse(string(webform.Template())))
 
 // WebFormContents returns an HTML form that can be embedded into a web UI to
 // provide an interactive form for issuing RPCs.
@@ -97,7 +97,7 @@ func WebFormContents(invokeURI, metadataURI string, descs []*desc.MethodDescript
 // that first verifies the CSRF token header before delegating to a
 // RPCInvokeHandler.
 func WebFormScript() []byte {
-	return webform.WebFormScript()
+	return webform.Script()
 }
 
 // WebFormSampleCSS returns a CSS stylesheet for styling the HTML web form
@@ -105,5 +105,5 @@ func WebFormScript() []byte {
 // supply their own stylesheet, but this makes it simple to use default
 // styling.
 func WebFormSampleCSS() []byte {
-	return webform.WebFormSampleCSS()
+	return webform.SampleCSS()
 }

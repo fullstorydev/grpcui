@@ -1,5 +1,4 @@
 package webform
 
-//go:generate go-bindata -out=webform-sample-css.go -pkg=webform -func=WebFormSampleCSS webform-sample.css
-//go:generate go-bindata -out=webform-template.go -pkg=webform -func=WebFormTemplate webform-template.html
-//go:generate go-bindata -out=webform-js.go -pkg=webform -func=WebFormScript webform.js
+//go:generate go-bindata -o=bindata.go -pkg=webform webform-template.html webform-sample.css webform.js
+//go:generate gofmt -w -s bindata.go
