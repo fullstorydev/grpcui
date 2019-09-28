@@ -44,7 +44,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 
 	for _, assetName := range standalone.AssetNames() {
 		// the index file will be handled separately
-		if assetName == "index-template.html" {
+		if assetName == standalone.IndexTemplateName {
 			continue
 		}
 		resourcePath := "/" + assetName
@@ -115,7 +115,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	})
 }
 
-var indexTemplate = template.Must(template.New("index.html").Parse(string(standalone.MustAsset("index-template.html"))))
+var indexTemplate = template.Must(template.New("index.html").Parse(string(standalone.IndexTemplate())))
 
 func getIndexContents(target string, webForm []byte) []byte {
 	data := struct {
