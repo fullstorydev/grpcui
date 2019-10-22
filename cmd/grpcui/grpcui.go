@@ -110,6 +110,8 @@ var (
 		The port on which the web UI is exposed.`))
 	bind = flags.String("bind", "127.0.0.1", prettify(`
 		The address on which the web UI is exposed.`))
+	prefix = flags.String("prefix", "", prettify(`
+		The path prefix under which the web UI is exposed.`))
 	services multiString
 	methods  multiString
 )
@@ -391,7 +393,7 @@ func main() {
 	if debug.set {
 		handlerOpts = append(handlerOpts, standalone.WithDebug(debug.val))
 	}
-	handler := standalone.Handler(cc, target, methods, allFiles, handlerOpts...)
+	handler := http.StripPrefix(*prefix, standalone.Handler(cc, target, methods, allFiles, handlerOpts...))
 	if *maxTime > 0 {
 		timeout := time.Duration(*maxTime * float64(time.Second))
 		// enforce the timeout by wrapping the handler and inserting a
@@ -449,6 +451,7 @@ func main() {
 	if err != nil {
 		fail(err, "Failed to listen on port %d", *port)
 	}
+	fmt.Printf("gRPC Web UI available at http://%s:%d/\n", *bind, listener.Addr().(*net.TCPAddr).Port)
 
 	url := fmt.Sprintf("http://%s:%d/", *bind, listener.Addr().(*net.TCPAddr).Port)
 	fmt.Printf("gRPC Web UI available at %s\n", url)
