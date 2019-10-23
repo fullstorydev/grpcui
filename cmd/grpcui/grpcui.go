@@ -386,6 +386,11 @@ func main() {
 		refClient = nil
 	}
 
+	if (len(*prefix) > 0) {
+		if (!strings.HasPrefix(*prefix, "/")) {
+			fail(nil, "The path prefix '%s' has to start with a '/'", *prefix)
+		}
+	}
 	var handlerOpts []standalone.HandlerOption
 	if len(defHeaders) > 0 {
 		handlerOpts = append(handlerOpts, standalone.WithDefaultMetadata(defHeaders))
@@ -393,6 +398,7 @@ func main() {
 	if debug.set {
 		handlerOpts = append(handlerOpts, standalone.WithDebug(debug.val))
 	}
+
 	handler := http.StripPrefix(*prefix, standalone.Handler(cc, target, methods, allFiles, handlerOpts...))
 	if *maxTime > 0 {
 		timeout := time.Duration(*maxTime * float64(time.Second))
