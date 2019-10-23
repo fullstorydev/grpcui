@@ -386,8 +386,8 @@ func main() {
 		refClient = nil
 	}
 
-	if (len(*prefix) > 0) {
-		if (!strings.HasPrefix(*prefix, "/")) {
+	if len(*prefix) > 0 {
+		if !strings.HasPrefix(*prefix, "/") {
 			fail(nil, "The path prefix '%s' has to start with a '/'", *prefix)
 		}
 	}
