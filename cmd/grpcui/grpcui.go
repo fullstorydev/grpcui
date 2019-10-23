@@ -111,7 +111,7 @@ var (
 	bind = flags.String("bind", "127.0.0.1", prettify(`
 		The address on which the web UI is exposed.`))
 	prefix = flags.String("prefix", "", prettify(`
-		The path prefix under which the web UI is exposed.`))
+		The path prefix under which the web UI is exposed, e.g. '/grpcui'.`))
 	services multiString
 	methods  multiString
 )
@@ -451,7 +451,7 @@ func main() {
 	if err != nil {
 		fail(err, "Failed to listen on port %d", *port)
 	}
-	fmt.Printf("gRPC Web UI available at http://%s:%d/\n", *bind, listener.Addr().(*net.TCPAddr).Port)
+	fmt.Printf("gRPC Web UI available at http://%s:%d%s/\n", *bind, listener.Addr().(*net.TCPAddr).Port, *prefix)
 
 	url := fmt.Sprintf("http://%s:%d/", *bind, listener.Addr().(*net.TCPAddr).Port)
 	fmt.Printf("gRPC Web UI available at %s\n", url)
