@@ -20,6 +20,11 @@ updatedeps:
 install:
 	go install -ldflags '-X "main.version=dev build $(dev_build_version)"' ./...
 
+.PHONY: recreate-bindata
+recreate-bindata:
+	cd internal/resources/webform/; go run github.com/go-bindata/go-bindata/go-bindata -o bindata.go -pkg=webform `find . -name '*.html' -or -name '*.css' -or -name '*.png' -or -name '*.js' -or -name '*.svg'`; gofmt -w -s bindata.go
+	cd internal/resources/standalone/; go run github.com/go-bindata/go-bindata/go-bindata -o bindata.go -pkg=standalone `find . -name '*.html' -or -name '*.css' -or -name '*.png' -or -name '*.js' -or -name '*.svg'`; gofmt -w -s bindata.go
+	
 .PHONY: release
 release:
 	@GO111MODULE=off go get github.com/goreleaser/goreleaser
@@ -28,7 +33,7 @@ release:
 .PHONY: docker
 docker:
 	@echo $(dev_build_version) > VERSION
-	docker build -t fullstorydev/grpcui:$(dev_build_version) .
+	docker build -t fullstorydev/grpcui:$(dev_build_version) . --ca
 	@rm VERSION
 
 .PHONY: checkgofmt
