@@ -98,7 +98,7 @@ func jquery331MinJs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "jquery-3.3.1.min.js", size: 86927, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "jquery-3.3.1.min.js", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -118,7 +118,7 @@ func grpcLogoSvg() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "grpc-logo.svg", size: 7398, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "grpc-logo.svg", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -138,7 +138,7 @@ func indexTemplateHtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "index-template.html", size: 2674, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "index-template.html", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -158,7 +158,7 @@ func grpcBgPng() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "grpc-bg.png", size: 379492, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "grpc-bg.png", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -178,7 +178,7 @@ func jqueryUi1121MinCss() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "jquery-ui-1.12.1.min.css", size: 30747, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "jquery-ui-1.12.1.min.css", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -198,7 +198,7 @@ func faviconPng() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "favicon.png", size: 1616, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "favicon.png", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -218,7 +218,7 @@ func jqueryUi1121MinJs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "jquery-ui-1.12.1.min.js", size: 253668, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "jquery-ui-1.12.1.min.js", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

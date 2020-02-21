@@ -31,6 +31,11 @@ docker:
 	docker build -t fullstorydev/grpcui:$(dev_build_version) .
 	@rm VERSION
 
+.PHONY: generate
+generate:
+	@go install github.com/go-bindata/go-bindata/go-bindata
+	go generate ./...
+
 .PHONY: checkgofmt
 checkgofmt:
 	gofmt -s -l .

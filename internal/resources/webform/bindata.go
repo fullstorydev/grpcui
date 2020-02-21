@@ -94,7 +94,7 @@ func webformTemplateHtml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "webform-template.html", size: 2898, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "webform-template.html", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -114,7 +114,7 @@ func webformSampleCss() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "webform-sample.css", size: 8560, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "webform-sample.css", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -134,7 +134,7 @@ func webformJs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "webform.js", size: 86954, mode: os.FileMode(420), modTime: time.Unix(1568993709, 0)}
+	info := bindataFileInfo{name: "webform.js", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
