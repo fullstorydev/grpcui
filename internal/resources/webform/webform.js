@@ -1093,7 +1093,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     }
 
     function isInt(num) {
-        return (num ^ 0) === num;
+        return (num % 1) === 0;
     }
 
     function addStringIntToForm(container, parent, value, fld, min, max) {
