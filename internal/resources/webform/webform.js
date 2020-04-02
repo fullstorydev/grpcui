@@ -1093,7 +1093,11 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     }
 
     function isInt(num) {
-        return (num ^ 0) === num;
+        // In JS, % operator returns fractional remainder when first argument
+        // is not a whole number. So this detects _all_ integers (even those
+        // way outside the range of 32 or even 64 bit int). We do a range
+        // check elsewhere (e.g. to verify if it's in range of 32-bits).
+        return (num % 1) === 0;
     }
 
     function addStringIntToForm(container, parent, value, fld, min, max) {
