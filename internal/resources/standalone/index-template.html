@@ -62,7 +62,7 @@
       margin: 0;
       padding: 32px 24px;
       color: white;
-      background: #4ca0ac url("grpc-bg.png") no-repeat center/cover;
+      background: #4ca0ac url("grpc-bg.svg") no-repeat center/cover;
     }
 
     .heading h1 {
@@ -87,9 +87,10 @@
     }
 
     img.grpc-logo {
-      width: 80px;
+      width: 100px;
       margin-bottom: 6px;
-      margin-right: 10px;
+      margin-right: 8px;
+      margin-top: 3px;
     }
 
     #grpc-form {
@@ -111,7 +112,7 @@
   <body>
     <div class="full-width-heading">
       <div class="heading">
-        <h1><img class="grpc-logo" src="grpc-logo.svg" alt="GRPC"/> Web UI</h1>
+        <h1><img class="grpc-logo" src="grpc-logo.png" alt="GRPC"/> Web UI</h1>
         {{ if not (eq .Target "") }}
           <h2>Connected to <span class="target">{{ .Target }}</span></h2>
         {{ end }}
