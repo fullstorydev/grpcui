@@ -1,5 +1,5 @@
 <div id="grpc-form">
-  <div class="grpc-select" id="grpc-service-select"><span class="grpc-form-label">Service name:</span>
+  <div class="grpc-desc" id="grpc-service-select"><span class="grpc-form-label">Service name:</span>
     <select name="grpc-service" id="grpc-service">
       {{ range .Services }}
       <option value="{{.}}">{{.}}</option>
@@ -7,7 +7,7 @@
     </select>
   </div>
 
-  <div class="grpc-select" id="grpc-method-select"><span class="grpc-form-label">Method name:</span>
+  <div class="grpc-desc" id="grpc-method-select"><span class="grpc-form-label">Method name:</span>
     <select name="grpc-method" id="grpc-method">
       <!-- populated by JavaScript when grpc-service is selected -->
     </select>
@@ -30,6 +30,11 @@
 
       <h3>Request Data</h3>
       <div id="grpc-request-form"></div>
+
+      <h3>Request Timeout</h3>
+      <div id="grpc-request-timeout">
+        <input type="number" min="0"/> Seconds
+      </div>
 
       <button class="grpc-invoke" disabled>Invoke</button>
     </div>

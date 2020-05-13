@@ -114,11 +114,18 @@ func RPCMetadataHandler(methods []*desc.MethodDescriptor, files []*desc.FileDesc
 		} else {
 			for _, md := range methods {
 				if md.GetFullyQualifiedName() == method {
-					results = gatherMetadata(md)
+					r, err := gatherMetadataForMethod(md)
+					if err != nil {
+						http.Error(w, "Failed to gather metadata for RPC Method", http.StatusUnprocessableEntity)
+						return
+					}
+
+					results = r
 					break
 				}
 			}
 		}
+
 		if results == nil {
 			http.Error(w, "Unknown RPC Method", http.StatusUnprocessableEntity)
 			return
@@ -133,15 +140,20 @@ func RPCMetadataHandler(methods []*desc.MethodDescriptor, files []*desc.FileDesc
 	})
 }
 
+// TODO(jaime, jhump): schema is playing double duty here. It's both a vehicle for all
+//  message and enum metadata. As well as RPC method scoped metadata for a single method.
+//  What if we wanted to load metadata for all methods? We should consider splitting this
+//  into 2 separate types for metadata to respond with accordingly.
 type schema struct {
-	RequestType   string                `json:"requestType"`
-	RequestStream bool                  `json:"requestStream"`
-	MessageTypes  map[string][]fieldDef `json:"messageTypes"`
-	EnumTypes     map[string][]string   `json:"enumTypes"`
+	RequestType   string                  `json:"requestType"`
+	RequestStream bool                    `json:"requestStream"`
+	MessageTypes  map[string][]fieldDef   `json:"messageTypes"`
+	EnumTypes     map[string][]enumValDef `json:"enumTypes"`
 }
 
 type fieldDef struct {
 	Name        string      `json:"name"`
+	ProtoName   string      `json:"protoName"`
 	Type        fieldType   `json:"type"`
 	OneOfFields []fieldDef  `json:"oneOfFields"`
 	IsMessage   bool        `json:"isMessage"`
@@ -150,6 +162,11 @@ type fieldDef struct {
 	IsMap       bool        `json:"isMap"`
 	IsRequired  bool        `json:"isRequired"`
 	DefaultVal  interface{} `json:"defaultVal"`
+}
+
+type enumValDef struct {
+	Num  int32  `json:"num"`
+	Name string `json:"name"`
 }
 
 type fieldType string
@@ -194,7 +211,7 @@ var typeMap = map[descriptor.FieldDescriptorProto_Type]fieldType{
 func gatherAllMessageMetadata(files []*desc.FileDescriptor) *schema {
 	result := &schema{
 		MessageTypes: map[string][]fieldDef{},
-		EnumTypes:    map[string][]string{},
+		EnumTypes:    map[string][]enumValDef{},
 	}
 	for _, fd := range files {
 		gatherAllMessages(fd.GetMessageTypes(), result)
@@ -209,18 +226,18 @@ func gatherAllMessages(msgs []*desc.MessageDescriptor, result *schema) {
 	}
 }
 
-func gatherMetadata(md *desc.MethodDescriptor) *schema {
+func gatherMetadataForMethod(md *desc.MethodDescriptor) (*schema, error) {
 	msg := md.GetInputType()
 	result := &schema{
 		RequestType:   msg.GetFullyQualifiedName(),
 		RequestStream: md.IsClientStreaming(),
 		MessageTypes:  map[string][]fieldDef{},
-		EnumTypes:     map[string][]string{},
+		EnumTypes:     map[string][]enumValDef{},
 	}
 
 	result.visitMessage(msg)
 
-	return result
+	return result, nil
 }
 
 func (s *schema) visitMessage(md *desc.MessageDescriptor) {
@@ -252,7 +269,8 @@ func (s *schema) visitMessage(md *desc.MessageDescriptor) {
 
 func (s *schema) processField(fd *desc.FieldDescriptor) fieldDef {
 	def := fieldDef{
-		Name:       fd.GetName(),
+		Name:       fd.GetJSONName(),
+		ProtoName:  fd.GetName(),
 		IsEnum:     fd.GetEnumType() != nil,
 		IsMessage:  fd.GetMessageType() != nil,
 		IsArray:    fd.IsRepeated() && !fd.IsMap(),
@@ -322,9 +340,12 @@ func (s *schema) visitEnum(ed *desc.EnumDescriptor) {
 		return
 	}
 
-	enumVals := make([]string, len(ed.GetValues()))
+	enumVals := make([]enumValDef, len(ed.GetValues()))
 	for i, evd := range ed.GetValues() {
-		enumVals[i] = evd.GetName()
+		enumVals[i] = enumValDef{
+			Num:  evd.GetNumber(),
+			Name: evd.GetName(),
+		}
 	}
 
 	s.EnumTypes[ed.GetFullyQualifiedName()] = enumVals
@@ -380,7 +401,8 @@ func invokeRPC(ctx context.Context, methodName string, ch grpcdynamic.Channel, d
 
 	if input.TimeoutSeconds > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, time.Duration(input.TimeoutSeconds)*time.Second)
+		timeout := time.Duration(input.TimeoutSeconds * float32(time.Second))
+		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
 
@@ -401,7 +423,7 @@ type rpcMetadata struct {
 }
 
 type rpcInput struct {
-	TimeoutSeconds int               `json:"timeout_seconds"`
+	TimeoutSeconds float32           `json:"timeout_seconds"`
 	Metadata       []rpcMetadata     `json:"metadata"`
 	Data           []json.RawMessage `json:"data"`
 }

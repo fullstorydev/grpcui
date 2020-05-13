@@ -3,19 +3,19 @@
     font-size: 1.0em;
 }
 
-.grpc-select {
+.grpc-desc {
     margin-bottom: 8px;
     margin-left: 16px;
 }
 
-.grpc-select span.grpc-form-label {
+.grpc-desc span.grpc-form-label {
     font-size: 125%;
     width: 130px;
     float: left;
     line-height: 30px;
 }
 
-.grpc-select select {
+.grpc-desc select {
     height: 30px;
 }
 
@@ -105,6 +105,16 @@
 
 textarea#grpc-request-raw-text {
     height: 200px;
+}
+
+#grpc-request-timeout {
+    margin-bottom: 20px;
+}
+
+#grpc-request-timeout input {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
+    border: 1px solid #888;
 }
 
 table#grpc-request-metadata-form {
