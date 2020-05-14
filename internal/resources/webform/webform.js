@@ -123,7 +123,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             rebuildRequestForm(requestObj, true);
         } catch (e) {
             var msg = e.message;
-            if (isUndefined(msg)) {
+            if (isUnset(msg)) {
                 msg = e.toString();
             }
             alert(msg);
@@ -241,8 +241,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     var undefined = [][1];
 
-    function isUndefined(v) {
-        return typeof v === 'undefined';
+    function isUnset(v) {
+        return v === null || typeof v === 'undefined';
     }
 
     /*
@@ -307,6 +307,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             // treat ListValue as if it were 'repeated Value'
             var elemType = {
                 name: fld.name,
+                protoName: fld.protoName,
                 type: "google.protobuf.Value",
                 oneOfFields: [],
                 isMessage: true,
@@ -314,7 +315,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 isArray: true,
                 isMap: false,
                 isRequired: false,
-                defaultVal: null,
+                defaultVal: null
             };
             return addArrayToForm(schema, container, parent, pathLen, value, allowMissing, fld.type, elemType);
         }
@@ -387,7 +388,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var mapEntryFields = schema.messageTypes[fld.type];
         var mapType = "map<" + mapEntryFields[0].type + "," + mapEntryFields[1].type + ">";
 
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = {};
         } else if (typeof value !== 'object' || value instanceof Array) {
             throw typeError(mapType, value, "object");
@@ -445,14 +446,14 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
                 var entryVal = this.asArray.children[index]['value'].value;
                 this.parent.onAdd(this, [newKey], entryVal);
-                if (!isUndefined(key)) {
+                if (!isUnset(key)) {
                     this.parent.onDelete(this, [key]);
                 }
                 this.childKeys[index] = newKey;
                 return;
             }
 
-            if (isUndefined(key)) {
+            if (isUnset(key)) {
                 // not yet in model, skip
                 return;
             }
@@ -468,7 +469,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             // translate child index to map key
             var index = revPath[revPath.length-1];
             var key = this.childKeys[index];
-            if (isUndefined(key)) {
+            if (isUnset(key)) {
                 // never added to model, so nothing to delete
                 return;
             }
@@ -495,7 +496,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // Arrays result in a table of inputs, where each row is an element in the
     // array value. The table includes buttons for adding and removing rows.
     function addArrayToForm(schema, container, parent, pathLen, value, allowMissing, typeName, fld) {
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = [];
         } else if (!(value instanceof Array)) {
             throw typeError(typeName, value, "array");
@@ -508,6 +509,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
         var elementFld = {
             name: fld.name,
+            protoName: fld.protoName,
             type: fld.type,
             oneOfFields: [],
             isMessage: fld.isMessage,
@@ -515,7 +517,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             isArray: false,
             isMap: false,
             isMapEntry: fld.isMap,
-            isRequired: false,
+            isRequired: false
         };
 
         for (var i = 0; i < value.length; i++) {
@@ -631,23 +633,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
         var fields = schema.messageTypes[fld.type];
 
-        // see if the incoming value has bad field names
-        var allFields = $.extend({}, value);
-        for (var i = 0; i < fields.length; i++) {
-            var currField = fields[i];
-            if (isOneOf(currField)) {
-                for (var j = 0; j < currField.oneOfFields.length; j++) {
-                    delete allFields[currField.oneOfFields[j].name];
-                }
-            } else {
-                delete allFields[currField.name];
-            }
-        }
-        for (var p in allFields) {
-            if (allFields.hasOwnProperty(p)) {
-                throw new Error("value for type " + fld.type + " has unrecognized field: " + p)
-            }
-        }
+        value = canonicalizeFields(value, fld.type, fields);
 
         // create table of child inputs, one for each field
 
@@ -655,8 +641,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var children = {};
         var input = new Input(parent, children, value);
 
-        for (i = 0; i < fields.length; i++) {
-            currField = fields[i];
+        for (var i = 0; i < fields.length; i++) {
+            var currField = fields[i];
 
             var row = $('<tr>');
             row.addClass('message_field');
@@ -680,7 +666,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 cell = $('<td>');
                 cell.attr('colspan', 2);
                 row.append(cell);
-                if (isUndefined(fldVal)) {
+                if (isUnset(fldVal)) {
                     if (currField.isMap) {
                         fldVal = {};
                     } else {
@@ -702,7 +688,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     } else {
                         checkbox = $('<input>');
                         checkbox.attr('type', 'checkbox');
-                        if (!isUndefined(fldVal)) {
+                        if (!isUnset(fldVal)) {
                             checkbox.prop('checked', true);
                         }
                         cell.append(checkbox);
@@ -711,7 +697,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 }
 
                 cell = $('<td>');
-                if (isUndefined(fldVal) && required) {
+                if (isUnset(fldVal) && required) {
                     if (allowMissing) {
                         fldVal = getInitialValue(schema, currField);
                         value[currField.name] = fldVal;
@@ -728,7 +714,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 children[currField.name] = child;
                 row.append(cell);
 
-                if (!isUndefined(checkbox)) {
+                if (!isUnset(checkbox)) {
                     (function(fld, cell) {
                         checkbox.change(function() {
                             var checkbox = $(this);
@@ -800,7 +786,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         radioSeq++;
 
         var clearPrevious = function() {
-            if (!isUndefined(selected.field)) {
+            if (!isUnset(selected.field)) {
                 // clear old selection
                 var otherCell;
                 var children = parent.children;
@@ -839,7 +825,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             var isPresent = false;
             if (!foundValue) {
                 fldVal = value[fld.name];
-                if (!isUndefined(fldVal)) {
+                if (!isUnset(fldVal)) {
                     isPresent = true;
                     foundValue = true;
                 }
@@ -928,6 +914,65 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         return children;
     }
 
+    function canonicalizeFields(value, type, fields) {
+        // newValue will be a copy of value, but with all fields populated using their
+        // original (proto) name, not their JSON name
+        var newValue = {};
+
+        // process fields identified by JSON name
+        for (var i = 0; i < fields.length; i++) {
+            var currField = fields[i];
+            if (isOneOf(currField)) {
+                for (var j = 0; j < currField.oneOfFields.length; j++) {
+                    var field = currField.oneOfFields[j];
+                    if (value.hasOwnProperty(field.name)) {
+                        newValue[field.name] = value[field.name];
+                        delete value[field.name];
+                    }
+                }
+            } else {
+                if (value.hasOwnProperty(currField.name)) {
+                    newValue[currField.name] = value[currField.name];
+                    delete value[currField.name];
+                }
+            }
+        }
+        // now process any remaining that are identified by original proto name
+        for (i = 0; i < fields.length; i++) {
+            currField = fields[i];
+            if (isOneOf(currField)) {
+                for (j = 0; j < currField.oneOfFields.length; j++) {
+                    field = currField.oneOfFields[j];
+                    if (value.hasOwnProperty(field.protoName)) {
+                        if (newValue.hasOwnProperty(field.name)) {
+                            throw new Error("value for type " + type + " has redundant values: " + field.name + " and " + field.protoName);
+                        }
+                        newValue[field.name] = value[field.protoName];
+                        delete value[field.protoName];
+                    }
+                }
+            } else {
+                if (value.hasOwnProperty(currField.protoName)) {
+                    if (newValue.hasOwnProperty(currField.name)) {
+                        throw new Error("value for type " + type + " has redundant values: " + currField.name + " and " + currField.protoName);
+                    }
+                    newValue[currField.name] = value[currField.protoName];
+                    delete value[currField.protoName];
+                }
+            }
+        }
+
+        // if there are any remaining fields, they are not valid field names
+        for (var p in value) {
+            if (value.hasOwnProperty(p)) {
+                throw new Error("value for type " + type + " has unrecognized field: " + p)
+            }
+        }
+
+        // copy canonicalized fields back into value
+        return $.extend(value, newValue)
+    }
+
     function isOneOf(fld) {
         return fld.type === "oneof" && !fld.isMessage;
     }
@@ -978,7 +1023,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         }
 
         var labelName = $('<strong>');
-        labelName.text(fld.name);
+        labelName.text(fld.protoName);
         cell.prepend($('<br>'));
         cell.prepend(labelName);
 
@@ -1001,26 +1046,28 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     }
 
     function addEnumToForm(schema, container, parent, value, fld) {
+        var enumVals = schema.enumTypes[fld.type];
+
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
-        } else if (typeof value !== 'string') {
-            throw typeError(fld.type, value, "string");
+        } else if (typeof value !== 'string' && typeof value !== 'number') {
+            throw typeError(fld.type, value, "string or number");
         }
 
-        var enumVals = schema.enumTypes[fld.type];
         var sel = $('<select>');
         if (disabled) {
             sel.prop('disabled', true);
         }
 
+        var isNumber = typeof value === 'number';
         var found = false;
         for (var i = 0; i < enumVals.length; i++) {
             var opt = $('<option>');
-            opt.attr('value', enumVals[i]);
-            opt.text(enumVals[i]);
-            if (enumVals[i] === value) {
+            opt.attr('value', enumVals[i].name);
+            opt.text(enumVals[i].name);
+            if (isNumber && enumVals[i].num === value || !isNumber && enumVals[i].name === value) {
                 found = true;
                 opt.prop('selected', true);
             }
@@ -1045,7 +1092,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addIntToForm(container, parent, value, fld, min, max) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         } else {
@@ -1102,12 +1149,16 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addStringIntToForm(container, parent, value, fld, min, max) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         } else {
             if (typeof value !== 'string') {
-                throw typeError(fld.type, value, "string");
+                if (typeof value === 'number') {
+                    value = value.toString();
+                } else {
+                    throw typeError(fld.type, value, "string");
+                }
             }
             // parse string/make sure it's a number
             if (!isStringInt(value)) {
@@ -1205,7 +1256,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addDoubleToForm(container, parent, value, fld) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         } else if (typeof value !== 'number') {
@@ -1266,7 +1317,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addBoolToForm(container, parent, value, fld) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         }
@@ -1317,7 +1368,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addStringToForm(container, parent, value, fld, base64) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         }
@@ -1565,7 +1616,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             throw typeError(fld.type, value, "object");
         }
         var typeUrl = value["@type"];
-        if (isUndefined(typeUrl) && allowMissing) {
+        if (isUnset(typeUrl) && allowMissing) {
             typeUrl = "type.googleapis.com/google.protobuf.StringValue";
             value["@type"] = typeUrl;
         }
@@ -1623,7 +1674,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
             if (wellKnown) {
                 input.anyValue = value["value"];
-                if (isUndefined(input.anyValue)) {
+                if (isUnset(input.anyValue)) {
                     input.anyValue = getInitialMessageValue(typeName);
                     value["value"] = input.anyValue;
                 }
@@ -1640,7 +1691,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 isEnum: false,
                 isArray: false,
                 isMap: false,
-                isRequired: false,
+                isRequired: false
             };
             if (knownType) {
                 input.child = addElementToForm(schema, cell, input, pathLen, input.anyValue, allowMissing, valFld);
@@ -1713,7 +1764,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var div = $('<div>');
         container.append(div);
 
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             div.append('<div class="null">unset</div>');
             return new Input(parent, [], undefined);
         }
@@ -1809,13 +1860,13 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         if (fld.isMessage) {
             return getInitialMessageValue(fld.type)
         }
-        if (!isUndefined(fld.defaultVal)) {
+        if (!isUnset(fld.defaultVal)) {
             return fld.defaultVal;
         }
 
         if (fld.isEnum) {
             var enumVals = schema.enumTypes[fld.type];
-            return enumVals[0];
+            return enumVals[0].name;
         }
 
         switch (fld.type) {
@@ -1999,6 +2050,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var service = $("#grpc-service").val();
         var method = $("#grpc-method").val();
 
+        var timeout = Number($("#grpc-request-timeout input").val());
+        timeout = Number.isNaN(timeout) ? undefined : timeout;
+
         var data = requestForm.data("request");
         if (!(data instanceof Array)) {
             data = [data];
@@ -2025,7 +2079,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 type: "POST",
                 url: invokeURI + "/" + service + "." + method,
                 contentType: "application/json",
-                data: JSON.stringify({metadata: metadata, data: data}),
+                data: JSON.stringify({timeout_seconds: timeout, metadata: metadata, data: data}),
             })
             .done(function(data) {
                 if (data.headers instanceof Array && data.headers.length > 0) {
@@ -2204,7 +2258,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // Returns true if the currently configured validation function is for
     // the given element
     function isValidating(element) {
-        return !isUndefined(validation) && validation.element === element;
+        return !isUnset(validation) && validation.element === element;
     }
 
     // Sets the current validation to the given element function. The given
@@ -2241,11 +2295,14 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // returns, the element will have an "invalid-input" CSS class if and only
     // if it failed validation.
     function checkValidation() {
-        if (!isUndefined(validation)) {
+        if (!isUnset(validation)) {
             var err = '';
             try {
                 validation.func(validation.element);
             } catch (ex) {
+                if (debug) {
+                    console.trace(ex);
+                }
                 if (ex.message) {
                     err = ex.message
                 } else {
@@ -2256,9 +2313,6 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             var el = $(validation.element);
             if (err) {
                 alert(err);
-                if (debug) {
-                    console.trace(err);
-                }
                 el.addClass('invalid-input');
                 return false;
             } else {
@@ -2299,6 +2353,24 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             validation = undefined;
         }
     }
+
+    $("#grpc-request-timeout input").focus(function() {
+        var inp = this;
+        setValidation(inp, function() {
+            var num = + $(inp).val();
+            if (num === undefined) {
+                return;
+            }
+            if (Number.isNaN(num)) {
+                $(inp).val(undefined);
+                throw new Error("numeric value required");
+            }
+            if (num <= 0) {
+                $(inp).val(undefined);
+                throw new Error("timeout value must be greater than zero");
+            }
+        });
+    })
 
     $("#grpc-request-response").tabs(
         {
