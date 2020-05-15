@@ -22,6 +22,8 @@ import (
 	"github.com/fullstorydev/grpcurl"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/grpcreflect"
+	"github.com/pkg/browser"
+	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -90,6 +92,11 @@ var (
 		requests and responses.`))
 	serverName = flags.String("servername", "", prettify(`
 		Override servername when validating TLS certificate.`))
+	openBrowser = flags.Bool("open-browser", false, prettify(`
+		When true, grpcui will try to open a browser pointed at the UI's URL.
+		This defaults to true when grpcui is used in an interactive mode; e.g.
+		when the tool detects that stdin is a terminal/tty. Otherwise, this
+		defaults to false.`))
 
 	port = flags.Int("port", 0, prettify(`
 		The port on which the web UI is exposed.`))
@@ -156,6 +163,10 @@ func (s *multiString) Set(value string) error {
 }
 
 func main() {
+	if terminal.IsTerminal(int(os.Stdin.Fd())) {
+		*openBrowser = true
+	}
+
 	flags.Usage = usage
 	flags.Parse(os.Args[1:])
 
@@ -390,8 +401,15 @@ func main() {
 	if err != nil {
 		fail(err, "Failed to listen on port %d", *port)
 	}
-	fmt.Printf("gRPC Web UI available at http://%s:%d/\n", *bind, listener.Addr().(*net.TCPAddr).Port)
 
+	url := fmt.Sprintf("http://%s:%d/", *bind, listener.Addr().(*net.TCPAddr).Port)
+	fmt.Printf("gRPC Web UI available at %s\n", url)
+
+	if *openBrowser {
+		if err := browser.OpenURL(url); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to open browser: %v\n", err)
+		}
+	}
 	if err := http.Serve(listener, handler); err != nil {
 		fail(err, "Failed to serve web UI")
 	}
