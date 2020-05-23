@@ -489,3 +489,58 @@ table#grpc-request-metadata-form {
     font-family: "Courier New", Courier, monospace;
     color: #c00;
 }
+
+#grpc-history-list button.delete {
+    background-color: #f66;
+    color: white;
+    border: 1px solid #c44;
+}
+
+#grpc-history-list button.load {
+    background-color: #0c0;
+    color: white;
+    border: 1px solid #090;
+}
+
+#grpc-history-list button.load:disabled {
+    background-color: #bbbbbb;
+    color: white;
+    border: 1px solid #c44;
+}
+#grpc-history-list button {
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: "Courier New", Courier, monospace;
+}
+
+#grpc-history-list .historyItemHeader {
+    min-width: 60%;
+    display: inline-flex;
+    align-items: center;
+}
+
+#grpc-history-list .historyItemHeader span {
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+}
+
+#grpc-history-list .historyItemHeader .historyItemTime {
+    padding-left: 24px;
+    padding-right:24px;
+}
+
+#grpc-history-list .historyItemHeader .historyItemMethod {
+    padding-right:24px;
+    font-weight: bold;
+}
+
+#grpc-history-list .historyItemHeader .historyItemLoad {
+    margin-left: auto;
+}
+
+#grpc-history-list .historyItemHeader .historyItemLoad .invalidhistory {
+    padding-left: 24px;
+}
+

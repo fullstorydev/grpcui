@@ -13,10 +13,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         $("#grpc-method option:first-of-type").select();
         // implicit selection of first element does not
         // generate a change event, so we have to do this
-        formMethodSelected();
+        return formMethodSelected();
     }
 
-    function formMethodSelected() {
+    function formMethodSelected(callback) {
         var service = $("#grpc-service").val();
         var method = $("#grpc-method").val();
 
@@ -24,9 +24,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         // disable the invoke button until we get the schema
         resetInvoke(false);
 
-        $.ajax(metadataURI + "?method=" + service + "." + method)
+        return $.ajax(metadataURI + "?method=" + service + "." + method)
             .done(function(data) {
                 buildRequestForm(data);
+                callback?.();
             })
             .fail(function(data, status) {
                 alert("Unexpected error: " + status);
@@ -2021,8 +2022,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     var MAX_UINT32 = 4294967295;
 
     // Adds a row to the request metadata table.
-    function addMetadataRow() {
-        tr = $('<tr>');
+    function addMetadataRow(name = '', value = '') {
+        tr = $('<tr class="metadataRow">');
         $("#grpc-request-metadata-form tr:last-of-type").before(tr);
 
         tr.append('<td><button class="delete">X</button></td>');
@@ -2030,7 +2031,21 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             $(this).closest('tr').remove();
         });
 
-        tr.append('<td><input class="name" size="24"></td><td><input class="value" size="40"></td>');
+        const td = $('<td>');
+        const nameInput = $('<input class="name" size="24" />');
+        const valueInput = $('<input class="value" size="40" />');
+        const nameTd = $('<td />').append(nameInput);
+        const valueTd = $('<td />').append(valueInput);
+
+        if (name) {
+            nameInput.val(name);
+        }
+
+        if (value) {
+            valueInput.val(value);
+        }
+
+        tr.append(nameTd, valueTd);
     }
 
     // Invokes an RPC by sending the user-defined request data and metadata to
@@ -2054,8 +2069,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var timeout = Number(timeoutStr);
         timeout = (timeoutStr === "" || Number.isNaN(timeout)) ? undefined : timeout;
 
-        var data = requestForm.data("request");
-        if (!(data instanceof Array)) {
+        const originalData = requestForm.data("request");
+        let data = originalData;
+        if (!(originalData instanceof Array)) {
             data = [data];
         }
         var metadata = [];
@@ -2082,28 +2098,28 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 contentType: "application/json",
                 data: JSON.stringify({timeout_seconds: timeout, metadata: metadata, data: data}),
             })
-            .done(function(data) {
-                if (data.headers instanceof Array && data.headers.length > 0) {
+            .done(function(responseData) {
+                if (responseData.headers instanceof Array && responseData.headers.length > 0) {
                     var hdrs = $("#grpc-response-headers");
                     hdrs.empty();
-                    for (var i = 0; i < data.headers.length; i++) {
+                    for (var i = 0; i < responseData.headers.length; i++) {
                         var hdrRow = $('<tr>');
                         hdrs.append(hdrRow);
                         var hdrCell = $('<td>');
-                        hdrCell.text(data.headers[i].name);
+                        hdrCell.text(responseData.headers[i].name);
                         hdrRow.append(hdrCell);
                         hdrCell = $('<td>');
-                        hdrCell.text(data.headers[i].value);
+                        hdrCell.text(responseData.headers[i].value);
                         hdrRow.append(hdrCell);
                     }
                 } else {
                     $("#grpc-response-headers").html('<tr><td class="none">None</td></tr>');
                 }
 
-                if (data.requests && data.requests.total !== data.requests.sent) {
+                if (responseData.requests && responseData.requests.total !== responseData.requests.sent) {
                     var stats = $("#grpc-response-req-stats");
                     stats.show();
-                    stats.text('Only ' + data.requests.sent + ' of ' + data.requests.total + ' requests accepted');
+                    stats.text('Only ' + responseData.requests.sent + ' of ' + responseData.requests.total + ' requests accepted');
                 } else {
                     $("#grpc-response-req-stats").hide();
                 }
@@ -2113,11 +2129,11 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 // to render maps a little differently and also to omit unset one-of fields
                 // (or even better, be able to render unset fields differently).
                 // But we need response schema info to do that...
-                if (data.responses instanceof Array && data.responses.length > 0) {
-                    var div = $("#grpc-response-data");
+                if (responseData.responses instanceof Array && responseData.responses.length > 0) {
+                    var div = $("#grpc-response-responseData");
                     div.show();
                     div.empty();
-                    var resp = data.responses;
+                    var resp = responseData.responses;
                     for (i = 0; i < resp.length; i++) {
                         var container = $('<div>');
                         container.addClass("output_container one-of-2 one-of-3 one-of-4 one-of-5 root");
@@ -2131,17 +2147,28 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     }
                     // TODO(jh): button or some other mechanism to view result as raw JSON.
                 } else {
-                    $("#grpc-response-data").hide();
+                    $("#grpc-response-responseData").hide();
                 }
 
-                if (data.error) {
+                if (responseData.error) {
+                    addHistory({
+                        request: {
+                            timeout: timeoutStr,
+                            metadata: metadata,
+                            data: originalData
+                        },
+                        service: service,
+                        method: method,
+                        time: new Date().toISOString(),
+                        result: responseData.error.name ?? 'FAILED'
+                    });
                     $("#grpc-response-error").show();
-                    $("#grpc-response-error-desc").text(data.error.name);
-                    $("#grpc-response-error-num").text('(' + data.error.code + ')');
-                    if (data.error.message !== data.error.name) {
+                    $("#grpc-response-error-desc").text(responseData.error.name);
+                    $("#grpc-response-error-num").text('(' + responseData.error.code + ')');
+                    if (responseData.error.message !== responseData.error.name) {
                         var msg = $("#grpc-response-error-msg");
                         msg.show();
-                        msg.text(data.error.message);
+                        msg.text(responseData.error.message);
                     } else {
                         $("#grpc-response-error-msg").hide();
                     }
@@ -2149,28 +2176,39 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     // show response messages above
                     $("#grpc-response-error-details").hide();
                 } else {
+                    addHistory({
+                        request: {
+                            timeout: timeoutStr,
+                            metadata: metadata,
+                            data: originalData
+                        },
+                        service: service,
+                        method: method,
+                        time: new Date().toISOString(),
+                        result: 'OK'
+                    });
                     $("#grpc-response-error").hide();
                 }
 
                 // TODO(jh): "copy as grpcurl" button? This would provide a
                 // command-line for grpcurl that does the same thing as clicking
-                // the "invoke" button for the current request data and metadata.
+                // the "invoke" button for the current request responseData and metadata.
 
                 // TODO(jh): "paste as grpcurl" button? This would provide a
                 // way to paste in a grpcurl command-line which would then select
-                // the right method, and populate the request data and metadata.
+                // the right method, and populate the request responseData and metadata.
 
-                if (data.trailers instanceof Array && data.trailers.length > 0) {
+                if (responseData.trailers instanceof Array && responseData.trailers.length > 0) {
                     var tlrs = $("#grpc-response-trailers");
                     tlrs.empty();
-                    for (i = 0; i < data.trailers.length; i++) {
+                    for (i = 0; i < responseData.trailers.length; i++) {
                         var tlrRow = $('<tr>');
                         tlrs.append(tlrRow);
                         var tlrCell = $('<td>');
-                        tlrCell.text(data.trailers[i].name);
+                        tlrCell.text(responseData.trailers[i].name);
                         tlrRow.append(tlrCell);
                         tlrCell = $('<td>');
-                        tlrCell.text(data.trailers[i].value);
+                        tlrCell.text(responseData.trailers[i].value);
                         tlrRow.append(tlrCell);
                     }
                 } else {
@@ -2181,10 +2219,21 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 t.tabs("enable", 2);
                 t.tabs("option", "active", 2);
             })
-            .fail(function(data, status) {
+            .fail(function(failureData, status) {
+                addHistory({
+                    request: {
+                        timeout: timeoutStr,
+                        metadata: metadata,
+                        data: originalData
+                    },
+                    service: service,
+                    method: method,
+                    time: new Date().toISOString(),
+                    result: `failure: ${status}`
+                });
                 alert("Unexpected error: " + status);
                 if (debug) {
-                    console.trace(data.responseText);
+                    console.trace(failureData.responseText);
                 }
             })
             .always(function() {
@@ -2355,6 +2404,117 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         }
     }
 
+    let history = [];
+    const maxHistory = 100;
+    const target = $(".target").text();
+
+    const storageKey = `grpcui-history-${window.location.host}-${target}`;
+
+    const loadHistory = () => {
+        const json = localStorage.getItem(storageKey);
+        if (json) {
+            history = (JSON.parse(json))
+        }
+        updateHistoryUI();
+    }
+
+    const writeHistory = () => {
+        localStorage.setItem(storageKey, JSON.stringify(history));
+    }
+
+    const clearHistory = () => {
+        if(confirm('Are you sure you wish to delete all history? This action is permanent and cannot be undone.')) {
+            history = [];
+            writeHistory();
+            updateHistoryUI();
+        }
+    }
+
+    const addHistory = (item) => {
+        history = history.slice(0, maxHistory - 1);
+        history.unshift(item);
+        writeHistory();
+        updateHistoryUI();
+    }
+
+    const updateHistoryUI = () => {
+        const list = $('#grpc-history-list');
+        list.empty();
+        const accordion = $('<div>');
+        list.append(accordion);
+        for (let i = 0; i < history.length; i++) {
+            const item = history[i];
+            const id = `grpc-history-item-${i}`;
+            const dataString = JSON.stringify(item.request.data, null, 4);
+            const valid = services[item.service] && services[item.service].includes(item.method);
+            accordion.append(`<div class="historyItemHeader" id="${id}">
+                <span><button class="delete" id="delete-${id}">X</button></span>
+                <span class="historyItemTime">${new Date(item.time).toLocaleString()}</span>
+                <span class="historyItemMethod">${item.service}.${item.method}</span>
+                <span class="historyItemResult">${item.result}</span>
+                <span class="historyItemLoad">
+                    <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
+                    ${valid ? '' : '<span class="invalidHistory">Service or method no longer available</span>'}
+                </span>
+            </div>`);
+            accordion.append(`<div class="historyItemPanel">
+                <div>
+                    <span>Request:</span>
+                    <span><pre id="json">${dataString.slice(0, 250)}${dataString.length > 250 ? '...' : ''}</pre></span>
+                </div>
+                <div>
+                    <span>MetaData:</span>
+                    <span>${JSON.stringify(item.request.metadata)}</span>
+                </div>
+            </div>`);
+            $(`#delete-${id}`).click((evt) => {
+                deleteHistoryItem(i);
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+            });
+            $(`#load-${id}`).click((evt) => {
+                loadHistoryItem(i);
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+            });
+        }
+        accordion.accordion({
+            animate: 200,
+            collapsible: true,
+            header: ".historyItemHeader",
+            heightStyle: "content",
+            active: 0,
+        });
+    }
+
+    const loadHistoryItem = (index) => {
+        const t = $("#grpc-request-response");
+        t.tabs("option", "active", 0);
+        const item = history[index];
+        $("#grpc-request-timeout input").val(item.timeout);
+        //TODO(gtg471h): test if service exists and alert if not available
+        //TODO(gtg471h): test if method exists and alert if not available
+        $("#grpc-service").val(item.service);
+        formServiceSelected().done(() => {
+            $("#grpc-method").val(item.method);
+            formMethodSelected().done(() => {
+                jsonRawTextArea.val(JSON.stringify(item.request.data, null, 2));
+                validateJSON();
+                //remove all rows
+                $("tr").remove('.metadataRow');
+                for (let metadata of item.request.metadata) {
+                    addMetadataRow(metadata.name, metadata.value);
+                }
+            });
+        });
+    }
+
+    const deleteHistoryItem = (index) => {
+        history.splice(index, 1);
+        writeHistory();
+        updateHistoryUI();
+    }
+
     $("#grpc-request-timeout input").focus(function() {
         var inp = this;
         setValidation(inp, function() {
@@ -2391,6 +2551,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             invoke();
         }
     });
+
+    $('#grpc-history-clear').click(() => clearHistory());
+
+    loadHistory();
 
     // TODO(jh): support populating the selected method and even request
     // data and metadata from URL hash fragment (and add a way for user to
