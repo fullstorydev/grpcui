@@ -2492,8 +2492,6 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         t.tabs("option", "active", 0);
         const item = history[index];
         $("#grpc-request-timeout input").val(item.timeout);
-        //TODO(gtg471h): test if service exists and alert if not available
-        //TODO(gtg471h): test if method exists and alert if not available
         $("#grpc-service").val(item.service);
         formServiceSelected(() => {
             $("#grpc-method").val(item.method);
