@@ -2,7 +2,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     var requestForm = $("#grpc-request-form");
 
-    function formServiceSelected() {
+    function formServiceSelected(callback) {
         var methods = services[$("#grpc-service").val()];
         var methodList = $("#grpc-method");
         methodList.empty();
@@ -13,7 +13,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         $("#grpc-method option:first-of-type").select();
         // implicit selection of first element does not
         // generate a change event, so we have to do this
-        return formMethodSelected();
+        return formMethodSelected(callback);
     }
 
     function formMethodSelected(callback) {
@@ -2495,9 +2495,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         //TODO(gtg471h): test if service exists and alert if not available
         //TODO(gtg471h): test if method exists and alert if not available
         $("#grpc-service").val(item.service);
-        formServiceSelected().done(() => {
+        formServiceSelected(() => {
             $("#grpc-method").val(item.method);
-            formMethodSelected().done(() => {
+            formMethodSelected(() => {
                 jsonRawTextArea.val(JSON.stringify(item.request.data, null, 2));
                 validateJSON();
                 //remove all rows
