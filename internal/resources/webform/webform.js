@@ -13,7 +13,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         $("#grpc-method option:first-of-type").select();
         // implicit selection of first element does not
         // generate a change event, so we have to do this
-        return formMethodSelected(callback);
+        formMethodSelected(callback);
     }
 
     function formMethodSelected(callback) {
@@ -24,7 +24,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         // disable the invoke button until we get the schema
         resetInvoke(false);
 
-        return $.ajax(metadataURI + "?method=" + service + "." + method)
+        $.ajax(metadataURI + "?method=" + service + "." + method)
             .done(function(data) {
                 buildRequestForm(data);
                 callback?.();
