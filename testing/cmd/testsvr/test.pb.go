@@ -14,6 +14,8 @@ import (
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -1548,7 +1550,9 @@ func init() {
 	proto.RegisterType((*TestMessage_Misc)(nil), "test.TestMessage.Misc")
 }
 
-func init() { proto.RegisterFile("test.proto", fileDescriptor_c161fcfdc0c3ff1e) }
+func init() {
+	proto.RegisterFile("test.proto", fileDescriptor_c161fcfdc0c3ff1e)
+}
 
 var fileDescriptor_c161fcfdc0c3ff1e = []byte{
 	// 3032 bytes of a gzipped FileDescriptorProto
@@ -1746,11 +1750,11 @@ var fileDescriptor_c161fcfdc0c3ff1e = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // KitchenSinkClient is the client API for KitchenSink service.
 //
@@ -1794,10 +1798,10 @@ type KitchenSinkClient interface {
 }
 
 type kitchenSinkClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewKitchenSinkClient(cc *grpc.ClientConn) KitchenSinkClient {
+func NewKitchenSinkClient(cc grpc.ClientConnInterface) KitchenSinkClient {
 	return &kitchenSinkClient{cc}
 }
 
@@ -2598,6 +2602,116 @@ type KitchenSinkServer interface {
 	SendMultipleInt64(KitchenSink_SendMultipleInt64Server) error
 	SendMultipleUInt32(KitchenSink_SendMultipleUInt32Server) error
 	SendMultipleUInt64(KitchenSink_SendMultipleUInt64Server) error
+}
+
+// UnimplementedKitchenSinkServer can be embedded to have forward compatible implementations.
+type UnimplementedKitchenSinkServer struct {
+}
+
+func (*UnimplementedKitchenSinkServer) Ping(ctx context.Context, req *empty.Empty) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
+}
+func (*UnimplementedKitchenSinkServer) Exchange(ctx context.Context, req *TestMessage) (*TestMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Exchange not implemented")
+}
+func (*UnimplementedKitchenSinkServer) UploadMany(srv KitchenSink_UploadManyServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadMany not implemented")
+}
+func (*UnimplementedKitchenSinkServer) DownloadMany(req *TestMessage, srv KitchenSink_DownloadManyServer) error {
+	return status.Errorf(codes.Unimplemented, "method DownloadMany not implemented")
+}
+func (*UnimplementedKitchenSinkServer) DoManyThings(srv KitchenSink_DoManyThingsServer) error {
+	return status.Errorf(codes.Unimplemented, "method DoManyThings not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendTimestamp(ctx context.Context, req *timestamp.Timestamp) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendTimestamp not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendDuration(ctx context.Context, req *duration.Duration) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendDuration not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendAny(ctx context.Context, req *any.Any) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendAny not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendStruct(ctx context.Context, req *_struct.Struct) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendStruct not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendValue(ctx context.Context, req *_struct.Value) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendValue not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendListValue(ctx context.Context, req *_struct.ListValue) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendListValue not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendBytes(ctx context.Context, req *wrappers.BytesValue) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendBytes not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendString(ctx context.Context, req *wrappers.StringValue) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendString not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendBool(ctx context.Context, req *wrappers.BoolValue) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendBool not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendDouble(ctx context.Context, req *wrappers.DoubleValue) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendDouble not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendFloat(ctx context.Context, req *wrappers.FloatValue) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendFloat not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendInt32(ctx context.Context, req *wrappers.Int32Value) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendInt32 not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendInt64(ctx context.Context, req *wrappers.Int64Value) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendInt64 not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendUInt32(ctx context.Context, req *wrappers.UInt32Value) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendUInt32 not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendUInt64(ctx context.Context, req *wrappers.UInt64Value) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendUInt64 not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleTimestamp(srv KitchenSink_SendMultipleTimestampServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleTimestamp not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleDuration(srv KitchenSink_SendMultipleDurationServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleDuration not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleAny(srv KitchenSink_SendMultipleAnyServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleAny not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleStruct(srv KitchenSink_SendMultipleStructServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleStruct not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleValue(srv KitchenSink_SendMultipleValueServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleValue not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleListValue(srv KitchenSink_SendMultipleListValueServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleListValue not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleBytes(srv KitchenSink_SendMultipleBytesServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleBytes not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleString(srv KitchenSink_SendMultipleStringServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleString not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleBool(srv KitchenSink_SendMultipleBoolServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleBool not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleDouble(srv KitchenSink_SendMultipleDoubleServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleDouble not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleFloat(srv KitchenSink_SendMultipleFloatServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleFloat not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleInt32(srv KitchenSink_SendMultipleInt32Server) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleInt32 not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleInt64(srv KitchenSink_SendMultipleInt64Server) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleInt64 not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleUInt32(srv KitchenSink_SendMultipleUInt32Server) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleUInt32 not implemented")
+}
+func (*UnimplementedKitchenSinkServer) SendMultipleUInt64(srv KitchenSink_SendMultipleUInt64Server) error {
+	return status.Errorf(codes.Unimplemented, "method SendMultipleUInt64 not implemented")
 }
 
 func RegisterKitchenSinkServer(s *grpc.Server, srv KitchenSinkServer) {
