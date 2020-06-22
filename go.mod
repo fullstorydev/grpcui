@@ -1,5 +1,7 @@
 module github.com/fullstorydev/grpcui
 
+go 1.13
+
 require (
 	github.com/fullstorydev/grpcurl v1.6.0
 	github.com/go-bindata/go-bindata v0.0.0-20191126083508-8639be0519b3 // indirect
