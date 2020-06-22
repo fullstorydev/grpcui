@@ -195,7 +195,7 @@ func computeETag(contents []byte) string {
 // and methods supported by the server, and constructs a handler to serve the UI.
 //
 // The handler has the same properties as the one returned by Handler.
-func HandlerViaReflection(ctx context.Context, cc *grpc.ClientConn, target string, opts ...HandlerOption) (http.Handler, error) {
+func HandlerViaReflection(ctx context.Context, cc grpc.ClientConnInterface, target string, opts ...HandlerOption) (http.Handler, error) {
 	m, err := grpcui.AllMethodsViaReflection(ctx, cc)
 	if err != nil {
 		return nil, err
