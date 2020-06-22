@@ -2357,7 +2357,6 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     $("#grpc-request-timeout input").focus(function() {
         var inp = this;
-        var origValue = $(inp).val();
         setValidation(inp, function() {
             var val = $(inp).val();
             if (val === "" || val === undefined) {
@@ -2365,7 +2364,6 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             }
             var num = Number(val);
             if (Number.isNaN(num)) {
-                $(inp).val(origValue);
                 throw new Error("numeric value required");
             }
             if (num <= 0) {
