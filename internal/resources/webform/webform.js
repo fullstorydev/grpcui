@@ -2050,8 +2050,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var service = $("#grpc-service").val();
         var method = $("#grpc-method").val();
 
-        var timeout = Number($("#grpc-request-timeout input").val());
-        timeout = Number.isNaN(timeout) ? undefined : timeout;
+        var timeoutStr = $("#grpc-request-timeout input").val();
+        var timeout = Number(timeoutStr);
+        timeout = (timeoutStr === "" || Number.isNaN(timeout)) ? undefined : timeout;
 
         var data = requestForm.data("request");
         if (!(data instanceof Array)) {
@@ -2357,12 +2358,12 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     $("#grpc-request-timeout input").focus(function() {
         var inp = this;
         setValidation(inp, function() {
-            var num = + $(inp).val();
-            if (num === undefined) {
+            var val = $(inp).val();
+            if (val === "" || val === undefined) {
                 return;
             }
+            var num = Number(val);
             if (Number.isNaN(num)) {
-                $(inp).val(undefined);
                 throw new Error("numeric value required");
             }
             if (num <= 0) {
@@ -2370,7 +2371,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 throw new Error("timeout value must be greater than zero");
             }
         });
-    })
+    });
 
     $("#grpc-request-response").tabs(
         {

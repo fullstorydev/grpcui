@@ -112,8 +112,6 @@ textarea#grpc-request-raw-text {
 }
 
 #grpc-request-timeout input {
-    font-family: "Courier New", Courier, monospace;
-    font-size: 14px;
     border: 1px solid #888;
 }
 
@@ -363,6 +361,11 @@ table#grpc-request-metadata-form {
 }
 
 #grpc-request-form div.invalid-input input {
+    background-color: #ffe0e8;
+}
+
+#grpc-request-timeout input.invalid-input {
+    border: 3px dotted #f46;
     background-color: #ffe0e8;
 }
 
