@@ -2184,7 +2184,6 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     $("#grpc-response-error-details").hide();
                 } else {
                     addHistory({
-
                         ...history,
                         duration: window.performance.now() - startTime,
                         result: 'OK'
