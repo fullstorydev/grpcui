@@ -2093,7 +2093,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
         const history = {
             request: {
-                timeout: timeoutString,
+                timeout: timeoutStr,
                 metadata: metadata,
                 data: originalData
             },
@@ -2444,8 +2444,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             const valid = services[item.service] && services[item.service].includes(item.method);
             accordion.append(`<div class="historyItemHeader" id="${id}">
                 <span><button class="delete" id="delete-${id}">X</button></span>
-                <span class="historyItemTime">${new Date(item.time).toLocaleString()}</span>
-                <span class="historyItemDuration">${item.duration}ms</span>
+                <span class="historyItemTime">${new Date(item.startTime).toLocaleString()}</span>
+                <span class="historyItemDuration">${item.duration.toFixed(2)}ms</span>
                 <span class="historyItemMethod">${item.service}.${item.method}</span>
                 <span class="historyItemResult">${item.result}</span>
                 <span class="historyItemLoad">
