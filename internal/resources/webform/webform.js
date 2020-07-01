@@ -2091,6 +2091,19 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         // ignore subsequent clicks until this RPC finishes
         $(".grpc-invoke").prop("disabled", true);
 
+        const history = {
+            request: {
+                timeout: timeoutString,
+                metadata: metadata,
+                data: originalData
+            },
+            service: service,
+            method: method,
+            startTime: new Date().toISOString(),
+        }
+
+        const startTime = window.performance.now();
+
         $.ajax(
             {
                 type: "POST",
@@ -2152,14 +2165,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
                 if (responseData.error) {
                     addHistory({
-                        request: {
-                            timeout: timeoutStr,
-                            metadata: metadata,
-                            data: originalData
-                        },
-                        service: service,
-                        method: method,
-                        time: new Date().toISOString(),
+                        ...history,
+                        duration: window.performance.now() - startTime,
                         result: responseData.error.name ?? 'FAILED'
                     });
                     $("#grpc-response-error").show();
@@ -2177,14 +2184,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     $("#grpc-response-error-details").hide();
                 } else {
                     addHistory({
-                        request: {
-                            timeout: timeoutStr,
-                            metadata: metadata,
-                            data: originalData
-                        },
-                        service: service,
-                        method: method,
-                        time: new Date().toISOString(),
+
+                        ...history,
+                        duration: window.performance.now() - startTime,
                         result: 'OK'
                     });
                     $("#grpc-response-error").hide();
@@ -2221,14 +2223,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             })
             .fail(function(failureData, status) {
                 addHistory({
-                    request: {
-                        timeout: timeoutStr,
-                        metadata: metadata,
-                        data: originalData
-                    },
-                    service: service,
-                    method: method,
-                    time: new Date().toISOString(),
+                    ...history,
+                    duration: window.performance.now() - startTime,
                     result: `failure: ${status}`
                 });
                 alert("Unexpected error: " + status);
@@ -2418,23 +2414,22 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         updateHistoryUI();
     }
 
-    const writeHistory = () => {
+    const onHistoryChange = () => {
         localStorage.setItem(storageKey, JSON.stringify(history));
+        updateHistoryUI();
     }
 
     const clearHistory = () => {
         if(confirm('Are you sure you wish to delete all history? This action is permanent and cannot be undone.')) {
             history = [];
-            writeHistory();
-            updateHistoryUI();
+            onHistoryChange();
         }
     }
 
     const addHistory = (item) => {
         history = history.slice(0, maxHistory - 1);
         history.unshift(item);
-        writeHistory();
-        updateHistoryUI();
+        onHistoryChange();
     }
 
     const updateHistoryUI = () => {
@@ -2450,6 +2445,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             accordion.append(`<div class="historyItemHeader" id="${id}">
                 <span><button class="delete" id="delete-${id}">X</button></span>
                 <span class="historyItemTime">${new Date(item.time).toLocaleString()}</span>
+                <span class="historyItemDuration">${item.duration}ms</span>
                 <span class="historyItemMethod">${item.service}.${item.method}</span>
                 <span class="historyItemResult">${item.result}</span>
                 <span class="historyItemLoad">
@@ -2509,8 +2505,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     const deleteHistoryItem = (index) => {
         history.splice(index, 1);
-        writeHistory();
-        updateHistoryUI();
+        onHistoryChange();
     }
 
     $("#grpc-request-timeout input").focus(function() {
