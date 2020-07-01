@@ -2470,6 +2470,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             });
             $(`#load-${id}`).click((evt) => {
                 loadHistoryItem(i);
+                // These prevent the accordion from opening or folding when clicking load...
                 evt.preventDefault();
                 evt.stopImmediatePropagation();
             });
