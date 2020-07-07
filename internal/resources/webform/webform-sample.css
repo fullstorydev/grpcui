@@ -536,6 +536,11 @@ table#grpc-request-metadata-form {
     padding-right:24px;
 }
 
+#grpc-history-list .historyItemHeader .historyItemMessages {
+    padding-left: 24px;
+    padding-right:24px;
+}
+
 #grpc-history-list .historyItemHeader .historyItemMethod {
     padding-right:24px;
     font-weight: bold;

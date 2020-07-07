@@ -2167,7 +2167,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     addHistory({
                         ...history,
                         duration: window.performance.now() - startTime,
-                        result: responseData.error.name ?? 'FAILED'
+                        result: responseData.error.name ?? 'FAILED',
+                        responseData: responseData,
                     });
                     $("#grpc-response-error").show();
                     $("#grpc-response-error-desc").text(responseData.error.name);
@@ -2186,7 +2187,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     addHistory({
                         ...history,
                         duration: window.performance.now() - startTime,
-                        result: 'OK'
+                        result: 'OK',
+                        responseData: responseData,
                     });
                     $("#grpc-response-error").hide();
                 }
@@ -2446,6 +2448,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 <span class="historyItemTime">${new Date(item.startTime).toLocaleString()}</span>
                 <span class="historyItemDuration">${item.duration.toFixed(2)}ms</span>
                 <span class="historyItemMethod">${item.service}.${item.method}</span>
+                <span class="historyItemMessages">
+                  ${(item.responseData?.responses?.length ?? 0) > 1 && item.result == 'OK' ? `Messages Received: ${item.responseData.responses.length}` : ''}
+                  ${(item.responseData?.responses?.length ?? 0) > 0 && item.result != 'OK' ? `Messages Received: ${item.responseData.responses.length}` : ''}
+                </span>
                 <span class="historyItemResult">${item.result}</span>
                 <span class="historyItemLoad">
                     <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
