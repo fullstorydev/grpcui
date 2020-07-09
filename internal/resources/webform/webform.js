@@ -2143,7 +2143,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 // (or even better, be able to render unset fields differently).
                 // But we need response schema info to do that...
                 if (responseData.responses instanceof Array && responseData.responses.length > 0) {
-                    var div = $("#grpc-response-responseData");
+                    var div = $("#grpc-response-data");
                     div.show();
                     div.empty();
                     var resp = responseData.responses;
@@ -2160,14 +2160,13 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     }
                     // TODO(jh): button or some other mechanism to view result as raw JSON.
                 } else {
-                    $("#grpc-response-responseData").hide();
+                    $("#grpc-response-data").hide();
                 }
 
                 if (responseData.error) {
                     addHistory({
                         ...history,
-                        duration: window.performance.now() - startTime,
-                        result: responseData.error.name ?? 'FAILED',
+                        durationMS: window.performance.now() - startTime,
                         responseData: responseData,
                     });
                     $("#grpc-response-error").show();
@@ -2186,8 +2185,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 } else {
                     addHistory({
                         ...history,
-                        duration: window.performance.now() - startTime,
-                        result: 'OK',
+                        durationMS: window.performance.now() - startTime,
                         responseData: responseData,
                     });
                     $("#grpc-response-error").hide();
@@ -2225,8 +2223,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             .fail(function(failureData, status) {
                 addHistory({
                     ...history,
-                    duration: window.performance.now() - startTime,
-                    result: `failure: ${status}`
+                    durationMS: window.performance.now() - startTime,
+                    failureStatus: status,
+                    failureData: failureData,
                 });
                 alert("Unexpected error: " + status);
                 if (debug) {
@@ -2421,7 +2420,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     }
 
     const clearHistory = () => {
-        if(confirm('Are you sure you wish to delete all history? This action is permanent and cannot be undone.')) {
+        if (confirm('Are you sure you wish to delete all history? This action is permanent and cannot be undone.')) {
             history = [];
             onHistoryChange();
         }
@@ -2443,16 +2442,24 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             const id = `grpc-history-item-${i}`;
             const dataString = JSON.stringify(item.request.data, null, 4);
             const valid = services[item.service] && services[item.service].includes(item.method);
+            let result = '';
+            let messages = '';
+            if (item.failureStatus) {
+                result = `Failure: ${item.failureStatus}`;
+            } else if (item.responseData.error) {
+                messages = (item.responseData?.responses?.length ?? 0) > 0 ? `Messages Received: ${item.responseData.responses.length}` : '';
+                result = item.responseData.error.name ?? 'FAILED';
+            } else {
+                messages = (item.responseData?.responses?.length ?? 0) > 1 ? `Messages Received: ${item.responseData.responses.length}` : '';
+                result = 'OK';
+            }
             accordion.append(`<div class="historyItemHeader" id="${id}">
                 <span><button class="delete" id="delete-${id}">X</button></span>
                 <span class="historyItemTime">${new Date(item.startTime).toLocaleString()}</span>
-                <span class="historyItemDuration">${item.duration.toFixed(2)}ms</span>
+                <span class="historyItemDuration">${item.durationMS.toFixed(2)}ms</span>
                 <span class="historyItemMethod">${item.service}.${item.method}</span>
-                <span class="historyItemMessages">
-                  ${(item.responseData?.responses?.length ?? 0) > 1 && item.result == 'OK' ? `Messages Received: ${item.responseData.responses.length}` : ''}
-                  ${(item.responseData?.responses?.length ?? 0) > 0 && item.result != 'OK' ? `Messages Received: ${item.responseData.responses.length}` : ''}
-                </span>
-                <span class="historyItemResult">${item.result}</span>
+                <span class="historyItemMessages">${messages}</span>
+                <span class="historyItemResult">${result}</span>
                 <span class="historyItemLoad">
                     <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
                     ${valid ? '' : '<span class="invalidHistory">Service or method no longer available</span>'}
