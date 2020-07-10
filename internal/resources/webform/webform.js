@@ -420,14 +420,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         input.asArray = addArrayToForm(schema, container, input, pathLen, arrayVal, allowMissing, mapType, fld);
 
         // adapt value form array to map by overriding change handlers
-        input.onAdd = function() {
-            // undefined key means it's not in main request model yet
-            // (we leave it that way and don't call parent to let user
-            // edit key field first, in case default value collides
-            // with existing key).
-            this.childKeys.push(undefined);
-        };
-        input.onChange = function(child, revPath, val) {
+        input.doOnChange = function(child, revPath, val, nextFunc) {
             // translate child index to map key
             var index = + revPath[revPath.length-1];
             var key = this.childKeys[index];
@@ -464,7 +457,22 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             revPath.splice(revPath.length-1, 1);
             revPath[revPath.length-1] = key;
 
-            this.parent.onChange(this, revPath, val);
+            this.parent[nextFunc].call(this.parent, this, revPath, val);
+        };
+        input.onAdd = function(child, revPath, val) {
+            if (revPath.length <= 1) {
+                // We are adding an entry to the map. We use an undefined
+                // key to means it's not in main request model yet
+                // (we leave it that way and don't call parent to let user
+                // edit key field first, in case default value collides
+                // with existing key).
+                this.childKeys.push(undefined);
+            } else {
+                this.doOnChange(child, revPath, val, 'onAdd');
+            }
+        };
+        input.onChange = function(child, revPath, val) {
+            this.doOnChange(child, revPath, val, 'onChange');
         };
         input.onDelete = function(child, revPath) {
             // translate child index to map key
