@@ -62,7 +62,7 @@ the form of an HTML table.
 ### From Source
 You can use the `go` tool to install `grpcui`:
 ```shell
-go get github.com/fullstorydev/grpcui
+go get github.com/fullstorydev/grpcui/...
 go install github.com/fullstorydev/grpcui/cmd/grpcui
 ```
 
