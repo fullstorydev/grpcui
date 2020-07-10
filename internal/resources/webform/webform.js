@@ -26,6 +26,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
 
         $.ajax(metadataURI + "?method=" + service + "." + method)
             .done(function(data) {
+                updateMethodOptions(data);
                 buildRequestForm(data);
                 callback?.();
             })
@@ -47,6 +48,25 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         }
         t.tabs("disable", 2);
         $(".grpc-invoke").prop("disabled", !enabled);
+    }
+
+    // Updates the method options entry for a given method after fetching its metadata.
+    function updateMethodOptions(schema) {
+        var options = $("#grpc-method-options");
+        if (!schema.methodOptions) {
+            options.css("display", "none");
+            return;
+        }
+
+        var table = $("#grpc-method-options>table");
+        table.empty();
+
+        for (var name in schema.methodOptions) {
+            var value = JSON.stringify(schema.methodOptions[name]);
+            table.append($("<tr>").append($("<td>").text(name)).append($("<td>").text(value)));
+        }
+
+        options.css("display", "block");
     }
 
     /*

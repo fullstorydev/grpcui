@@ -17,6 +17,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/dynamic"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -110,6 +111,7 @@ func RPCMetadataHandler(methods []*desc.MethodDescriptor, files []*desc.FileDesc
 		if method == "*" {
 			// This means gather *all* message types. This is used to
 			// provide a drop-down for Any messages.
+			// TODO(jaime, jhump): This feels a little weird. Because we don't also return metadata for all methods. We omit fields and basically only populate message types and enum types.
 			results = gatherAllMessageMetadata(files)
 		} else {
 			for _, md := range methods {
@@ -145,10 +147,11 @@ func RPCMetadataHandler(methods []*desc.MethodDescriptor, files []*desc.FileDesc
 //  What if we wanted to load metadata for all methods? We should consider splitting this
 //  into 2 separate types for metadata to respond with accordingly.
 type schema struct {
-	RequestType   string                  `json:"requestType"`
-	RequestStream bool                    `json:"requestStream"`
-	MessageTypes  map[string][]fieldDef   `json:"messageTypes"`
-	EnumTypes     map[string][]enumValDef `json:"enumTypes"`
+	RequestType   string                     `json:"requestType"`
+	RequestStream bool                       `json:"requestStream"`
+	MethodOptions map[string]json.RawMessage `json:"methodOptions,omitempty"`
+	MessageTypes  map[string][]fieldDef      `json:"messageTypes"`
+	EnumTypes     map[string][]enumValDef    `json:"enumTypes"`
 }
 
 type fieldDef struct {
@@ -228,11 +231,17 @@ func gatherAllMessages(msgs []*desc.MessageDescriptor, result *schema) {
 
 func gatherMetadataForMethod(md *desc.MethodDescriptor) (*schema, error) {
 	msg := md.GetInputType()
+	opts, err := getMethodOptions(md)
+	if err != nil {
+		return nil, err
+	}
+
 	result := &schema{
 		RequestType:   msg.GetFullyQualifiedName(),
 		RequestStream: md.IsClientStreaming(),
 		MessageTypes:  map[string][]fieldDef{},
 		EnumTypes:     map[string][]enumValDef{},
+		MethodOptions: opts,
 	}
 
 	result.visitMessage(msg)
@@ -523,4 +532,103 @@ func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message) rpcR
 		}
 		return rpcResponseElement{Data: json.RawMessage(b), IsError: true}
 	}
+}
+
+// getMethodOptions returns a value (representing MethodOptions in a structured form) that can be serialized via encoding/json and sent to the browser.
+func getMethodOptions(methodDesc *desc.MethodDescriptor) (map[string]json.RawMessage, error) {
+	var exts dynamic.ExtensionRegistry
+	exts.AddExtensionsFromFileRecursively(methodDesc.GetFile())
+
+	// MessageDescriptor for the proto.Message representing MethodOptions.
+	optsMessageDesc, err := desc.LoadMessageDescriptorForMessage(methodDesc.GetMethodOptions())
+	if err != nil {
+		return nil, err
+	}
+
+	// Dynamic message that we will allow us to introspect the message.
+	dynOptsMessage := dynamic.NewMessageWithExtensionRegistry(optsMessageDesc, &exts)
+	if err := dynOptsMessage.ConvertFrom(methodDesc.GetMethodOptions()); err != nil {
+		return nil, err
+	}
+
+	opts := map[string]json.RawMessage{}
+
+	for _, fd := range dynOptsMessage.GetKnownFields() {
+		if dynOptsMessage.HasField(fd) {
+			if opts[fd.GetName()], err = fdToJSON(fd, dynOptsMessage.GetField(fd)); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	for _, fd := range dynOptsMessage.GetKnownExtensions() {
+		if dynOptsMessage.HasField(fd) {
+			name := fmt.Sprintf("(%s)", fd.GetFullyQualifiedName())
+			if opts[name], err = fdToJSON(fd, dynOptsMessage.GetField(fd)); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return opts, nil
+}
+
+// fdToJSON will JSON encode any possible protobuf value.
+//
+// NOTE: Gross. But it can handle all possible protobuf values which sadly
+// jsonpb.Marshaler cannot (its API can only marshals *messages*, even though
+// under the hood it must support the same set of possible values)
+func fdToJSON(fd *desc.FieldDescriptor, val interface{}) (json.RawMessage, error) {
+	if fd.IsMap() {
+		val := val.(map[interface{}]interface{})
+		jsMap := make(map[interface{}]json.RawMessage, len(val))
+		for k, v := range val {
+			js, err := fdToJSON(fd.GetMapValueType(), v)
+			if err != nil {
+				return nil, err
+			}
+			jsMap[k] = js
+		}
+		bytes, err := json.Marshal(jsMap)
+		return json.RawMessage(bytes), err
+	} else if fd.IsRepeated() {
+		val := val.([]interface{})
+		array := make([]json.RawMessage, len(val))
+		for i, v := range val {
+			js, err := elementToJSON(fd, v)
+			if err != nil {
+				return nil, err
+			}
+			array[i] = js
+		}
+		bytes, err := json.Marshal(array)
+		return json.RawMessage(bytes), err
+	} else {
+		return elementToJSON(fd, val)
+	}
+}
+
+// elementToJSON will JSON encode a terminal non-map or repeated field.
+func elementToJSON(fd *desc.FieldDescriptor, val interface{}) (json.RawMessage, error) {
+	if fd.GetMessageType() != nil {
+		marshaler := jsonpb.Marshaler{}
+		// TODO: need to weave an AnyResolver to this point, in the event that
+		// the message has a google.protobuf.Any value whose message type is
+		// unknown...
+		js, err := marshaler.MarshalToString(val.(proto.Message))
+		if err != nil {
+			return nil, err
+		}
+		return json.RawMessage(js), nil
+	}
+
+	if fd.GetEnumType() != nil {
+		// try to swap out the int32 value for the enum value's name
+		if enumVal := fd.GetEnumType().FindValueByNumber(val.(int32)); enumVal != nil {
+			val = enumVal.GetName()
+		}
+	}
+
+	js, err := json.Marshal(val)
+	return json.RawMessage(js), err
 }

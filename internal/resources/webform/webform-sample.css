@@ -154,6 +154,12 @@ table#grpc-request-metadata-form {
     border: 1px solid #888;
 }
 
+#grpc-method-options td {
+    padding-top: 10px;
+    font-size: 12px;
+    font-family: "Courier New", Courier, monospace;
+}
+
 #grpc-request-metadata {
     margin-bottom: 20px;
 }
