@@ -32,6 +32,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 
+	// Register gzip compressor so compressed responses will work
+	_ "google.golang.org/grpc/encoding/gzip"
+	// Register xds so xds and xds-experimental resolver schemes work
+	_ "google.golang.org/grpc/xds"
+
 	"github.com/fullstorydev/grpcui/standalone"
 )
 
