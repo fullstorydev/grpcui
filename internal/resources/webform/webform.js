@@ -2102,8 +2102,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         const history = {
             request: {
                 timeout: timeoutStr,
-                metadata: $.extend(true,{}, metadata),
-                data: $.extend(true,{}, originalData)
+                metadata: $.extend(true, {}, metadata),
+                data: $.extend(true, {}, originalData)
             },
             service: service,
             method: method,
