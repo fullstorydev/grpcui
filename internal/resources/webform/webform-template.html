@@ -82,7 +82,12 @@
         ],
     {{- end}}
     };
+    var headers = [
+    {{- range .DefaultMetadata}}
+        {"name": "{{.Name}}", "value": "{{.Value}}"},
+    {{- end}}
+    ];
 
-    initGRPCForm(services, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }});
+    initGRPCForm(services, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers);
 })();
 </script>

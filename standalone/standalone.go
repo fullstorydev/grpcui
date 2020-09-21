@@ -69,7 +69,11 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	}
 
 	// Add the index page (not bundled in standalone)
-	webFormHTML := grpcui.WebFormContents("invoke", "metadata", methods)
+	formOpts := grpcui.WebFormOptions{
+		DefaultMetadata: uiOpts.defaultMetadata,
+		Debug:           uiOpts.debug,
+	}
+	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", methods, formOpts)
 	indexContents := getIndexContents(uiOpts.indexTmpl, target, webFormHTML, uiOpts.tmplResources)
 	indexResource := newResource("/", indexContents, "text/html; charset=utf-8")
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

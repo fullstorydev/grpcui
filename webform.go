@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"os"
 	"sort"
+	"strings"
+	"unicode"
 
 	"github.com/jhump/protoreflect/desc"
 
@@ -45,18 +47,55 @@ var webFormTemplate = template.Must(template.New("grpc web form").Parse(string(w
 // The returned HTML form requires that the contents of WebFormScript() have
 // already been loaded as a script in the page.
 func WebFormContents(invokeURI, metadataURI string, descs []*desc.MethodDescriptor) []byte {
+	return WebFormContentsWithOptions(invokeURI, metadataURI, descs, WebFormOptions{})
+}
+
+// WebFormOptions contains optional arguments when creating a gRPCui web form.
+type WebFormOptions struct {
+	// The set of metadata to show in the web form by default. Each value in
+	// the slice should be in the form "name: value"
+	DefaultMetadata []string
+	// If non-nil and true, the web form JS code will log debug information
+	// to the JS console. If nil, whether debug is enabled or not depends on
+	// an environment variable: GRPC_WEBFORM_DEBUG (if it's not blank, then
+	// debug is enabled).
+	Debug *bool
+}
+
+// WebFormContentsWithDefaultMetadata is the same as WebFormContents except that
+// it accepts an additional argument, options. This can be used to toggle the JS
+// code into debug logging and can also be used to define the set of metadata to
+// show in the web form by default (empty if unspecified).
+func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.MethodDescriptor, opts WebFormOptions) []byte {
+	type metadataEntry struct {
+		Name, Value string
+	}
 	params := struct {
-		InvokeURI   string
-		MetadataURI string
-		Services    []string
-		Methods     map[string][]string
-		Debug       bool
+		InvokeURI       string
+		MetadataURI     string
+		Services        []string
+		Methods         map[string][]string
+		DefaultMetadata []metadataEntry
+		Debug           bool
 	}{
 		InvokeURI:   invokeURI,
 		MetadataURI: metadataURI,
 		Methods:     map[string][]string{},
 		// TODO(jh): parameter for enabling this instead of env var?
 		Debug: os.Getenv("GRPC_WEBFORM_DEBUG") != "",
+	}
+
+	if opts.Debug != nil {
+		params.Debug = *opts.Debug
+	}
+	for _, md := range opts.DefaultMetadata {
+		parts := strings.SplitN(md, ":", 2)
+		key := strings.TrimSpace(parts[0])
+		var val string
+		if len(parts) > 1 {
+			val = strings.TrimLeftFunc(parts[1], unicode.IsSpace)
+		}
+		params.DefaultMetadata = append(params.DefaultMetadata, metadataEntry{Name: key, Value: val})
 	}
 
 	// build list of distinct service and method names and sort them
