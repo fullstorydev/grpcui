@@ -80,6 +80,22 @@ func ServeAsset(filename string, contents []byte) HandlerOption {
 	})
 }
 
+// WithDefaultMetadata sets the default metadata in the web form to the given
+// values. Each string should be in the form "name: value".
+func WithDefaultMetadata(headers []string) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.defaultMetadata = headers
+	})
+}
+
+// WithDebug enables console logging in the client JS. This prints extra
+// information as the UI processes user input.
+func WithDebug(debug bool) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.debug = &debug
+	})
+}
+
 // optFunc implements HandlerOption
 type optFunc func(opts *handlerOptions)
 
@@ -92,6 +108,8 @@ type handlerOptions struct {
 	css                 []byte
 	tmplResources       []*resource
 	servedOnlyResources []*resource
+	defaultMetadata     []string
+	debug               *bool
 }
 
 func (opts *handlerOptions) addlServedResources() []*resource {

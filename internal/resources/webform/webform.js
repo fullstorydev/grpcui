@@ -1,4 +1,4 @@
-window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
+window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers) {
 
     var requestForm = $("#grpc-request-form");
 
@@ -2099,11 +2099,16 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         // ignore subsequent clicks until this RPC finishes
         $(".grpc-invoke").prop("disabled", true);
 
+        if (originalData instanceof Array) {
+            cloneData = $.extend(true, [], originalData)
+        } else {
+            cloneData = $.extend(true, {}, originalData)
+        }
         const history = {
             request: {
                 timeout: timeoutStr,
-                metadata: $.extend(true, {}, metadata),
-                data: $.extend(true, {}, originalData)
+                metadata: $.extend([], metadata),
+                data: cloneData
             },
             service: service,
             method: method,
@@ -2577,6 +2582,12 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // initialize methods drop-down based on selected service
     formServiceSelected();
 
-    // add a single blank entry to request metadata table
-    addMetadataRow();
+    if (isUnset(headers) || headers.length === 0) {
+        // add a single blank entry to request metadata table
+        addMetadataRow();
+    } else {
+        for (let metadata of headers) {
+            addMetadataRow(metadata.name, metadata.value);
+        }
+    }
 };
