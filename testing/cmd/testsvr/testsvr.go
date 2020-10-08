@@ -19,8 +19,10 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
 
 //go:generate protoc --go_out=plugins=grpc:. test.proto
@@ -68,8 +70,8 @@ func (s testSvr) Exchange(ctx context.Context, m *TestMessage) (*TestMessage, er
 				hdrs[k] = v
 			}
 		}
-		grpc.SendHeader(ctx, hdrs)
-		grpc.SetTrailer(ctx, tlrs)
+		_ = grpc.SendHeader(ctx, hdrs)
+		_ = grpc.SetTrailer(ctx, tlrs)
 	}
 	return m, nil
 }
@@ -85,7 +87,7 @@ func (s testSvr) UploadMany(stream KitchenSink_UploadManyServer) error {
 				hdrs[k] = v
 			}
 		}
-		stream.SendHeader(hdrs)
+		_ = stream.SendHeader(hdrs)
 		stream.SetTrailer(tlrs)
 	}
 
@@ -100,6 +102,9 @@ func (s testSvr) UploadMany(stream KitchenSink_UploadManyServer) error {
 			return err
 		}
 		count++
+	}
+	if m == nil {
+		return status.Error(codes.InvalidArgument, "must provide at least one request message")
 	}
 	m.NeededNumA = proto.Float32(float32(count))
 	return stream.SendAndClose(m)
@@ -116,7 +121,7 @@ func (s testSvr) DownloadMany(m *TestMessage, stream KitchenSink_DownloadManySer
 				hdrs[k] = v
 			}
 		}
-		stream.SendHeader(hdrs)
+		_ = stream.SendHeader(hdrs)
 		stream.SetTrailer(tlrs)
 	}
 
@@ -141,7 +146,7 @@ func (s testSvr) DoManyThings(stream KitchenSink_DoManyThingsServer) error {
 				hdrs[k] = v
 			}
 		}
-		stream.SendHeader(hdrs)
+		_ = stream.SendHeader(hdrs)
 		stream.SetTrailer(tlrs)
 	}
 
