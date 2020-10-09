@@ -2456,37 +2456,55 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             const dataString = JSON.stringify(item.request.data, null, 4);
             const valid = services[item.service] && services[item.service].includes(item.method);
             let result = '';
-            let messages = '';
+            let messages = '&nbsp;';
+            let err = false;
             if (item.failureStatus) {
                 result = `Failure: ${item.failureStatus}`;
+                err = true;
             } else if (item.responseData.error) {
-                messages = (item.responseData?.responses?.length ?? 0) > 0 ? `Messages Received: ${item.responseData.responses.length}` : '';
+                // for errors, show if any response messages were sent
+                let numMsgs = item.responseData?.responses?.length ?? 0;
+                if (numMsgs === 1) {
+                    messages = `1 response message`; // singular
+                } else if (numMsgs > 1) {
+                    messages = `${numMsgs} response messages`;
+                }
                 result = item.responseData.error.name ?? 'FAILED';
+                err = true;
             } else {
-                messages = (item.responseData?.responses?.length ?? 0) > 1 ? `Messages Received: ${item.responseData.responses.length}` : '';
+                // on success, only show number of response messages if more than one (e.g. a stream)
+                messages = (item.responseData?.responses?.length ?? 0) > 1 ? `${item.responseData.responses.length} response messages` : '';
                 result = 'OK';
             }
-            accordion.append(`<div class="historyItemHeader" id="${id}">
-                <span><button class="delete" id="delete-${id}">X</button></span>
-                <span class="historyItemTime">${new Date(item.startTime).toLocaleString()}</span>
-                <span class="historyItemDuration">${item.durationMS.toFixed(2)}ms</span>
-                <span class="historyItemMethod">${item.service}.${item.method}</span>
-                <span class="historyItemMessages">${messages}</span>
-                <span class="historyItemResult">${result}</span>
-                <span class="historyItemLoad">
+            accordion.append(`<div class="history-item-header" id="${id}">
+                <span class="history-item-delete"><button class="delete" id="delete-${id}">X</button></span>
+                <span class="history-item-load">
                     <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
-                    ${valid ? '' : '<span class="invalidHistory">Service or method no longer available</span>'}
                 </span>
+                <span class="history-item-time">${new Date(item.startTime).toLocaleString()}</span>
+                <span class="history-item-duration">${item.durationMS.toFixed(2)}ms</span>
+                <span class="history-item-result ${err ? 'error' : ''}">${result}</span>
+                <span class="history-item-method ${valid ? '' : 'invalid-history'}"
+                      ${valid ? '' : 'title="Service or method no longer available"'}
+                >
+                    ${item.service}.${item.method}
+                </span>
+                <span class="history-item-messages">${messages}</span>
             </div>`);
-            accordion.append(`<div class="historyItemPanel">
-                <div>
-                    <span>Request:</span>
-                    <span><pre id="json">${dataString.slice(0, 250)}${dataString.length > 250 ? '...' : ''}</pre></span>
+            accordion.append(`<div class="history-item-panel">
+                <div class="history-detail-request">
+                    <div class="history-detail-heading">Request</div>
+                    <span><pre class="request-json">${dataString.slice(0, 250)}${dataString.length > 250 ? '...' : ''}</pre></span>
                 </div>
-                <div>
-                    <span>MetaData:</span>
-                    <span>${JSON.stringify(item.request.metadata)}</span>
-                </div>
+                ${item.request.metadata.length === 0 ? '' : `
+                <div class="history-detail-metadata">
+                    <div class="history-detail-heading">Metadata</div>
+                    <table>
+                        ${item.request.metadata.map((item) => `
+                        <tr><th>${item.name}</th><td>${item.value}</td></tr>
+                        `).join('\n')}
+                    </table>
+                </div>`}
             </div>`);
             $(`#delete-${id}`).click((evt) => {
                 deleteHistoryItem(i);
@@ -2502,10 +2520,11 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         }
         accordion.accordion({
             animate: 200,
+            active: false,
             collapsible: true,
-            header: ".historyItemHeader",
+            icons: false,
+            header: ".history-item-header",
             heightStyle: "content",
-            active: 0,
         });
     }
 

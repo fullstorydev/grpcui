@@ -101,6 +101,8 @@
     width: 100%;
     border: 1px solid #aaa;
     margin-bottom: 16px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
 }
 
 textarea#grpc-request-raw-text {
@@ -490,67 +492,120 @@ table#grpc-request-metadata-form {
     color: #c00;
 }
 
+#grpc-history-clear {
+    margin-bottom: 20px;
+}
+
 #grpc-history-list button.delete {
     background-color: #f66;
     color: white;
     border: 1px solid #c44;
-}
-
-#grpc-history-list button.load {
-    background-color: #0c0;
-    color: white;
-    border: 1px solid #090;
-}
-
-#grpc-history-list button.load:disabled {
-    background-color: #bbbbbb;
-    color: white;
-    border: 1px solid #c44;
-}
-#grpc-history-list button {
     padding: 2px 4px;
     border-radius: 3px;
     font-size: 12px;
     font-family: "Courier New", Courier, monospace;
 }
 
-#grpc-history-list .historyItemHeader {
-    min-width: 60%;
+#grpc-history-list button.load {
+    padding: 6px 12px 6px;
+    font-size: 100%;
+    margin: 0 24px;
+}
+
+#grpc-history-list .history-item-header {
+    align-items: center;
+    outline: none;
+    background: inherit;
+    border: none;
+    border-bottom: 1px solid #eee;
+    border-radius: 0;
+    margin: 0;
+    padding: 10px;
+}
+
+#grpc-history-list .history-item-header.ui-state-active {
+    color: #000;
+}
+
+#grpc-history-list > .ui-accordion:first-child {
+    border-top: 1px solid #eee;
+}
+
+#grpc-history-list .history-item-panel {
+    border-radius: 0;
+}
+
+#grpc-history-list .history-item-header span {
     display: inline-flex;
     align-items: center;
 }
 
-#grpc-history-list .historyItemHeader span {
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
+#grpc-history-list .history-item-header .history-item-time {
+    width: 180px;
 }
 
-#grpc-history-list .historyItemHeader .historyItemTime {
-    padding-left: 24px;
-    padding-right:24px;
+#grpc-history-list .history-item-header .history-item-duration {
+    width: 80px;
 }
 
-#grpc-history-list .historyItemHeader .historyItemDuration {
-    padding-left: 24px;
-    padding-right:24px;
+#grpc-history-list .history-item-header .history-item-result {
+    width: 144px;
 }
 
-#grpc-history-list .historyItemHeader .historyItemMessages {
-    padding-left: 24px;
-    padding-right:24px;
+#grpc-history-list .history-item-header .history-item-result.error {
+    color: #a00;
 }
 
-#grpc-history-list .historyItemHeader .historyItemMethod {
-    padding-right:24px;
+#grpc-history-list .history-item-header .history-item-method {
     font-weight: bold;
 }
 
-#grpc-history-list .historyItemHeader .historyItemLoad {
-    margin-left: auto;
+#grpc-history-list .history-item-header .history-item-method.invalid-history {
+    text-decoration: line-through;
+    color: #800;
 }
 
-#grpc-history-list .historyItemHeader .historyItemLoad .invalidhistory {
-    padding-left: 24px;
+#grpc-history-list .history-item-header .history-item-messages {
+    color: #888;
+    font-size: 90%;
+    padding-left: 30px;
 }
 
+#grpc-history-list .history-item-panel {
+    background-color: #fcfcfc;
+    padding: 1em;
+}
+
+#grpc-history-list .history-item-panel .history-detail-heading {
+    font-weight: bold;
+}
+
+#grpc-history-list .history-item-panel .history-detail-request .request-json {
+    font-size: 1.0em;
+    font-family: "Courier New", Courier, monospace;
+    margin: 1.0em 0 0 0;
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata .history-detail-heading {
+    margin: 1.0em 0 0 0;
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata table {
+    margin: 1.0em 0 0 0;
+    font-size: 1.0em;
+    font-family: "Courier New", Courier, monospace;
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata th {
+    font-weight: bold;
+    text-align: left;
+    color: #555;
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata th:after {
+    content: ":";
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata td {
+    padding-left: 12px;
+}
