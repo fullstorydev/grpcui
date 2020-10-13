@@ -8,6 +8,9 @@ builds:
     goarch:
       - amd64
       - 386
+    ignore:
+      - goos: darwin
+        goarch: 386
     ldflags:
       - -s -w -X main.version=v{{.Version}}
 
