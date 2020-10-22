@@ -2471,10 +2471,6 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         download('history.json', JSON.stringify(history, null, 2))
     }
 
-    // const loadHistory = () => {
-    //     console.log("clicked")
-    // }
-
     const addHistory = (item) => {
         history = history.slice(0, maxHistory - 1);
         history.unshift(item);
@@ -2537,12 +2533,12 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 </div>`}
             </div>`);
         $(`#delete-${id}`).click((evt) => {
-            deleteHistoryItem(i);
+            deleteHistoryItem(index);
             evt.preventDefault();
             evt.stopImmediatePropagation();
         });
         $(`#load-${id}`).click((evt) => {
-            loadHistoryItem(i);
+            loadHistoryItem(index);
             // These prevent the accordion from opening or folding when clicking load...
             evt.preventDefault();
             evt.stopImmediatePropagation();
