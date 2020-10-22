@@ -2449,6 +2449,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     const clearHistory = () => {
         if (confirm('Are you sure you wish to delete all history? This action is permanent and cannot be undone.')) {
             history = [];
+            preloadedHistory = [];
             onHistoryChange();
         }
     }
