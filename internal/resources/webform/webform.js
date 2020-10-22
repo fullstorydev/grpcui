@@ -2414,6 +2414,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     let history = [];
+    let preloadedHistory = [];
     const maxHistory = 100;
     const target = $(".target").text();
 
@@ -2424,6 +2425,19 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         if (json) {
             history = (JSON.parse(json))
         }
+
+        $.ajax({
+            url: 's/history.json',
+            type: 'GET',
+            success: function(data){
+                preloadedHistory = data;
+                updateHistoryUI();
+            },
+            error: function(data) {
+                // nothing to do probably no history saved server side
+            }
+        });
+
         updateHistoryUI();
     }
 
@@ -2439,44 +2453,59 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         }
     }
 
+    const download = (filename, text) => {
+        var element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+
+        element.style.display = 'none';
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
+    }
+
+    const saveHistory = () => {
+        download('history.json', JSON.stringify(history, null, 2))
+    }
+
+    // const loadHistory = () => {
+    //     console.log("clicked")
+    // }
+
     const addHistory = (item) => {
         history = history.slice(0, maxHistory - 1);
         history.unshift(item);
         onHistoryChange();
     }
 
-    const updateHistoryUI = () => {
-        const list = $('#grpc-history-list');
-        list.empty();
-        const accordion = $('<div>');
-        list.append(accordion);
-        for (let i = 0; i < history.length; i++) {
-            const item = history[i];
-            const id = `grpc-history-item-${i}`;
-            const dataString = JSON.stringify(item.request.data, null, 4);
-            const valid = services[item.service] && services[item.service].includes(item.method);
-            let result = '';
-            let messages = '&nbsp;';
-            let err = false;
-            if (item.failureStatus) {
-                result = `Failure: ${item.failureStatus}`;
-                err = true;
-            } else if (item.responseData.error) {
-                // for errors, show if any response messages were sent
-                let numMsgs = item.responseData?.responses?.length ?? 0;
-                if (numMsgs === 1) {
-                    messages = `1 response message`; // singular
-                } else if (numMsgs > 1) {
-                    messages = `${numMsgs} response messages`;
-                }
-                result = item.responseData.error.name ?? 'FAILED';
-                err = true;
-            } else {
-                // on success, only show number of response messages if more than one (e.g. a stream)
-                messages = (item.responseData?.responses?.length ?? 0) > 1 ? `${item.responseData.responses.length} response messages` : '';
-                result = 'OK';
+    const createHistoryRow = (accordion, item, index) => {
+        const id = `grpc-history-item-${index}`;
+        const dataString = JSON.stringify(item.request.data, null, 4);
+        const valid = services[item.service] && services[item.service].includes(item.method);
+        let result = '';
+        let messages = '&nbsp;';
+        let err = false;
+        if (item.failureStatus) {
+            result = `Failure: ${item.failureStatus}`;
+            err = true;
+        } else if (item.responseData.error) {
+            // for errors, show if any response messages were sent
+            let numMsgs = item.responseData?.responses?.length ?? 0;
+            if (numMsgs === 1) {
+                messages = `1 response message`; // singular
+            } else if (numMsgs > 1) {
+                messages = `${numMsgs} response messages`;
             }
-            accordion.append(`<div class="history-item-header" id="${id}">
+            result = item.responseData.error.name ?? 'FAILED';
+            err = true;
+        } else {
+            // on success, only show number of response messages if more than one (e.g. a stream)
+            messages = (item.responseData?.responses?.length ?? 0) > 1 ? `${item.responseData.responses.length} response messages` : '';
+            result = 'OK';
+        }
+        accordion.append(`<div class="history-item-header" id="${id}">
                 <span class="history-item-delete"><button class="delete" id="delete-${id}">X</button></span>
                 <span class="history-item-load">
                     <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
@@ -2491,7 +2520,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 </span>
                 <span class="history-item-messages">${messages}</span>
             </div>`);
-            accordion.append(`<div class="history-item-panel">
+        accordion.append(`<div class="history-item-panel">
                 <div class="history-detail-request">
                     <div class="history-detail-heading">Request</div>
                     <span><pre class="request-json">${dataString.slice(0, 250)}${dataString.length > 250 ? '...' : ''}</pre></span>
@@ -2506,17 +2535,31 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                     </table>
                 </div>`}
             </div>`);
-            $(`#delete-${id}`).click((evt) => {
-                deleteHistoryItem(i);
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
-            });
-            $(`#load-${id}`).click((evt) => {
-                loadHistoryItem(i);
-                // These prevent the accordion from opening or folding when clicking load...
-                evt.preventDefault();
-                evt.stopImmediatePropagation();
-            });
+        $(`#delete-${id}`).click((evt) => {
+            deleteHistoryItem(i);
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+        });
+        $(`#load-${id}`).click((evt) => {
+            loadHistoryItem(i);
+            // These prevent the accordion from opening or folding when clicking load...
+            evt.preventDefault();
+            evt.stopImmediatePropagation();
+        });
+    }
+
+    const updateHistoryUI = () => {
+        const list = $('#grpc-history-list');
+        list.empty();
+        const accordion = $('<div>');
+        list.append(accordion);
+        for (let i = 0; i < history.length; i++) {
+            const item = history[i];
+            createHistoryRow(accordion, item, i)
+        }
+        for (let i = 0; i < preloadedHistory.length; i++) {
+            const item = preloadedHistory[i];
+            createHistoryRow(accordion, item, history.length + i)
         }
         accordion.accordion({
             animate: 200,
@@ -2591,6 +2634,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     });
 
     $('#grpc-history-clear').click(() => clearHistory());
+    $('#grpc-history-save').click(() => saveHistory());
+    // $('#grpc-history-load').click(() => loadHistory());
 
     loadHistory();
 

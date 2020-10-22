@@ -492,7 +492,7 @@ table#grpc-request-metadata-form {
     color: #c00;
 }
 
-#grpc-history-clear {
+#grpc-history-clear #grpc-history-save #grpc-history-load {
     margin-bottom: 20px;
 }
 
