@@ -2468,7 +2468,11 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     const saveHistory = () => {
-        download('history.json', JSON.stringify(history, null, 2))
+        let toSave = history
+        if (preloadedHistory.length > 0 && confirm('Include pre-loaded (gray) items?')) {
+            toSave = toSave.concat(preloadedHistory)
+        }
+        download('history.json', JSON.stringify(toSave, null, 2))
     }
 
     const addHistory = (item) => {
@@ -2477,7 +2481,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         onHistoryChange();
     }
 
-    const createHistoryRow = (accordion, item, index) => {
+    const createHistoryRow = (accordion, item, index, preloaded) => {
         const id = `grpc-history-item-${index}`;
         const dataString = JSON.stringify(item.request.data, null, 4);
         const valid = services[item.service] && services[item.service].includes(item.method);
@@ -2502,7 +2506,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             messages = (item.responseData?.responses?.length ?? 0) > 1 ? `${item.responseData.responses.length} response messages` : '';
             result = 'OK';
         }
-        accordion.append(`<div class="history-item-header" id="${id}">
+        let style = (preloaded)
+            ?'style="background:#dcdcdc"'
+            : '';
+        accordion.append(`<div class="history-item-header" id="${id}" ${style}>
                 <span class="history-item-delete"><button class="delete" id="delete-${id}">X</button></span>
                 <span class="history-item-load">
                     <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
@@ -2552,11 +2559,11 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         list.append(accordion);
         for (let i = 0; i < history.length; i++) {
             const item = history[i];
-            createHistoryRow(accordion, item, i)
+            createHistoryRow(accordion, item, i, false)
         }
         for (let i = 0; i < preloadedHistory.length; i++) {
             const item = preloadedHistory[i];
-            createHistoryRow(accordion, item, history.length + i)
+            createHistoryRow(accordion, item, history.length + i, true)
         }
         accordion.accordion({
             animate: 200,
@@ -2571,8 +2578,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     const loadHistoryItem = (index) => {
         const t = $("#grpc-request-response");
         t.tabs("option", "active", 0);
-        const item = history[index];
-        $("#grpc-request-timeout input").val(item.timeout);
+        const item = (index < history.length)
+            ? history[index]
+            : preloadedHistory[index];
+        $("#grpc-request-timeout input").val(item.request.timeout);
         $("#grpc-service").val(item.service);
         formServiceSelected(() => {
             $("#grpc-method").val(item.method);
@@ -2589,7 +2598,11 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     const deleteHistoryItem = (index) => {
-        history.splice(index, 1);
+        if (index >= history.length) {
+            preloadedHistory.splice(index-history.length, 1);
+        } else {
+            history.splice(index, 1);
+        }
         onHistoryChange();
     }
 
