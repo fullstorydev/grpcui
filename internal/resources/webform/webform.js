@@ -2131,7 +2131,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         const historyItem = {
             request: {
-                timeout: timeoutStr,
+                timeout_seconds: timeoutStr,
                 metadata: $.extend([], metadata),
                 data: cloneData
             },
@@ -2460,6 +2460,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     }
 
     let history = [];
+    let examples = [];
     // TODO: add ability to customize these max history values
     const maxHistory = 100;
     const maxHistorySize = 1024*1024; // 1mb
@@ -2467,6 +2468,42 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     const historyStorageKey = `grpcui-history-${window.location.host}-${target}`;
     const expandDescStorageKey = `grpcui-expand-description`;
+
+    const loadExamples = () => {
+        $.ajax({
+            url: 'examples',
+            type: 'GET',
+            success: function(data){
+                examples = data;
+                updateExamplesUI();
+            },
+            error: function(data) {
+                console.log("Failed to load examples")
+            }
+        });
+    }
+
+    const updateExamplesUI = () => {
+        // only populate the example list if we have some
+        if (examples.length == 0) {
+            return
+        }
+
+        let examplesList = $("#grpc-request-examples")
+        examples.forEach(example => {
+            let exampleItem = $(`<li class="grpc-request-example">${example.name}</li>`);
+            examplesList.append(exampleItem);
+        })
+        $("#grpc-request-examples").selectable({
+            stop: function() {
+                $( ".ui-selected", this ).each(function() {
+                    const index = $( "li", examplesList ).index( this );
+                    loadRequest(examples[index])
+                });
+            }
+        })
+        $("#grpc-request-examples-container").show()
+    }
 
     const loadHistory = () => {
         const json = localStorage.getItem(historyStorageKey);
@@ -2506,6 +2543,23 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             history = [];
             onHistoryChange();
         }
+    }
+
+    const download = (filename, text) => {
+        let element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+
+        element.style.display = 'none';
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
+    }
+
+    const saveHistory = () => {
+        download('history.json', JSON.stringify(history, null, 2));
     }
 
     const addHistory = (item) => {
@@ -2597,11 +2651,10 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         });
     }
 
-    const loadHistoryItem = (index) => {
+    const loadRequest = (item) => {
         const t = $("#grpc-request-response");
         t.tabs("option", "active", 0);
-        const item = history[index];
-        $("#grpc-request-timeout input").val(item.timeout);
+        $("#grpc-request-timeout input").val(item.request.timeout_seconds);
         $("#grpc-service").val(item.service);
         formServiceSelected(() => {
             $("#grpc-method").val(item.method);
@@ -2615,6 +2668,15 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                 }
             });
         });
+    }
+
+    const clearExampleSelection = () => {
+        $('#grpc-request-examples .ui-selected').removeClass('ui-selected')
+    }
+
+    const loadHistoryItem = (index) => {
+        clearExampleSelection();
+        loadRequest(history[index]);
     }
 
     const deleteHistoryItem = (index) => {
@@ -2648,7 +2710,10 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         });
 
     $("#grpc-service").change(() => formServiceSelected());
-    $("#grpc-method").change(() => formMethodSelected());
+    $("#grpc-method").change(() => {
+        clearExampleSelection();
+        formMethodSelected();
+    });
 
     $("#grpc-request-metadata-add-row").click(function() {
         addMetadataRow();
@@ -2678,7 +2743,9 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     });
 
     $('#grpc-history-clear').click(() => clearHistory());
+    $('#grpc-history-save').click(() => saveHistory());
 
+    loadExamples();
     loadHistory();
 
     // TODO(jh): support populating the selected method and even request

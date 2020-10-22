@@ -111,6 +111,16 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	rpcMetadataHandler := grpcui.RPCMetadataHandler(methods, files)
 	mux.Handle("/metadata", rpcMetadataHandler)
 
+	mux.HandleFunc("/examples", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
+		if len(uiOpts.examples) > 0 {
+			w.Write(uiOpts.examples)
+		} else {
+			w.Write([]byte("[]"))
+		}
+	})
+
 	// make sure we always have a csrf token cookie
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := r.Cookie(csrfCookieName); err != nil {

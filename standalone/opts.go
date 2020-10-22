@@ -1,6 +1,8 @@
 package standalone
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"path"
@@ -129,6 +131,18 @@ func ServeAssetDirectory(dirname string, open func(filename string) (io.ReadClos
 	})
 }
 
+// WithExamples will add examples to the UI. The examples blob is expected to be valid json.
+func WithExamples(examples ...Example) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		examplesBlob, err := json.Marshal(examples)
+		if err != nil {
+			panic(fmt.Errorf("failed to encode examples to json: %v", err))
+		}
+
+		opts.examples = examplesBlob
+	})
+}
+
 // WithDefaultMetadata sets the default metadata in the web form to the given
 // values. Each string should be in the form "name: value".
 func WithDefaultMetadata(headers []string) HandlerOption {
@@ -193,6 +207,7 @@ type handlerOptions struct {
 	indexTmpl           *template.Template
 	css                 []byte
 	cssPublic           bool
+	examples            []byte
 	tmplResources       []*resource
 	servedOnlyResources []*resource
 	defaultMetadata     []string
