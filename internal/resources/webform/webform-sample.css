@@ -19,10 +19,29 @@
     height: 30px;
 }
 
+#grpc-container {
+    display: flex;
+}
+
+#grpc-request-examples-container {
+    flex: 1;
+    max-width: 200px;
+    margin-right: 10px;
+    margin-top: 25px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+#grpc-request-examples-container h3 {
+    text-align: center;
+}
+
 #grpc-request-response {
     margin-top: 24px;
     border: none;
     padding: 0;
+    flex: 1;
 }
 
 #grpc-request-response ul.ui-tabs-nav {
@@ -78,19 +97,6 @@
     margin-bottom: 16px;
     font-weight: bold;
     font-size: 18px;
-}
-
-#grpc-request-tab {
-    display: flex;
-}
-
-#grpc-request-examples-container {
-    flex: 1;
-    max-width: 200px;
-}
-
-#grpc-request-container {
-    flex: 1;
 }
 
 #grpc-request-examples {
