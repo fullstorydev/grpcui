@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 )
 
-// Examples list of gRPC request examples
-type Examples []struct {
+// Example model of an example gRPC request
+type Example struct {
 	Name    string `json:"name"`
 	Request struct {
 		Timeout  string `json:"timeout"`
@@ -19,6 +19,9 @@ type Examples []struct {
 	Service string `json:"service"`
 	Method  string `json:"method"`
 }
+
+// Examples list of gRPC request examples
+type Examples []Example
 
 // ParseExamplesFile parses the given examples file
 func ParseExamplesFile(path string) (*Examples, error) {
