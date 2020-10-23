@@ -101,6 +101,7 @@
 
 #grpc-request-examples li:hover {
     background-color: lightgray;
+    cursor: default;
 }
 
 #grpc-request-examples .ui-selected {
