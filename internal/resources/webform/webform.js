@@ -2606,6 +2606,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     const loadHistoryItem = (index) => {
+        $('#grpc-request-examples .ui-selected').removeClass('ui-selected')
         loadRequest(history[index])
     }
 
