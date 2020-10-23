@@ -21,23 +21,30 @@
         <li id="#grpc-history-tab-button"><a href="#grpc-history-tab">History</a></li>
     </ul>
     <div class="grpc-tabcontent" id="grpc-request-tab">
-      <h3>Request Metadata</h3>
-      <div id="grpc-request-metadata">
-        <table class="grpc-request-table" id="grpc-request-metadata-form">
-            <tr><th></th><th class="name">Name</th><th class="value">Value</th></tr>
-            <tr><td><button id="grpc-request-metadata-add-row" class="add">+</button></td><td colspan="2"><span class="add-row-label">Add item</span></td></tr>
-        </table>
+      <div id="grpc-request-examples-container" style="display: none">
+        <h3>Examples</h3>
+        <ol id="grpc-request-examples"/>
       </div>
 
-      <h3>Request Data</h3>
-      <div id="grpc-request-form"></div>
+      <div id="grpc-request-container">
+        <h3>Request Metadata</h3>
+        <div id="grpc-request-metadata">
+          <table class="grpc-request-table" id="grpc-request-metadata-form">
+              <tr><th></th><th class="name">Name</th><th class="value">Value</th></tr>
+              <tr><td><button id="grpc-request-metadata-add-row" class="add">+</button></td><td colspan="2"><span class="add-row-label">Add item</span></td></tr>
+          </table>
+        </div>
 
-      <h3>Request Timeout</h3>
-      <div id="grpc-request-timeout">
-        <input/> seconds
+        <h3>Request Data</h3>
+        <div id="grpc-request-form"></div>
+
+        <h3>Request Timeout</h3>
+        <div id="grpc-request-timeout">
+          <input/> seconds
+        </div>
+
+        <button class="grpc-invoke" disabled>Invoke</button>
       </div>
-
-      <button class="grpc-invoke" disabled>Invoke</button>
     </div>
     <div class="grpc-tabcontent" id="grpc-request-raw-tab">
       <textarea id="grpc-request-raw-text"></textarea><br/>

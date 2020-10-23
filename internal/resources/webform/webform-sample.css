@@ -80,6 +80,34 @@
     font-size: 18px;
 }
 
+#grpc-request-tab {
+    display: flex;
+}
+
+#grpc-request-examples-container {
+    flex: 1;
+    max-width: 200px;
+}
+
+#grpc-request-container {
+    flex: 1;
+}
+
+#grpc-request-examples {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#grpc-request-examples li:hover {
+    background-color: lightgray;
+}
+
+#grpc-request-examples .ui-selected {
+    background: darkgray;
+    color: white;
+}
+
 #grpc-form button {
     border-radius: 3px;
     background: #f0f0f0;

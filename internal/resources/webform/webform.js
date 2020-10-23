@@ -2414,30 +2414,48 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     let history = [];
-    let preloadedHistory = [];
+    let examples = [];
     const maxHistory = 100;
     const target = $(".target").text();
 
     const storageKey = `grpcui-history-${window.location.host}-${target}`;
+
+    const loadExamples = () => {
+        $.ajax({
+            url: 'examples',
+            type: 'GET',
+            success: function(data){
+                examples = data;
+                updateExamplesUI();
+            },
+            error: function(data) {
+                console.log("Failed to load examples")
+            }
+        });
+    }
+
+    const updateExamplesUI = () => {
+        let examplesList = $("#grpc-request-examples")
+        examples.forEach(example => {
+            let exampleItem = $(`<li class="grpc-request-example">${example.name}</li>`)
+            examplesList.append(exampleItem)
+        })
+        $("#grpc-request-examples").selectable({
+            stop: function() {
+                $( ".ui-selected", this ).each(function() {
+                    const index = $( "li", examplesList ).index( this );
+                    loadRequest(examples[index])
+                });
+            }
+        })
+        $("#grpc-request-examples-container").show()
+    }
 
     const loadHistory = () => {
         const json = localStorage.getItem(storageKey);
         if (json) {
             history = (JSON.parse(json))
         }
-
-        $.ajax({
-            url: 's/history.json',
-            type: 'GET',
-            success: function(data){
-                preloadedHistory = data;
-                updateHistoryUI();
-            },
-            error: function(data) {
-                // nothing to do probably no history saved server side
-            }
-        });
-
         updateHistoryUI();
     }
 
@@ -2449,13 +2467,12 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     const clearHistory = () => {
         if (confirm('Are you sure you wish to delete all history? This action is permanent and cannot be undone.')) {
             history = [];
-            preloadedHistory = [];
             onHistoryChange();
         }
     }
 
     const download = (filename, text) => {
-        var element = document.createElement('a');
+        let element = document.createElement('a');
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
         element.setAttribute('download', filename);
 
@@ -2469,8 +2486,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
 
     const saveHistory = () => {
         let toSave = history
-        if (preloadedHistory.length > 0 && confirm('Include pre-loaded (gray) items?')) {
-            toSave = toSave.concat(preloadedHistory)
+        if (examples.length > 0 && confirm('Include pre-loaded (gray) items?')) {
+            toSave = toSave.concat(examples)
         }
         download('history.json', JSON.stringify(toSave, null, 2))
     }
@@ -2481,35 +2498,38 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         onHistoryChange();
     }
 
-    const createHistoryRow = (accordion, item, index, preloaded) => {
-        const id = `grpc-history-item-${index}`;
-        const dataString = JSON.stringify(item.request.data, null, 4);
-        const valid = services[item.service] && services[item.service].includes(item.method);
-        let result = '';
-        let messages = '&nbsp;';
-        let err = false;
-        if (item.failureStatus) {
-            result = `Failure: ${item.failureStatus}`;
-            err = true;
-        } else if (item.responseData.error) {
-            // for errors, show if any response messages were sent
-            let numMsgs = item.responseData?.responses?.length ?? 0;
-            if (numMsgs === 1) {
-                messages = `1 response message`; // singular
-            } else if (numMsgs > 1) {
-                messages = `${numMsgs} response messages`;
+    const updateHistoryUI = () => {
+        const list = $('#grpc-history-list');
+        list.empty();
+        const accordion = $('<div>');
+        list.append(accordion);
+        for (let i = 0; i < history.length; i++) {
+            const item = history[i];
+            const id = `grpc-history-item-${i}`;
+            const dataString = JSON.stringify(item.request.data, null, 4);
+            const valid = services[item.service] && services[item.service].includes(item.method);
+            let result = '';
+            let messages = '&nbsp;';
+            let err = false;
+            if (item.failureStatus) {
+                result = `Failure: ${item.failureStatus}`;
+                err = true;
+            } else if (item.responseData.error) {
+                // for errors, show if any response messages were sent
+                let numMsgs = item.responseData?.responses?.length ?? 0;
+                if (numMsgs === 1) {
+                    messages = `1 response message`; // singular
+                } else if (numMsgs > 1) {
+                    messages = `${numMsgs} response messages`;
+                }
+                result = item.responseData.error.name ?? 'FAILED';
+                err = true;
+            } else {
+                // on success, only show number of response messages if more than one (e.g. a stream)
+                messages = (item.responseData?.responses?.length ?? 0) > 1 ? `${item.responseData.responses.length} response messages` : '';
+                result = 'OK';
             }
-            result = item.responseData.error.name ?? 'FAILED';
-            err = true;
-        } else {
-            // on success, only show number of response messages if more than one (e.g. a stream)
-            messages = (item.responseData?.responses?.length ?? 0) > 1 ? `${item.responseData.responses.length} response messages` : '';
-            result = 'OK';
-        }
-        let style = (preloaded)
-            ?'style="background:#dcdcdc"'
-            : '';
-        accordion.append(`<div class="history-item-header" id="${id}" ${style}>
+            accordion.append(`<div class="history-item-header" id="${id}">
                 <span class="history-item-delete"><button class="delete" id="delete-${id}">X</button></span>
                 <span class="history-item-load">
                     <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
@@ -2524,7 +2544,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 </span>
                 <span class="history-item-messages">${messages}</span>
             </div>`);
-        accordion.append(`<div class="history-item-panel">
+            accordion.append(`<div class="history-item-panel">
                 <div class="history-detail-request">
                     <div class="history-detail-heading">Request</div>
                     <span><pre class="request-json">${dataString.slice(0, 250)}${dataString.length > 250 ? '...' : ''}</pre></span>
@@ -2539,31 +2559,17 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                     </table>
                 </div>`}
             </div>`);
-        $(`#delete-${id}`).click((evt) => {
-            deleteHistoryItem(index);
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
-        });
-        $(`#load-${id}`).click((evt) => {
-            loadHistoryItem(index);
-            // These prevent the accordion from opening or folding when clicking load...
-            evt.preventDefault();
-            evt.stopImmediatePropagation();
-        });
-    }
-
-    const updateHistoryUI = () => {
-        const list = $('#grpc-history-list');
-        list.empty();
-        const accordion = $('<div>');
-        list.append(accordion);
-        for (let i = 0; i < history.length; i++) {
-            const item = history[i];
-            createHistoryRow(accordion, item, i, false)
-        }
-        for (let i = 0; i < preloadedHistory.length; i++) {
-            const item = preloadedHistory[i];
-            createHistoryRow(accordion, item, history.length + i, true)
+            $(`#delete-${id}`).click((evt) => {
+                deleteHistoryItem(i);
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+            });
+            $(`#load-${id}`).click((evt) => {
+                loadHistoryItem(i);
+                // These prevent the accordion from opening or folding when clicking load...
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+            });
         }
         accordion.accordion({
             animate: 200,
@@ -2575,34 +2581,31 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         });
     }
 
-    const loadHistoryItem = (index) => {
+    const loadRequest = (request) => {
         const t = $("#grpc-request-response");
         t.tabs("option", "active", 0);
-        const item = (index < history.length)
-            ? history[index]
-            : preloadedHistory[index];
-        $("#grpc-request-timeout input").val(item.request.timeout);
-        $("#grpc-service").val(item.service);
+        $("#grpc-request-timeout input").val(request.request.timeout);
+        $("#grpc-service").val(request.service);
         formServiceSelected(() => {
-            $("#grpc-method").val(item.method);
+            $("#grpc-method").val(request.method);
             formMethodSelected(() => {
-                jsonRawTextArea.val(JSON.stringify(item.request.data, null, 2));
+                jsonRawTextArea.val(JSON.stringify(request.request.data, null, 2));
                 validateJSON();
                 //remove all rows
                 $("tr").remove('.metadataRow');
-                for (let metadata of item.request.metadata) {
+                for (let metadata of request.request.metadata) {
                     addMetadataRow(metadata.name, metadata.value);
                 }
             });
         });
     }
 
+    const loadHistoryItem = (index) => {
+        loadRequest(history[index])
+    }
+
     const deleteHistoryItem = (index) => {
-        if (index >= history.length) {
-            preloadedHistory.splice(index-history.length, 1);
-        } else {
-            history.splice(index, 1);
-        }
+        history.splice(index, 1);
         onHistoryChange();
     }
 
@@ -2645,8 +2648,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
 
     $('#grpc-history-clear').click(() => clearHistory());
     $('#grpc-history-save').click(() => saveHistory());
-    // $('#grpc-history-load').click(() => loadHistory());
 
+    loadExamples();
     loadHistory();
 
     // TODO(jh): support populating the selected method and even request
