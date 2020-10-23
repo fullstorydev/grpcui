@@ -6,7 +6,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"github.com/apex/log"
 	"html/template"
 	"mime"
 	"net/http"
@@ -121,13 +123,20 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 }
 
 func registerExamplesHandler(mux *http.ServeMux, uiOpts *handlerOptions) {
-	if len(uiOpts.examples) == 0 {
-		uiOpts.examples = []byte("[]")
+	var examplesBlob []byte
+	if uiOpts.examples != nil && len(*uiOpts.examples) != 0 {
+		marshaled, err := json.Marshal(uiOpts.examples)
+		if err == nil {
+			examplesBlob = marshaled
+		} else {
+			log.Warnf("Failed to marshal examples: %v", err)
+		}
 	}
+
 	mux.HandleFunc("/examples", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(200)
-		w.Write(uiOpts.examples)
+		w.Write(examplesBlob)
 	})
 }
 
