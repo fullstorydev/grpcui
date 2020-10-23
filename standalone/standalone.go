@@ -99,7 +99,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	rpcMetadataHandler := grpcui.RPCMetadataHandler(methods, files)
 	mux.Handle("/metadata", rpcMetadataHandler)
 
-	registerExamplesHandler(mux, uiOpts)
+	registerExamplesHandler(&mux, uiOpts)
 
 	// make sure we always have a csrf token cookie
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +120,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	})
 }
 
-func registerExamplesHandler(mux http.ServeMux, uiOpts *handlerOptions) {
+func registerExamplesHandler(mux *http.ServeMux, uiOpts *handlerOptions) {
 	if len(uiOpts.examples) == 0 {
 		uiOpts.examples = []byte("[]")
 	}
