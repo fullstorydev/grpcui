@@ -2601,8 +2601,12 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         });
     }
 
-    const loadHistoryItem = (index) => {
+    const clearExampleSelection = () => {
         $('#grpc-request-examples .ui-selected').removeClass('ui-selected')
+    }
+
+    const loadHistoryItem = (index) => {
+        clearExampleSelection()
         loadRequest(history[index])
     }
 
@@ -2637,7 +2641,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         });
 
     $("#grpc-service").change(formServiceSelected);
-    $("#grpc-method").change(formMethodSelected);
+    $("#grpc-method").change(() => {
+        clearExampleSelection()
+        formMethodSelected()
+    });
 
     $("#grpc-request-metadata-add-row").click(function() {
         addMetadataRow();
