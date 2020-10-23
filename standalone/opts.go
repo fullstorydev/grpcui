@@ -80,6 +80,13 @@ func ServeAsset(filename string, contents []byte) HandlerOption {
 	})
 }
 
+// WithExamples will add examples to the UI
+func WithExamples(examples []byte) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.examples = examples
+	})
+}
+
 // WithDefaultMetadata sets the default metadata in the web form to the given
 // values. Each string should be in the form "name: value".
 func WithDefaultMetadata(headers []string) HandlerOption {
@@ -106,6 +113,7 @@ func (f optFunc) apply(opts *handlerOptions) {
 type handlerOptions struct {
 	indexTmpl           *template.Template
 	css                 []byte
+	examples            []byte
 	tmplResources       []*resource
 	servedOnlyResources []*resource
 	defaultMetadata     []string
