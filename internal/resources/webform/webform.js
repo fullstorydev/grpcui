@@ -2490,11 +2490,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     const saveHistory = () => {
-        let toSave = history
-        if (examples.length > 0 && confirm('Include pre-loaded (gray) items?')) {
-            toSave = toSave.concat(examples)
-        }
-        download('history.json', JSON.stringify(toSave, null, 2))
+        download('history.json', JSON.stringify(history, null, 2))
     }
 
     const addHistory = (item) => {
