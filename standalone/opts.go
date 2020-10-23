@@ -80,7 +80,7 @@ func ServeAsset(filename string, contents []byte) HandlerOption {
 	})
 }
 
-// WithExamples will add examples to the UI
+// WithExamples will add examples to the UI. The examples blob is expected to be valid json.
 func WithExamples(examples []byte) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
 		opts.examples = examples
