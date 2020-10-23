@@ -2435,6 +2435,11 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     const updateExamplesUI = () => {
+        // only populate the example list if we have some
+        if (examples.length == 0) {
+            return
+        }
+
         let examplesList = $("#grpc-request-examples")
         examples.forEach(example => {
             let exampleItem = $(`<li class="grpc-request-example">${example.name}</li>`)
