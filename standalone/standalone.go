@@ -8,8 +8,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/apex/log"
 	"html/template"
+	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -129,7 +129,7 @@ func registerExamplesHandler(mux *http.ServeMux, uiOpts *handlerOptions) {
 		if err == nil {
 			examplesBlob = marshaled
 		} else {
-			log.Warnf("Failed to marshal examples: %v", err)
+			log.Printf("Failed to marshal examples: %v\n", err)
 		}
 	}
 
