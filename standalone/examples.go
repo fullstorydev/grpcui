@@ -1,10 +1,5 @@
 package standalone
 
-import (
-	"encoding/json"
-	"io/ioutil"
-)
-
 // Example model of an example gRPC request
 type Example struct {
 	Name    string `json:"name"`
@@ -18,29 +13,4 @@ type Example struct {
 	} `json:"request"`
 	Service string `json:"service"`
 	Method  string `json:"method"`
-}
-
-// Examples list of gRPC request examples
-type Examples []Example
-
-// ParseExamplesFile parses the given examples file
-func ParseExamplesFile(path string) (*Examples, error) {
-	content, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	return ParseExamples(content)
-}
-
-// ParseExamplesFile parses the given examples blob
-func ParseExamples(content []byte) (*Examples, error) {
-	var examples Examples
-
-	err := json.Unmarshal(content, &examples)
-	if err != nil {
-		return nil, err
-	}
-
-	return &examples, nil
 }
