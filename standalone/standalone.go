@@ -122,15 +122,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 }
 
 func registerExamplesHandler(mux *http.ServeMux, uiOpts *handlerOptions) {
-	var examplesBlob []byte
-	var err error
-
-	if len(uiOpts.examples) > 0 {
-		marshaled, err := json.Marshal(uiOpts.examples)
-		if err == nil {
-			examplesBlob = marshaled
-		}
-	}
+	examplesBlob, err := json.Marshal(uiOpts.examples)
 
 	mux.HandleFunc("/examples", func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
