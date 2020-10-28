@@ -125,7 +125,7 @@ func registerExamplesHandler(mux *http.ServeMux, uiOpts *handlerOptions) {
 	examplesBlob, err := json.Marshal(uiOpts.examples)
 
 	mux.HandleFunc("/examples", func(w http.ResponseWriter, r *http.Request) {
-		if err != nil {
+		if err == nil {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(200)
 			w.Write(examplesBlob)
