@@ -81,7 +81,7 @@ func ServeAsset(filename string, contents []byte) HandlerOption {
 }
 
 // WithExamples will add examples to the UI. The examples blob is expected to be valid json.
-func WithExamples(examples *Examples) HandlerOption {
+func WithExamples(examples ...Examples) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
 		opts.examples = examples
 	})
@@ -113,7 +113,7 @@ func (f optFunc) apply(opts *handlerOptions) {
 type handlerOptions struct {
 	indexTmpl           *template.Template
 	css                 []byte
-	examples            *Examples
+	examples            []Examples
 	tmplResources       []*resource
 	servedOnlyResources []*resource
 	defaultMetadata     []string

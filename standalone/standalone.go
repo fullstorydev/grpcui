@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"log"
 	"mime"
 	"net/http"
 	"path"
@@ -124,19 +123,25 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 
 func registerExamplesHandler(mux *http.ServeMux, uiOpts *handlerOptions) {
 	var examplesBlob []byte
-	if uiOpts.examples != nil && len(*uiOpts.examples) != 0 {
+	var err error
+
+	if len(uiOpts.examples) > 0 {
 		marshaled, err := json.Marshal(uiOpts.examples)
 		if err == nil {
 			examplesBlob = marshaled
-		} else {
-			log.Printf("Failed to marshal examples: %v\n", err)
 		}
 	}
 
 	mux.HandleFunc("/examples", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(200)
-		w.Write(examplesBlob)
+		if err != nil {
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(200)
+			w.Write(examplesBlob)
+		} else {
+			w.Header().Add("Content-Type", "text/plain")
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+		}
 	})
 }
 
