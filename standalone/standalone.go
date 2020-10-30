@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"mime"
@@ -122,17 +121,13 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 }
 
 func registerExamplesHandler(mux *http.ServeMux, uiOpts *handlerOptions) {
-	examplesBlob, err := json.Marshal(uiOpts.examples)
-
 	mux.HandleFunc("/examples", func(w http.ResponseWriter, r *http.Request) {
-		if err == nil {
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(200)
-			w.Write(examplesBlob)
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
+		if len(uiOpts.examples) > 0 {
+			w.Write(uiOpts.examples)
 		} else {
-			w.Header().Add("Content-Type", "text/plain")
-			w.WriteHeader(500)
-			w.Write([]byte(err.Error()))
+			w.Write([]byte("[]"))
 		}
 	})
 }

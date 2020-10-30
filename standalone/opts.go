@@ -1,6 +1,8 @@
 package standalone
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"path"
 )
@@ -83,7 +85,12 @@ func ServeAsset(filename string, contents []byte) HandlerOption {
 // WithExamples will add examples to the UI. The examples blob is expected to be valid json.
 func WithExamples(examples ...Example) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
-		opts.examples = examples
+		examplesBlob, err := json.Marshal(examples)
+		if err != nil {
+			panic(fmt.Errorf("failed to encode examples to json: %v", err))
+		}
+
+		opts.examples = examplesBlob
 	})
 }
 
@@ -113,7 +120,7 @@ func (f optFunc) apply(opts *handlerOptions) {
 type handlerOptions struct {
 	indexTmpl           *template.Template
 	css                 []byte
-	examples            []Example
+	examples            []byte
 	tmplResources       []*resource
 	servedOnlyResources []*resource
 	defaultMetadata     []string
