@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
 	"github.com/mitchellh/mapstructure"
+	"strings"
 	"time"
 )
 
@@ -30,27 +33,64 @@ type Request struct {
 }
 
 func (request Request) MarshalJSON() ([]byte, error) {
+	var encFields []string
+
+	if request.Timeout != 0 {
+		encTimeout := fmt.Sprintf("\"timeout\": %q", request.Timeout.String())
+		encFields = append(encFields, encTimeout)
+	}
+
+	if len(request.Metadata) > 0 {
+		marshalMetadata, err := json.Marshal(request.Metadata)
+		if err != nil {
+			return nil, err
+		}
+		encMetadata := fmt.Sprintf("\"metadata\": %s", marshalMetadata)
+		encFields = append(encFields, encMetadata)
+	}
+
+	if request.Data != nil {
+		marshalData, err := marshalData(request.Data)
+		if err != nil {
+			return nil, err
+		}
+		encData := fmt.Sprintf("\"data\": %s", marshalData)
+		encFields = append(encFields, encData)
+	}
+
 	buffer := bytes.NewBufferString("{")
-
-	buffer.WriteString(fmt.Sprintf("\"timeout\": %q,", request.Timeout.String()))
-
-	marshalMetadata, err := json.Marshal(request.Metadata)
-	if err != nil {
-		return nil, err
-	}
-	buffer.WriteString(fmt.Sprintf("\"metadata\": %s,", marshalMetadata))
-
-	marshalData, err := json.Marshal(request.Data)
-	if err != nil {
-		return nil, err
-	}
-	buffer.WriteString(fmt.Sprintf("\"data\": %s", marshalData))
-
+	buffer.WriteString(strings.Join(encFields, ","))
 	buffer.WriteString("}")
 
-	fmt.Println(buffer.String())
-
 	return buffer.Bytes(), nil
+}
+
+func marshalData(data interface{}) ([]byte, error) {
+	var marshalData []byte
+	var err error
+
+	if protoMsg, ok := data.(proto.Message); ok {
+		marshalData, err = toJSON(protoMsg)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		marshalData, err = json.Marshal(data)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return marshalData, nil
+}
+
+func toJSON(msg proto.Message) ([]byte, error) {
+	jsm := jsonpb.Marshaler{EmitDefaults: true, OrigName: true}
+	var b bytes.Buffer
+	if err := jsm.Marshal(&b, msg); err == nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
 
 func (request *Request) UnmarshalJSON(b []byte) (returnedErr error) {
@@ -65,17 +105,23 @@ func (request *Request) UnmarshalJSON(b []byte) (returnedErr error) {
 		}
 	}()
 
-	request.Timeout, returnedErr = time.ParseDuration(raw["timeout"].(string))
-	if returnedErr != nil {
-		return returnedErr
+	if timeoutVal, exists := raw["timeout"]; exists {
+		request.Timeout, returnedErr = time.ParseDuration(timeoutVal.(string))
+		if returnedErr != nil {
+			return returnedErr
+		}
 	}
 
-	returnedErr = mapstructure.Decode(raw["metadata"], &request.Metadata)
-	if returnedErr != nil {
-		return returnedErr
+	if metadataVal, exists := raw["metadata"]; exists {
+		returnedErr = mapstructure.Decode(metadataVal, &request.Metadata)
+		if returnedErr != nil {
+			return returnedErr
+		}
 	}
 
-	request.Data = raw["data"]
+	if dataVal, exists := raw["data"]; exists {
+		request.Data = dataVal
+	}
 
 	return nil
 }
