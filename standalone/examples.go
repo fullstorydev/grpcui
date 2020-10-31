@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/mitchellh/mapstructure"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -35,8 +36,8 @@ type Request struct {
 func (request Request) MarshalJSON() ([]byte, error) {
 	var encFields []string
 
-	if request.Timeout != 0 {
-		encTimeout := fmt.Sprintf("\"timeout\": %q", request.Timeout.String())
+	if request.Timeout.Milliseconds() != 0 {
+		encTimeout := fmt.Sprintf("\"timeoutSeconds\": %f", request.Timeout.Seconds())
 		encFields = append(encFields, encTimeout)
 	}
 
@@ -105,11 +106,18 @@ func (request *Request) UnmarshalJSON(b []byte) (returnedErr error) {
 		}
 	}()
 
-	if timeoutVal, exists := raw["timeout"]; exists {
-		request.Timeout, returnedErr = time.ParseDuration(timeoutVal.(string))
-		if returnedErr != nil {
-			return returnedErr
+	if timeoutVal, exists := raw["timeoutSeconds"]; exists {
+		float64Val, isFloat64 := timeoutVal.(float64)
+		if !isFloat64 {
+			var err error
+
+			float64Val, err = strconv.ParseFloat(timeoutVal.(string), 64)
+			if err != nil {
+				return err
+			}
 		}
+
+		request.Timeout = time.Duration(float64Val*1000) * time.Millisecond
 	}
 
 	if metadataVal, exists := raw["metadata"]; exists {

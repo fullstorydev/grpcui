@@ -2106,7 +2106,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         }
         const history = {
             request: {
-                timeout: timeoutStr,
+                timeoutSeconds: timeoutStr,
                 metadata: $.extend([], metadata),
                 data: cloneData
             },
@@ -2585,7 +2585,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     const loadRequest = (request) => {
         const t = $("#grpc-request-response");
         t.tabs("option", "active", 0);
-        $("#grpc-request-timeout input").val(request.request.timeout);
+        $("#grpc-request-timeout input").val(request.request.timeoutSeconds);
         $("#grpc-service").val(request.service);
         formServiceSelected(() => {
             $("#grpc-method").val(request.method);

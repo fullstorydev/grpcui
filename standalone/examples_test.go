@@ -16,7 +16,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		{
 			name: "Full request, complex data",
 			request: Request{
-				Timeout: 100 * time.Second,
+				Timeout: 1 * time.Second,
 				Metadata: []MetadataPair{
 					{
 						"key",
@@ -31,7 +31,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		{
 			name: "Full request, string data",
 			request: Request{
-				Timeout: 100 * time.Second,
+				Timeout: 2 * time.Millisecond,
 				Metadata: []MetadataPair{
 					{
 						"key",
@@ -58,7 +58,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		{
 			name: "no data",
 			request: Request{
-				Timeout: 100 * time.Second,
+				Timeout: 1 * time.Millisecond,
 				Metadata: []MetadataPair{
 					{
 						"key",
@@ -70,7 +70,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		{
 			name: "only timeout",
 			request: Request{
-				Timeout: 100 * time.Second,
+				Timeout: 24 * time.Hour,
 			},
 		},
 		{
@@ -177,7 +177,7 @@ func TestRequest_UnmarshalJSON_Invalid(t *testing.T) {
 	}{
 		{
 			name:  "Invalid timeout",
-			input: "{\"timeout\": 1}",
+			input: "{\"timeoutSeconds\": \"1s\"}",
 		},
 		{
 			name:  "Top level not an object",
