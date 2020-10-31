@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package testmodels;
+
+option go_package = ".;testmodels";
+
+// A collection of proto messages used for testing
+
+message TestMessage2 {
+  required int32 aInt32 = 1;
+  optional string aString = 2;
+};

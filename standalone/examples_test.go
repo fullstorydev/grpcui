@@ -2,7 +2,7 @@ package standalone
 
 import (
 	"encoding/json"
-	testmodels "github.com/fullstorydev/grpcui/testing/testdata"
+	"github.com/fullstorydev/grpcui/testing/testdata"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
@@ -113,32 +113,61 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 }
 
 func TestRequest_MarshalJSON_ProtoData(t *testing.T) {
-	request := Request{
-		Data: testmodels.TestMessage{
-			AInt32:  107,
-			AString: "string",
+	tests := []struct {
+		name    string
+		request Request
+	}{
+		{
+			name: "proto3 data",
+			request: Request{
+				Data: testmodels.TestMessage3{
+					AInt32:  107,
+					AString: "string",
+				},
+			},
+		},
+		{
+			name: "proto2 data",
+			request: Request{
+				Data: testmodels.TestMessage2{
+					AInt32:  int32Ptr(107),
+					AString: strPtr("string"),
+				},
+			},
 		},
 	}
 
-	marshal, err := json.Marshal(request)
-	if err != nil {
-		t.Fatalf("marshal failed: %v", err)
-	}
-	t.Logf("marshaled: %q", string(marshal))
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			marshal, err := json.Marshal(test.request)
+			if err != nil {
+				t.Fatalf("marshal failed: %v", err)
+			}
+			t.Logf("marshaled: %q", string(marshal))
 
-	var raw interface{}
-	err = json.Unmarshal(marshal, &raw)
-	if err != nil {
-		t.Fatalf("unmarshal failed: %v", err)
-	}
+			var raw interface{}
+			err = json.Unmarshal(marshal, &raw)
+			if err != nil {
+				t.Fatalf("unmarshal failed: %v", err)
+			}
 
-	data := raw.(map[string]interface{})["data"].(map[string]interface{})
-	if data["aInt32"] != float64(107) {
-		t.Fatalf("aInt32 == %v != 107", data["aInt32"])
+			data := raw.(map[string]interface{})["data"].(map[string]interface{})
+			if data["aInt32"] != float64(107) {
+				t.Fatalf("aInt32 == %v != 107", data["aInt32"])
+			}
+			if data["aString"] != "string" {
+				t.Fatalf("aString == %v != \"string\"", data["aString"])
+			}
+		})
 	}
-	if data["aString"] != "string" {
-		t.Fatalf("aString == %v != \"string\"", data["aString"])
-	}
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
 }
 
 func TestRequest_UnmarshalJSON_Invalid(t *testing.T) {

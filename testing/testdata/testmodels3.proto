@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package testmodels;
 
-option go_package = "testmodels";
+option go_package = ".;testmodels";
 
 // A collection of proto messages used for testing
 
-message TestMessage {
+message TestMessage3 {
   int32 aInt32 = 1;
   string aString = 2;
 };
