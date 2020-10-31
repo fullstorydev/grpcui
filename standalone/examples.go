@@ -36,7 +36,7 @@ type Request struct {
 func (request Request) MarshalJSON() ([]byte, error) {
 	var encFields []string
 
-	if request.Timeout.Milliseconds() != 0 {
+	if request.Timeout.Seconds() != 0 {
 		encTimeout := fmt.Sprintf("\"timeoutSeconds\": %f", request.Timeout.Seconds())
 		encFields = append(encFields, encTimeout)
 	}
