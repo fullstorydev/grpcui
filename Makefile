@@ -34,6 +34,7 @@ docker:
 .PHONY: generate
 generate:
 	@go install github.com/go-bindata/go-bindata/go-bindata
+	@go install github.com/golang/protobuf/protoc-gen-go
 	go generate ./...
 
 .PHONY: checkgofmt
