@@ -170,7 +170,7 @@ func TestRequest_UnmarshalJSON_Invalid(t *testing.T) {
 	}{
 		{
 			name:  "Invalid timeout",
-			input: "{\"timeoutSeconds\": \"1s\"}",
+			input: "{\"timeout_seconds\": \"1s\"}",
 		},
 		{
 			name:  "Top level not an object",
