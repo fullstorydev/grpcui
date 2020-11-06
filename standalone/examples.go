@@ -4,13 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-	"github.com/mitchellh/mapstructure"
 )
 
 // Example model of an example gRPC request
@@ -34,37 +31,26 @@ type ExampleRequest struct {
 	Data     interface{}
 }
 
+// intermediateRequest intermedia type using for marshaling/unmarshaling
+type intermediateRequest struct {
+	TimeoutSeconds float64               `json:"timeout_seconds"`
+	Metadata       []ExampleMetadataPair `json:"metadata"`
+	Data           json.RawMessage       `json:"data"`
+}
+
 func (request ExampleRequest) MarshalJSON() ([]byte, error) {
-	var encFields []string
-
-	if request.Timeout.Seconds() != 0 {
-		encTimeout := fmt.Sprintf("\"timeout_seconds\": %f", request.Timeout.Seconds())
-		encFields = append(encFields, encTimeout)
+	marshalData, err := marshalData(request.Data)
+	if err != nil {
+		return nil, err
 	}
 
-	if len(request.Metadata) > 0 {
-		marshalMetadata, err := json.Marshal(request.Metadata)
-		if err != nil {
-			return nil, err
-		}
-		encMetadata := fmt.Sprintf("\"metadata\": %s", marshalMetadata)
-		encFields = append(encFields, encMetadata)
+	jsonRequest := intermediateRequest{
+		TimeoutSeconds: request.Timeout.Seconds(),
+		Metadata:       request.Metadata,
+		Data:           marshalData,
 	}
 
-	if request.Data != nil {
-		marshalData, err := marshalData(request.Data)
-		if err != nil {
-			return nil, err
-		}
-		encData := fmt.Sprintf("\"data\": %s", marshalData)
-		encFields = append(encFields, encData)
-	}
-
-	buffer := bytes.NewBufferString("{")
-	buffer.WriteString(strings.Join(encFields, ","))
-	buffer.WriteString("}")
-
-	return buffer.Bytes(), nil
+	return json.Marshal(jsonRequest)
 }
 
 func marshalData(data interface{}) ([]byte, error) {
@@ -96,8 +82,8 @@ func toJSON(msg proto.Message) ([]byte, error) {
 }
 
 func (request *ExampleRequest) UnmarshalJSON(b []byte) (returnedErr error) {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
+	var intermediate intermediateRequest
+	if err := json.Unmarshal(b, &intermediate); err != nil {
 		return fmt.Errorf("failed to unmarshal input as object: %v", err)
 	}
 
@@ -107,30 +93,9 @@ func (request *ExampleRequest) UnmarshalJSON(b []byte) (returnedErr error) {
 		}
 	}()
 
-	if timeoutVal, exists := raw["timeout_seconds"]; exists {
-		float64Val, isFloat64 := timeoutVal.(float64)
-		if !isFloat64 {
-			var err error
-
-			float64Val, err = strconv.ParseFloat(timeoutVal.(string), 64)
-			if err != nil {
-				return err
-			}
-		}
-
-		request.Timeout = time.Duration(float64Val*1000) * time.Millisecond
-	}
-
-	if metadataVal, exists := raw["metadata"]; exists {
-		returnedErr = mapstructure.Decode(metadataVal, &request.Metadata)
-		if returnedErr != nil {
-			return returnedErr
-		}
-	}
-
-	if dataVal, exists := raw["data"]; exists {
-		request.Data = dataVal
-	}
+	request.Timeout = time.Duration(intermediate.TimeoutSeconds*1000) * time.Millisecond
+	request.Metadata = intermediate.Metadata
+	request.Data = intermediate.Data
 
 	return nil
 }

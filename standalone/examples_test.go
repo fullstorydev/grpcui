@@ -3,6 +3,7 @@ package standalone
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/tj/assert"
 	"testing"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestRequest_MarshalUnmarshal(t *testing.T) {
@@ -110,9 +110,17 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 				t.Fatalf("unmarshal failed: %v", err)
 			}
 
-			if diff := cmp.Diff(test.request, unmarshaled); diff != "" {
-				t.Fatalf("OSRM gateway request mismatch (-want +got):\n%s", diff)
+			assert.Equal(t, test.request.Timeout, unmarshaled.Timeout)
+			assert.Equal(t, test.request.Metadata, unmarshaled.Metadata)
+
+			b, _ := unmarshaled.Data.(json.RawMessage).MarshalJSON()
+			var dataUnmarshaled interface{}
+			err = json.Unmarshal(b, &dataUnmarshaled)
+			if err != nil {
+				t.Fatalf("unmarshal failed: %v", err)
 			}
+
+			assert.Equal(t, test.request.Data, dataUnmarshaled)
 		})
 	}
 }
