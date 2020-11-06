@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestRequest_MarshalUnmarshal(t *testing.T) {
@@ -110,8 +111,12 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 				t.Fatalf("unmarshal failed: %v", err)
 			}
 
-			assert.Equal(t, test.request.Timeout, unmarshaled.Timeout)
-			assert.Equal(t, test.request.Metadata, unmarshaled.Metadata)
+			if diff := cmp.Diff(test.request.Timeout, unmarshaled.Timeout); diff != "" {
+				t.Fatalf("new stack mismatch (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(test.request.Metadata, unmarshaled.Metadata); diff != "" {
+				t.Fatalf("new stack mismatch (-want +got):\n%s", diff)
+			}
 
 			b, _ := unmarshaled.Data.(json.RawMessage).MarshalJSON()
 			var dataUnmarshaled interface{}
@@ -120,7 +125,9 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 				t.Fatalf("unmarshal failed: %v", err)
 			}
 
-			assert.Equal(t, test.request.Data, dataUnmarshaled)
+			if diff := cmp.Diff(test.request.Data, dataUnmarshaled); diff != "" {
+				t.Fatalf("new stack mismatch (-want +got):\n%s", diff)
+			}
 		})
 	}
 }
