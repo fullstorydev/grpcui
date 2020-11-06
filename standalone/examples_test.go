@@ -3,7 +3,6 @@ package standalone
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/tj/assert"
 	"testing"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRequest_MarshalUnmarshal(t *testing.T) {
