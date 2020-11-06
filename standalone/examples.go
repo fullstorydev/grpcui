@@ -15,26 +15,26 @@ import (
 
 // Example model of an example gRPC request
 type Example struct {
-	Name    string  `json:"name"`
-	Service string  `json:"service"`
-	Method  string  `json:"method"`
-	Request Request `json:"request"`
+	Name    string         `json:"name"`
+	Service string         `json:"service"`
+	Method  string         `json:"method"`
+	Request ExampleRequest `json:"request"`
 }
 
-// MetadataPair (name, value) pair
-type MetadataPair struct {
+// ExampleMetadataPair (name, value) pair
+type ExampleMetadataPair struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
-// Request gRPC request
-type Request struct {
+// ExampleRequest gRPC request
+type ExampleRequest struct {
 	Timeout  time.Duration
-	Metadata []MetadataPair
+	Metadata []ExampleMetadataPair
 	Data     interface{}
 }
 
-func (request Request) MarshalJSON() ([]byte, error) {
+func (request ExampleRequest) MarshalJSON() ([]byte, error) {
 	var encFields []string
 
 	if request.Timeout.Seconds() != 0 {
@@ -95,7 +95,7 @@ func toJSON(msg proto.Message) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (request *Request) UnmarshalJSON(b []byte) (returnedErr error) {
+func (request *ExampleRequest) UnmarshalJSON(b []byte) (returnedErr error) {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return fmt.Errorf("failed to unmarshal input as object: %v", err)

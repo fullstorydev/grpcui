@@ -11,13 +11,13 @@ import (
 func TestRequest_MarshalUnmarshal(t *testing.T) {
 	tests := []struct {
 		name    string
-		request Request
+		request ExampleRequest
 	}{
 		{
 			name: "Full request, complex data",
-			request: Request{
+			request: ExampleRequest{
 				Timeout: 1 * time.Second,
-				Metadata: []MetadataPair{
+				Metadata: []ExampleMetadataPair{
 					{
 						"key",
 						"value",
@@ -30,9 +30,9 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		},
 		{
 			name: "Full request, string data",
-			request: Request{
+			request: ExampleRequest{
 				Timeout: 2 * time.Millisecond,
-				Metadata: []MetadataPair{
+				Metadata: []ExampleMetadataPair{
 					{
 						"key",
 						"value",
@@ -43,8 +43,8 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		},
 		{
 			name: "No timeout",
-			request: Request{
-				Metadata: []MetadataPair{
+			request: ExampleRequest{
+				Metadata: []ExampleMetadataPair{
 					{
 						"key",
 						"value",
@@ -57,9 +57,9 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		},
 		{
 			name: "no data",
-			request: Request{
+			request: ExampleRequest{
 				Timeout: 1 * time.Millisecond,
-				Metadata: []MetadataPair{
+				Metadata: []ExampleMetadataPair{
 					{
 						"key",
 						"value",
@@ -69,20 +69,20 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		},
 		{
 			name: "only timeout",
-			request: Request{
+			request: ExampleRequest{
 				Timeout: 24 * time.Hour,
 			},
 		},
 		{
 			name: "only data",
-			request: Request{
+			request: ExampleRequest{
 				Data: "some data",
 			},
 		},
 		{
 			name: "only metadata",
-			request: Request{
-				Metadata: []MetadataPair{
+			request: ExampleRequest{
+				Metadata: []ExampleMetadataPair{
 					{
 						"a",
 						"b",
@@ -99,7 +99,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 			}
 			t.Logf("marshaled: %q", string(marshal))
 
-			var unmarshaled Request
+			var unmarshaled ExampleRequest
 			err = json.Unmarshal(marshal, &unmarshaled)
 			if err != nil {
 				t.Fatalf("unmarshal failed: %v", err)
@@ -115,11 +115,11 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 func TestRequest_MarshalJSON_ProtoData(t *testing.T) {
 	tests := []struct {
 		name    string
-		request Request
+		request ExampleRequest
 	}{
 		{
 			name: "proto3 data",
-			request: Request{
+			request: ExampleRequest{
 				Data: testmodels.TestMessage3{
 					AInt32:  107,
 					AString: "string",
@@ -128,7 +128,7 @@ func TestRequest_MarshalJSON_ProtoData(t *testing.T) {
 		},
 		{
 			name: "proto2 data",
-			request: Request{
+			request: ExampleRequest{
 				Data: testmodels.TestMessage2{
 					AInt32:  int32Ptr(107),
 					AString: strPtr("string"),
@@ -190,7 +190,7 @@ func TestRequest_UnmarshalJSON_Invalid(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var unmarshaled Request
+			var unmarshaled ExampleRequest
 			err := json.Unmarshal([]byte(test.input), &unmarshaled)
 			if err == nil {
 				t.Error("unmarshal should fail")
