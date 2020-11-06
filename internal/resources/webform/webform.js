@@ -2442,8 +2442,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
 
         let examplesList = $("#grpc-request-examples")
         examples.forEach(example => {
-            let exampleItem = $(`<li class="grpc-request-example">${example.name}</li>`)
-            examplesList.append(exampleItem)
+            let exampleItem = $(`<li class="grpc-request-example">${example.name}</li>`);
+            examplesList.append(exampleItem);
         })
         $("#grpc-request-examples").selectable({
             stop: function() {
@@ -2490,7 +2490,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     const saveHistory = () => {
-        download('history.json', JSON.stringify(history, null, 2))
+        download('history.json', JSON.stringify(history, null, 2));
     }
 
     const addHistory = (item) => {
@@ -2606,8 +2606,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     const loadHistoryItem = (index) => {
-        clearExampleSelection()
-        loadRequest(history[index])
+        clearExampleSelection();
+        loadRequest(history[index]);
     }
 
     const deleteHistoryItem = (index) => {
@@ -2642,8 +2642,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
 
     $("#grpc-service").change(formServiceSelected);
     $("#grpc-method").change(() => {
-        clearExampleSelection()
-        formMethodSelected()
+        clearExampleSelection();
+        formMethodSelected();
     });
 
     $("#grpc-request-metadata-add-row").click(function() {
