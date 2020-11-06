@@ -3,6 +3,7 @@ package standalone
 import (
 	"encoding/json"
 	"github.com/fullstorydev/grpcui/testing/testdata"
+	"github.com/gogo/protobuf/proto"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
@@ -130,8 +131,8 @@ func TestRequest_MarshalJSON_ProtoData(t *testing.T) {
 			name: "proto2 data",
 			request: ExampleRequest{
 				Data: testmodels.TestMessage2{
-					AInt32:  int32Ptr(107),
-					AString: strPtr("string"),
+					AInt32:  proto.Int32(107),
+					AString: proto.String("string"),
 				},
 			},
 		},
@@ -160,14 +161,6 @@ func TestRequest_MarshalJSON_ProtoData(t *testing.T) {
 			}
 		})
 	}
-}
-
-func strPtr(s string) *string {
-	return &s
-}
-
-func int32Ptr(i int32) *int32 {
-	return &i
 }
 
 func TestRequest_UnmarshalJSON_Invalid(t *testing.T) {
