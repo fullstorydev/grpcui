@@ -87,9 +87,9 @@ func marshalData(data interface{}) ([]byte, error) {
 }
 
 func toJSON(msg proto.Message) ([]byte, error) {
-	jsm := jsonpb.Marshaler{EmitDefaults: true, OrigName: true}
+	jsm := jsonpb.Marshaler{}
 	var b bytes.Buffer
-	if err := jsm.Marshal(&b, msg); err == nil {
+	if err := jsm.Marshal(&b, msg); err != nil {
 		return nil, err
 	}
 	return b.Bytes(), nil

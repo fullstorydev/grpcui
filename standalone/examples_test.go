@@ -1,12 +1,16 @@
 package standalone
 
 import (
+	"bytes"
 	"encoding/json"
-	"github.com/fullstorydev/grpcui/testing/testdata"
-	"github.com/gogo/protobuf/proto"
-	"github.com/google/go-cmp/cmp"
 	"testing"
 	"time"
+
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
+
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestRequest_MarshalUnmarshal(t *testing.T) {
@@ -113,26 +117,38 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 	}
 }
 
+type testRequest struct {
+	TimeoutSeconds float32               `json:"timeout_seconds"`
+	Metadata       []ExampleMetadataPair `json:"metadata"`
+	Data           json.RawMessage       `json:"data"`
+}
+
 func TestRequest_MarshalJSON_ProtoData(t *testing.T) {
 	tests := []struct {
 		name    string
 		request ExampleRequest
+		want    *descriptor.DescriptorProto
 	}{
 		{
-			name: "proto3 data",
+			name: "FieldDescriptorProto data",
 			request: ExampleRequest{
-				Data: testmodels.TestMessage3{
-					AInt32:  107,
-					AString: "string",
+				Data: &descriptor.DescriptorProto{
+					Name: proto.String("a name"),
+					Field: []*descriptor.FieldDescriptorProto{
+						{
+							Name:   proto.String("another name"),
+							Number: proto.Int32(1337),
+						},
+					},
 				},
 			},
-		},
-		{
-			name: "proto2 data",
-			request: ExampleRequest{
-				Data: testmodels.TestMessage2{
-					AInt32:  proto.Int32(107),
-					AString: proto.String("string"),
+			want: &descriptor.DescriptorProto{
+				Name: proto.String("a name"),
+				Field: []*descriptor.FieldDescriptorProto{
+					{
+						Name:   proto.String("another name"),
+						Number: proto.Int32(1337),
+					},
 				},
 			},
 		},
@@ -146,18 +162,21 @@ func TestRequest_MarshalJSON_ProtoData(t *testing.T) {
 			}
 			t.Logf("marshaled: %q", string(marshal))
 
-			var raw interface{}
+			var raw testRequest
 			err = json.Unmarshal(marshal, &raw)
 			if err != nil {
 				t.Fatalf("unmarshal failed: %v", err)
 			}
 
-			data := raw.(map[string]interface{})["data"].(map[string]interface{})
-			if data["aInt32"] != float64(107) {
-				t.Fatalf("aInt32 == %v != 107", data["aInt32"])
+			b, _ := raw.Data.MarshalJSON()
+			var got descriptor.DescriptorProto
+			err = jsonpb.Unmarshal(bytes.NewReader(b), &got)
+			if err != nil {
+				t.Fatalf("unmarshal failed: %v", err)
 			}
-			if data["aString"] != "string" {
-				t.Fatalf("aString == %v != \"string\"", data["aString"])
+
+			if !proto.Equal(test.want, &got) {
+				t.Fatal("Decoded version does not match")
 			}
 		})
 	}
