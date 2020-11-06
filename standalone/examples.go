@@ -38,7 +38,7 @@ func (request ExampleRequest) MarshalJSON() ([]byte, error) {
 	var encFields []string
 
 	if request.Timeout.Seconds() != 0 {
-		encTimeout := fmt.Sprintf("\"timeoutSeconds\": %f", request.Timeout.Seconds())
+		encTimeout := fmt.Sprintf("\"timeout_seconds\": %f", request.Timeout.Seconds())
 		encFields = append(encFields, encTimeout)
 	}
 
@@ -107,7 +107,7 @@ func (request *ExampleRequest) UnmarshalJSON(b []byte) (returnedErr error) {
 		}
 	}()
 
-	if timeoutVal, exists := raw["timeoutSeconds"]; exists {
+	if timeoutVal, exists := raw["timeout_seconds"]; exists {
 		float64Val, isFloat64 := timeoutVal.(float64)
 		if !isFloat64 {
 			var err error
