@@ -2156,22 +2156,21 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 // (or even better, be able to render unset fields differently).
                 // But we need response schema info to do that...
                 if (responseData.responses instanceof Array && responseData.responses.length > 0) {
-                    var div = $("#grpc-response-data");
-                    div.show();
-                    div.empty();
-                    var resp = responseData.responses;
-                    for (i = 0; i < resp.length; i++) {
-                        var container = $('<div>');
-                        container.addClass("output_container one-of-2 one-of-3 one-of-4 one-of-5 root");
-                        div.append(container);
-                        var val = resp[i];
-                        if (val.isError) {
+                    const responseDiv = $("#grpc-response-data");
+                    responseDiv.empty();
+                    responseDiv.show();
+                    for (const resp of responseData.responses) {
+                        const container = $('<div>');
+                        if (resp.isError) {
                             container.html('<div class="error">Server error processing message #' + (i+1) + '</div>');
                         } else {
-                            populateResultContainer(container, 0, val.message);
+                            const textArea = $('<textarea>');
+                            textArea.val(JSON.stringify(resp.message, null, 2));
+                            textArea.addClass('grpc-response-textarea');
+                            container.append(textArea);
                         }
+                        responseDiv.append(container);
                     }
-                    // TODO(jh): button or some other mechanism to view result as raw JSON.
                 } else {
                     $("#grpc-response-data").hide();
                 }
@@ -2253,6 +2252,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     // Renders the given response value to the given DIV element. The depth
     // parameter is used to add CSS styles to container elements (in the same
     // way that pathLen is used in the add*ToForm functions above).
+    // TODO: Wire this back into results rendering if pretty results are still desirable.
     function populateResultContainer(div, depth, val) {
         if (val === null) {
             div.html('<span class="null">null</span>');
