@@ -411,6 +411,11 @@ table#grpc-request-metadata-form {
     padding: 0;
 }
 
+textarea.grpc-response-textarea {
+    font-family: "Courier New", Courier, monospace;
+    height: 200px;
+}
+
 #grpc-response-req-stats {
     font-size: 110%;
     padding-bottom: 8px;
