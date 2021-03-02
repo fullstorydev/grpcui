@@ -23,6 +23,7 @@ import (
 	"github.com/fullstorydev/grpcurl"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/grpcreflect"
+	"github.com/jpillora/backoff"
 	"github.com/pkg/browser"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/net/context"
@@ -84,6 +85,11 @@ var (
 		probe is sent. If the connection remains idle and no keepalive response
 		is received for this same period then the connection is closed and the
 		operation fails.`))
+	retryMaxAttempts = flags.Int("retry-max-attempts", 0, prettify(`
+		The maximum number of times to attempt to reconnect to the gRPC server.
+		grpcui will exponentially back off the time between connection attempts
+		as it is unable to reach the server. Useful for running grpcui as a
+		sidecar to gRPC service development. Defaults to 0.`))
 	maxTime = flags.Float64("max-time", 0, prettify(`
 		The maximum total time a single RPC invocation is allowed to take, in
 		seconds.`))
@@ -233,6 +239,9 @@ func main() {
 	if *maxMsgSz < 0 {
 		fail(nil, "The -max-msg-sz argument must not be negative.")
 	}
+	if *retryMaxAttempts < 0 {
+		fail(nil, "The -retry-max-attempts argument must not be negative.")
+	}
 	if *plaintext && *insecure {
 		fail(nil, "The -plaintext and -insecure arguments are mutually exclusive.")
 	}
@@ -325,9 +334,36 @@ func main() {
 	if isUnixSocket != nil && isUnixSocket() {
 		network = "unix"
 	}
-	cc, err := grpcurl.BlockingDial(ctx, network, target, creds, opts...)
-	if err != nil {
-		fail(err, "Failed to dial target host %q", target)
+
+	b := &backoff.Backoff{
+		Min: 2 * time.Second,
+		Max: 8 * time.Second,
+	}
+	retryCount := 0
+	var cc *grpc.ClientConn
+	for {
+		if retryCount > 0 {
+			fmt.Printf("Retry attempt %d of %d\n", retryCount, *retryMaxAttempts)
+		}
+		conn, err := grpcurl.BlockingDial(ctx, network, target, creds, opts...)
+		if err != nil {
+			if *retryMaxAttempts == 0 {
+				fail(err, "Failed to reach host %q", target)
+			} else {
+				fmt.Printf("Unable to reach host %q\n", target)
+				if retryCount == *retryMaxAttempts {
+					fail(err, "Failed to reach host %q after %d attempts", target, retryCount)
+				}
+				d := b.Duration()
+				fmt.Printf("Reconnecting in %s\n", d)
+				time.Sleep(d)
+				retryCount++
+				continue
+			}
+		}
+		// connected to the server
+		cc = conn
+		break
 	}
 
 	var descSource grpcurl.DescriptorSource
