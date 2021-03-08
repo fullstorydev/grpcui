@@ -1,5 +1,5 @@
 # gRPC UI
-[![Build Status](https://travis-ci.org/fullstorydev/grpcui.svg?branch=master)](https://travis-ci.org/fullstorydev/grpcui/branches)
+[![Build Status](https://travis-ci.com/fullstorydev/grpcui.svg?branch=master)](https://travis-ci.com/github/fullstorydev/grpcui/branches)
 [![Go Report Card](https://goreportcard.com/badge/github.com/fullstorydev/grpcui)](https://goreportcard.com/report/github.com/fullstorydev/grpcui)
 
 `grpcui` is a command-line tool that lets you interact with gRPC servers via a browser.
@@ -62,7 +62,7 @@ the form of an HTML table.
 ### From Source
 You can use the `go` tool to install `grpcui`:
 ```shell
-go get github.com/fullstorydev/grpcui
+go get github.com/fullstorydev/grpcui/...
 go install github.com/fullstorydev/grpcui/cmd/grpcui
 ```
 

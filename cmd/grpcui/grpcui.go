@@ -16,6 +16,7 @@ import (
 	"net/http/httputil"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,12 +24,19 @@ import (
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"github.com/jhump/protoreflect/grpcreflect"
+	"github.com/pkg/browser"
+	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
+
+	// Register gzip compressor so compressed responses will work
+	_ "google.golang.org/grpc/encoding/gzip"
+	// Register xds so xds and xds-experimental resolver schemes work
+	_ "google.golang.org/grpc/xds"
 
 	"github.com/fullstorydev/grpcui/standalone"
 )
@@ -65,6 +73,7 @@ var (
 	targets     multiString
 	importPaths multiString
 	reflHeaders multiString
+	defHeaders  multiString
 	authority   = flags.String("authority", "", prettify(`
 		Value of :authority pseudo-header to be use with underlying HTTP/2
 		requests. It defaults to the given address.`))
@@ -82,6 +91,7 @@ var (
 	maxMsgSz = flags.Int("max-msg-sz", 0, prettify(`
 		The maximum encoded size of a message that grpcui will accept. If not
 		specified, defaults to 4mb.`))
+	debug   optionalBoolFlag
 	verbose = flags.Bool("v", false, prettify(`
 		Enable verbose output.`))
 	veryVerbose = flags.Bool("vv", false, prettify(`
@@ -91,6 +101,11 @@ var (
 		requests and responses.`))
 	serverName = flags.String("servername", "", prettify(`
 		Override servername when validating TLS certificate.`))
+	openBrowser = flags.Bool("open-browser", false, prettify(`
+		When true, grpcui will try to open a browser pointed at the UI's URL.
+		This defaults to true when grpcui is used in an interactive mode; e.g.
+		when the tool detects that stdin is a terminal/tty. Otherwise, this
+		defaults to false.`))
 
 	port = flags.Int("port", 0, prettify(`
 		The port on which the web UI is exposed.`))
@@ -106,6 +121,11 @@ func init() {
 		than one via multiple flags. These headers will only be used during
 		reflection requests and will be excluded when invoking the requested RPC
 		method.`))
+	flags.Var(&defHeaders, "default-header", prettify(`
+		Additional headers to add to metadata in the gRPCui web form. Each value
+		should be in 'name: value' format. May specify more than one via multiple
+		flags. These headers are just defaults in the UI and maybe changed or
+		removed by the user that is interacting with the form.`))
 	flags.Var(&protoset, "protoset", prettify(`
 		The name of a file containing an encoded FileDescriptorSet. This file's
 		contents will be used to determine the RPC schema instead of querying
@@ -146,6 +166,9 @@ func init() {
 		a -method flag. Method names must be fully-qualified and may either use
 		a dot (".") or a slash ("/") to separate the fully-qualified service
 		name from the method's name.`))
+	flags.Var(&debug, "debug-client", prettify(`
+		When true, the client JS code in the gRPCui web form will log extra
+		debug info to the console.`))
 }
 
 type multiString []string
@@ -159,7 +182,36 @@ func (s *multiString) Set(value string) error {
 	return nil
 }
 
+type optionalBoolFlag struct {
+	set, val bool
+}
+
+func (f *optionalBoolFlag) String() string {
+	if !f.set {
+		return "unset"
+	}
+	return strconv.FormatBool(f.val)
+}
+
+func (f *optionalBoolFlag) Set(s string) error {
+	v, err := strconv.ParseBool(s)
+	if err != nil {
+		return err
+	}
+	f.set = true
+	f.val = v
+	return nil
+}
+
+func (f *optionalBoolFlag) IsBoolFlag() bool {
+	return true
+}
+
 func main() {
+	if terminal.IsTerminal(int(os.Stdin.Fd())) {
+		*openBrowser = true
+	}
+
 	flags.Usage = usage
 	flags.Parse(os.Args[1:])
 
@@ -342,7 +394,14 @@ func main() {
 		refClient = nil
 	}
 
-	handler := standalone.Handler(chMap, sb.String(), methods, allFiles)
+	var handlerOpts []standalone.HandlerOption
+	if len(defHeaders) > 0 {
+		handlerOpts = append(handlerOpts, standalone.WithDefaultMetadata(defHeaders))
+	}
+	if debug.set {
+		handlerOpts = append(handlerOpts, standalone.WithDebug(debug.val))
+	}
+	handler := standalone.Handler(chMap, sb.String(), methods, allFiles, handlerOpts...)
 	if *maxTime > 0 {
 		timeout := time.Duration(*maxTime * float64(time.Second))
 		// enforce the timeout by wrapping the handler and inserting a
@@ -400,8 +459,15 @@ func main() {
 	if err != nil {
 		fail(err, "Failed to listen on port %d", *port)
 	}
-	fmt.Printf("gRPC Web UI available at http://%s:%d/\n", *bind, listener.Addr().(*net.TCPAddr).Port)
 
+	url := fmt.Sprintf("http://%s:%d/", *bind, listener.Addr().(*net.TCPAddr).Port)
+	fmt.Printf("gRPC Web UI available at %s\n", url)
+
+	if *openBrowser {
+		if err := browser.OpenURL(url); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to open browser: %v\n", err)
+		}
+	}
 	if err := http.Serve(listener, handler); err != nil {
 		fail(err, "Failed to serve web UI")
 	}

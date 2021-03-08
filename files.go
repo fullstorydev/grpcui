@@ -15,7 +15,7 @@ import (
 // connection. This returns an error if the server does not support service
 // reflection. (See "google.golang.org/grpc/reflection" for more on service
 // reflection.)
-func AllFilesViaReflection(ctx context.Context, cc *grpc.ClientConn) ([]*desc.FileDescriptor, error) {
+func AllFilesViaReflection(ctx context.Context, cc grpc.ClientConnInterface) ([]*desc.FileDescriptor, error) {
 	stub := rpb.NewServerReflectionClient(cc)
 	cli := grpcreflect.NewClient(ctx, stub)
 	cli.ListServices()

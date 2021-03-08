@@ -3,19 +3,19 @@
     font-size: 1.0em;
 }
 
-.grpc-select {
+.grpc-desc {
     margin-bottom: 8px;
     margin-left: 16px;
 }
 
-.grpc-select span.grpc-form-label {
+.grpc-desc span.grpc-form-label {
     font-size: 125%;
     width: 130px;
     float: left;
     line-height: 30px;
 }
 
-.grpc-select select {
+.grpc-desc select {
     height: 30px;
 }
 
@@ -101,10 +101,20 @@
     width: 100%;
     border: 1px solid #aaa;
     margin-bottom: 16px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 14px;
 }
 
 textarea#grpc-request-raw-text {
     height: 200px;
+}
+
+#grpc-request-timeout {
+    margin-bottom: 20px;
+}
+
+#grpc-request-timeout input {
+    border: 1px solid #888;
 }
 
 table#grpc-request-metadata-form {
@@ -356,6 +366,11 @@ table#grpc-request-metadata-form {
     background-color: #ffe0e8;
 }
 
+#grpc-request-timeout input.invalid-input {
+    border: 3px dotted #f46;
+    background-color: #ffe0e8;
+}
+
 .grpc-timestamp-picker.ui-datepicker span.ui-icon {
     background: none;
     text-indent: 0;
@@ -394,6 +409,11 @@ table#grpc-request-metadata-form {
     border: none;
     font-style: italic;
     padding: 0;
+}
+
+textarea.grpc-response-textarea {
+    font-family: "Courier New", Courier, monospace;
+    height: 200px;
 }
 
 #grpc-response-req-stats {
@@ -475,4 +495,122 @@ table#grpc-request-metadata-form {
     font-size: 14px;
     font-family: "Courier New", Courier, monospace;
     color: #c00;
+}
+
+#grpc-history-clear {
+    margin-bottom: 20px;
+}
+
+#grpc-history-list button.delete {
+    background-color: #f66;
+    color: white;
+    border: 1px solid #c44;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: "Courier New", Courier, monospace;
+}
+
+#grpc-history-list button.load {
+    padding: 6px 12px 6px;
+    font-size: 100%;
+    margin: 0 24px;
+}
+
+#grpc-history-list .history-item-header {
+    align-items: center;
+    outline: none;
+    background: inherit;
+    border: none;
+    border-bottom: 1px solid #eee;
+    border-radius: 0;
+    margin: 0;
+    padding: 10px;
+}
+
+#grpc-history-list .history-item-header.ui-state-active {
+    color: #000;
+}
+
+#grpc-history-list > .ui-accordion:first-child {
+    border-top: 1px solid #eee;
+}
+
+#grpc-history-list .history-item-panel {
+    border-radius: 0;
+}
+
+#grpc-history-list .history-item-header span {
+    display: inline-flex;
+    align-items: center;
+}
+
+#grpc-history-list .history-item-header .history-item-time {
+    width: 180px;
+}
+
+#grpc-history-list .history-item-header .history-item-duration {
+    width: 80px;
+}
+
+#grpc-history-list .history-item-header .history-item-result {
+    width: 144px;
+}
+
+#grpc-history-list .history-item-header .history-item-result.error {
+    color: #a00;
+}
+
+#grpc-history-list .history-item-header .history-item-method {
+    font-weight: bold;
+}
+
+#grpc-history-list .history-item-header .history-item-method.invalid-history {
+    text-decoration: line-through;
+    color: #800;
+}
+
+#grpc-history-list .history-item-header .history-item-messages {
+    color: #888;
+    font-size: 90%;
+    padding-left: 30px;
+}
+
+#grpc-history-list .history-item-panel {
+    background-color: #fcfcfc;
+    padding: 1em;
+}
+
+#grpc-history-list .history-item-panel .history-detail-heading {
+    font-weight: bold;
+}
+
+#grpc-history-list .history-item-panel .history-detail-request .request-json {
+    font-size: 1.0em;
+    font-family: "Courier New", Courier, monospace;
+    margin: 1.0em 0 0 0;
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata .history-detail-heading {
+    margin: 1.0em 0 0 0;
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata table {
+    margin: 1.0em 0 0 0;
+    font-size: 1.0em;
+    font-family: "Courier New", Courier, monospace;
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata th {
+    font-weight: bold;
+    text-align: left;
+    color: #555;
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata th:after {
+    content: ":";
+}
+
+#grpc-history-list .history-item-panel .history-detail-metadata td {
+    padding-left: 12px;
 }

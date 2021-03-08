@@ -1,8 +1,8 @@
-window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
+window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers) {
 
     var requestForm = $("#grpc-request-form");
 
-    function formServiceSelected() {
+    function formServiceSelected(callback) {
         var methods = services[$("#grpc-service").val()];
         var methodList = $("#grpc-method");
         methodList.empty();
@@ -13,10 +13,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         $("#grpc-method option:first-of-type").select();
         // implicit selection of first element does not
         // generate a change event, so we have to do this
-        formMethodSelected();
+        formMethodSelected(callback);
     }
 
-    function formMethodSelected() {
+    function formMethodSelected(callback) {
         var service = $("#grpc-service").val();
         var method = $("#grpc-method").val();
 
@@ -27,6 +27,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         $.ajax(metadataURI + "?method=" + service + "." + method)
             .done(function(data) {
                 buildRequestForm(data);
+                callback?.();
             })
             .fail(function(data, status) {
                 alert("Unexpected error: " + status);
@@ -123,7 +124,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             rebuildRequestForm(requestObj, true);
         } catch (e) {
             var msg = e.message;
-            if (isUndefined(msg)) {
+            if (isUnset(msg)) {
                 msg = e.toString();
             }
             alert(msg);
@@ -241,8 +242,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     var undefined = [][1];
 
-    function isUndefined(v) {
-        return typeof v === 'undefined';
+    function isUnset(v) {
+        return v === null || typeof v === 'undefined';
     }
 
     /*
@@ -307,6 +308,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             // treat ListValue as if it were 'repeated Value'
             var elemType = {
                 name: fld.name,
+                protoName: fld.protoName,
                 type: "google.protobuf.Value",
                 oneOfFields: [],
                 isMessage: true,
@@ -314,7 +316,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 isArray: true,
                 isMap: false,
                 isRequired: false,
-                defaultVal: null,
+                defaultVal: null
             };
             return addArrayToForm(schema, container, parent, pathLen, value, allowMissing, fld.type, elemType);
         }
@@ -387,7 +389,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var mapEntryFields = schema.messageTypes[fld.type];
         var mapType = "map<" + mapEntryFields[0].type + "," + mapEntryFields[1].type + ">";
 
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = {};
         } else if (typeof value !== 'object' || value instanceof Array) {
             throw typeError(mapType, value, "object");
@@ -418,14 +420,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         input.asArray = addArrayToForm(schema, container, input, pathLen, arrayVal, allowMissing, mapType, fld);
 
         // adapt value form array to map by overriding change handlers
-        input.onAdd = function() {
-            // undefined key means it's not in main request model yet
-            // (we leave it that way and don't call parent to let user
-            // edit key field first, in case default value collides
-            // with existing key).
-            this.childKeys.push(undefined);
-        };
-        input.onChange = function(child, revPath, val) {
+        input.doOnChange = function(child, revPath, val, nextFunc) {
             // translate child index to map key
             var index = + revPath[revPath.length-1];
             var key = this.childKeys[index];
@@ -445,14 +440,14 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
                 var entryVal = this.asArray.children[index]['value'].value;
                 this.parent.onAdd(this, [newKey], entryVal);
-                if (!isUndefined(key)) {
+                if (!isUnset(key)) {
                     this.parent.onDelete(this, [key]);
                 }
                 this.childKeys[index] = newKey;
                 return;
             }
 
-            if (isUndefined(key)) {
+            if (isUnset(key)) {
                 // not yet in model, skip
                 return;
             }
@@ -462,13 +457,28 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             revPath.splice(revPath.length-1, 1);
             revPath[revPath.length-1] = key;
 
-            this.parent.onChange(this, revPath, val);
+            this.parent[nextFunc].call(this.parent, this, revPath, val);
+        };
+        input.onAdd = function(child, revPath, val) {
+            if (revPath.length <= 1) {
+                // We are adding an entry to the map. We use an undefined
+                // key to means it's not in main request model yet
+                // (we leave it that way and don't call parent to let user
+                // edit key field first, in case default value collides
+                // with existing key).
+                this.childKeys.push(undefined);
+            } else {
+                this.doOnChange(child, revPath, val, 'onAdd');
+            }
+        };
+        input.onChange = function(child, revPath, val) {
+            this.doOnChange(child, revPath, val, 'onChange');
         };
         input.onDelete = function(child, revPath) {
             // translate child index to map key
             var index = revPath[revPath.length-1];
             var key = this.childKeys[index];
-            if (isUndefined(key)) {
+            if (isUnset(key)) {
                 // never added to model, so nothing to delete
                 return;
             }
@@ -495,7 +505,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // Arrays result in a table of inputs, where each row is an element in the
     // array value. The table includes buttons for adding and removing rows.
     function addArrayToForm(schema, container, parent, pathLen, value, allowMissing, typeName, fld) {
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = [];
         } else if (!(value instanceof Array)) {
             throw typeError(typeName, value, "array");
@@ -508,6 +518,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
         var elementFld = {
             name: fld.name,
+            protoName: fld.protoName,
             type: fld.type,
             oneOfFields: [],
             isMessage: fld.isMessage,
@@ -515,7 +526,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             isArray: false,
             isMap: false,
             isMapEntry: fld.isMap,
-            isRequired: false,
+            isRequired: false
         };
 
         for (var i = 0; i < value.length; i++) {
@@ -631,23 +642,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
         var fields = schema.messageTypes[fld.type];
 
-        // see if the incoming value has bad field names
-        var allFields = $.extend({}, value);
-        for (var i = 0; i < fields.length; i++) {
-            var currField = fields[i];
-            if (isOneOf(currField)) {
-                for (var j = 0; j < currField.oneOfFields.length; j++) {
-                    delete allFields[currField.oneOfFields[j].name];
-                }
-            } else {
-                delete allFields[currField.name];
-            }
-        }
-        for (var p in allFields) {
-            if (allFields.hasOwnProperty(p)) {
-                throw new Error("value for type " + fld.type + " has unrecognized field: " + p)
-            }
-        }
+        value = canonicalizeFields(value, fld.type, fields);
 
         // create table of child inputs, one for each field
 
@@ -655,8 +650,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var children = {};
         var input = new Input(parent, children, value);
 
-        for (i = 0; i < fields.length; i++) {
-            currField = fields[i];
+        for (var i = 0; i < fields.length; i++) {
+            var currField = fields[i];
 
             var row = $('<tr>');
             row.addClass('message_field');
@@ -680,7 +675,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 cell = $('<td>');
                 cell.attr('colspan', 2);
                 row.append(cell);
-                if (isUndefined(fldVal)) {
+                if (isUnset(fldVal)) {
                     if (currField.isMap) {
                         fldVal = {};
                     } else {
@@ -702,7 +697,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     } else {
                         checkbox = $('<input>');
                         checkbox.attr('type', 'checkbox');
-                        if (!isUndefined(fldVal)) {
+                        if (!isUnset(fldVal)) {
                             checkbox.prop('checked', true);
                         }
                         cell.append(checkbox);
@@ -711,7 +706,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 }
 
                 cell = $('<td>');
-                if (isUndefined(fldVal) && required) {
+                if (isUnset(fldVal) && required) {
                     if (allowMissing) {
                         fldVal = getInitialValue(schema, currField);
                         value[currField.name] = fldVal;
@@ -728,7 +723,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 children[currField.name] = child;
                 row.append(cell);
 
-                if (!isUndefined(checkbox)) {
+                if (!isUnset(checkbox)) {
                     (function(fld, cell) {
                         checkbox.change(function() {
                             var checkbox = $(this);
@@ -800,7 +795,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         radioSeq++;
 
         var clearPrevious = function() {
-            if (!isUndefined(selected.field)) {
+            if (!isUnset(selected.field)) {
                 // clear old selection
                 var otherCell;
                 var children = parent.children;
@@ -839,7 +834,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             var isPresent = false;
             if (!foundValue) {
                 fldVal = value[fld.name];
-                if (!isUndefined(fldVal)) {
+                if (!isUnset(fldVal)) {
                     isPresent = true;
                     foundValue = true;
                 }
@@ -928,6 +923,65 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         return children;
     }
 
+    function canonicalizeFields(value, type, fields) {
+        // newValue will be a copy of value, but with all fields populated using their
+        // original (proto) name, not their JSON name
+        var newValue = {};
+
+        // process fields identified by JSON name
+        for (var i = 0; i < fields.length; i++) {
+            var currField = fields[i];
+            if (isOneOf(currField)) {
+                for (var j = 0; j < currField.oneOfFields.length; j++) {
+                    var field = currField.oneOfFields[j];
+                    if (value.hasOwnProperty(field.name)) {
+                        newValue[field.name] = value[field.name];
+                        delete value[field.name];
+                    }
+                }
+            } else {
+                if (value.hasOwnProperty(currField.name)) {
+                    newValue[currField.name] = value[currField.name];
+                    delete value[currField.name];
+                }
+            }
+        }
+        // now process any remaining that are identified by original proto name
+        for (i = 0; i < fields.length; i++) {
+            currField = fields[i];
+            if (isOneOf(currField)) {
+                for (j = 0; j < currField.oneOfFields.length; j++) {
+                    field = currField.oneOfFields[j];
+                    if (value.hasOwnProperty(field.protoName)) {
+                        if (newValue.hasOwnProperty(field.name)) {
+                            throw new Error("value for type " + type + " has redundant values: " + field.name + " and " + field.protoName);
+                        }
+                        newValue[field.name] = value[field.protoName];
+                        delete value[field.protoName];
+                    }
+                }
+            } else {
+                if (value.hasOwnProperty(currField.protoName)) {
+                    if (newValue.hasOwnProperty(currField.name)) {
+                        throw new Error("value for type " + type + " has redundant values: " + currField.name + " and " + currField.protoName);
+                    }
+                    newValue[currField.name] = value[currField.protoName];
+                    delete value[currField.protoName];
+                }
+            }
+        }
+
+        // if there are any remaining fields, they are not valid field names
+        for (var p in value) {
+            if (value.hasOwnProperty(p)) {
+                throw new Error("value for type " + type + " has unrecognized field: " + p)
+            }
+        }
+
+        // copy canonicalized fields back into value
+        return $.extend(value, newValue)
+    }
+
     function isOneOf(fld) {
         return fld.type === "oneof" && !fld.isMessage;
     }
@@ -978,7 +1032,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         }
 
         var labelName = $('<strong>');
-        labelName.text(fld.name);
+        labelName.text(fld.protoName);
         cell.prepend($('<br>'));
         cell.prepend(labelName);
 
@@ -1001,26 +1055,28 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     }
 
     function addEnumToForm(schema, container, parent, value, fld) {
+        var enumVals = schema.enumTypes[fld.type];
+
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
-        } else if (typeof value !== 'string') {
-            throw typeError(fld.type, value, "string");
+        } else if (typeof value !== 'string' && typeof value !== 'number') {
+            throw typeError(fld.type, value, "string or number");
         }
 
-        var enumVals = schema.enumTypes[fld.type];
         var sel = $('<select>');
         if (disabled) {
             sel.prop('disabled', true);
         }
 
+        var isNumber = typeof value === 'number';
         var found = false;
         for (var i = 0; i < enumVals.length; i++) {
             var opt = $('<option>');
-            opt.attr('value', enumVals[i]);
-            opt.text(enumVals[i]);
-            if (enumVals[i] === value) {
+            opt.attr('value', enumVals[i].name);
+            opt.text(enumVals[i].name);
+            if (isNumber && enumVals[i].num === value || !isNumber && enumVals[i].name === value) {
                 found = true;
                 opt.prop('selected', true);
             }
@@ -1045,7 +1101,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addIntToForm(container, parent, value, fld, min, max) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         } else {
@@ -1093,17 +1149,25 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     }
 
     function isInt(num) {
-        return (num ^ 0) === num;
+        // In JS, % operator returns fractional remainder when first argument
+        // is not a whole number. So this detects _all_ integers (even those
+        // way outside the range of 32 or even 64 bit int). We do a range
+        // check elsewhere (e.g. to verify if it's in range of 32-bits).
+        return (num % 1) === 0;
     }
 
     function addStringIntToForm(container, parent, value, fld, min, max) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         } else {
             if (typeof value !== 'string') {
-                throw typeError(fld.type, value, "string");
+                if (typeof value === 'number') {
+                    value = value.toString();
+                } else {
+                    throw typeError(fld.type, value, "string");
+                }
             }
             // parse string/make sure it's a number
             if (!isStringInt(value)) {
@@ -1201,7 +1265,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addDoubleToForm(container, parent, value, fld) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         } else if (typeof value !== 'number') {
@@ -1262,7 +1326,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addBoolToForm(container, parent, value, fld) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         }
@@ -1313,7 +1377,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
     function addStringToForm(container, parent, value, fld, base64) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         }
@@ -1561,7 +1625,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             throw typeError(fld.type, value, "object");
         }
         var typeUrl = value["@type"];
-        if (isUndefined(typeUrl) && allowMissing) {
+        if (isUnset(typeUrl) && allowMissing) {
             typeUrl = "type.googleapis.com/google.protobuf.StringValue";
             value["@type"] = typeUrl;
         }
@@ -1619,7 +1683,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
 
             if (wellKnown) {
                 input.anyValue = value["value"];
-                if (isUndefined(input.anyValue)) {
+                if (isUnset(input.anyValue)) {
                     input.anyValue = getInitialMessageValue(typeName);
                     value["value"] = input.anyValue;
                 }
@@ -1636,7 +1700,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 isEnum: false,
                 isArray: false,
                 isMap: false,
-                isRequired: false,
+                isRequired: false
             };
             if (knownType) {
                 input.child = addElementToForm(schema, cell, input, pathLen, input.anyValue, allowMissing, valFld);
@@ -1709,7 +1773,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var div = $('<div>');
         container.append(div);
 
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             div.append('<div class="null">unset</div>');
             return new Input(parent, [], undefined);
         }
@@ -1805,13 +1869,13 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         if (fld.isMessage) {
             return getInitialMessageValue(fld.type)
         }
-        if (!isUndefined(fld.defaultVal)) {
+        if (!isUnset(fld.defaultVal)) {
             return fld.defaultVal;
         }
 
         if (fld.isEnum) {
             var enumVals = schema.enumTypes[fld.type];
-            return enumVals[0];
+            return enumVals[0].name;
         }
 
         switch (fld.type) {
@@ -1966,8 +2030,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     var MAX_UINT32 = 4294967295;
 
     // Adds a row to the request metadata table.
-    function addMetadataRow() {
-        tr = $('<tr>');
+    function addMetadataRow(name = '', value = '') {
+        tr = $('<tr class="metadataRow">');
         $("#grpc-request-metadata-form tr:last-of-type").before(tr);
 
         tr.append('<td><button class="delete">X</button></td>');
@@ -1975,7 +2039,21 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             $(this).closest('tr').remove();
         });
 
-        tr.append('<td><input class="name" size="24"></td><td><input class="value" size="40"></td>');
+        const td = $('<td>');
+        const nameInput = $('<input class="name" size="24" />');
+        const valueInput = $('<input class="value" size="40" />');
+        const nameTd = $('<td />').append(nameInput);
+        const valueTd = $('<td />').append(valueInput);
+
+        if (name) {
+            nameInput.val(name);
+        }
+
+        if (value) {
+            valueInput.val(value);
+        }
+
+        tr.append(nameTd, valueTd);
     }
 
     // Invokes an RPC by sending the user-defined request data and metadata to
@@ -1995,8 +2073,13 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         var service = $("#grpc-service").val();
         var method = $("#grpc-method").val();
 
-        var data = requestForm.data("request");
-        if (!(data instanceof Array)) {
+        var timeoutStr = $("#grpc-request-timeout input").val();
+        var timeout = Number(timeoutStr);
+        timeout = (timeoutStr === "" || Number.isNaN(timeout)) ? undefined : timeout;
+
+        const originalData = requestForm.data("request");
+        let data = originalData;
+        if (!(originalData instanceof Array)) {
             data = [data];
         }
         var metadata = [];
@@ -2016,35 +2099,53 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         // ignore subsequent clicks until this RPC finishes
         $(".grpc-invoke").prop("disabled", true);
 
+        if (originalData instanceof Array) {
+            cloneData = $.extend(true, [], originalData)
+        } else {
+            cloneData = $.extend(true, {}, originalData)
+        }
+        const history = {
+            request: {
+                timeout: timeoutStr,
+                metadata: $.extend([], metadata),
+                data: cloneData
+            },
+            service: service,
+            method: method,
+            startTime: new Date().toISOString(),
+        }
+
+        const startTime = window.performance.now();
+
         $.ajax(
             {
                 type: "POST",
                 url: invokeURI + "/" + service + "." + method,
                 contentType: "application/json",
-                data: JSON.stringify({metadata: metadata, data: data}),
+                data: JSON.stringify({timeout_seconds: timeout, metadata: metadata, data: data}),
             })
-            .done(function(data) {
-                if (data.headers instanceof Array && data.headers.length > 0) {
+            .done(function(responseData) {
+                if (responseData.headers instanceof Array && responseData.headers.length > 0) {
                     var hdrs = $("#grpc-response-headers");
                     hdrs.empty();
-                    for (var i = 0; i < data.headers.length; i++) {
+                    for (var i = 0; i < responseData.headers.length; i++) {
                         var hdrRow = $('<tr>');
                         hdrs.append(hdrRow);
                         var hdrCell = $('<td>');
-                        hdrCell.text(data.headers[i].name);
+                        hdrCell.text(responseData.headers[i].name);
                         hdrRow.append(hdrCell);
                         hdrCell = $('<td>');
-                        hdrCell.text(data.headers[i].value);
+                        hdrCell.text(responseData.headers[i].value);
                         hdrRow.append(hdrCell);
                     }
                 } else {
                     $("#grpc-response-headers").html('<tr><td class="none">None</td></tr>');
                 }
 
-                if (data.requests && data.requests.total !== data.requests.sent) {
+                if (responseData.requests && responseData.requests.total !== responseData.requests.sent) {
                     var stats = $("#grpc-response-req-stats");
                     stats.show();
-                    stats.text('Only ' + data.requests.sent + ' of ' + data.requests.total + ' requests accepted');
+                    stats.text('Only ' + responseData.requests.sent + ' of ' + responseData.requests.total + ' requests accepted');
                 } else {
                     $("#grpc-response-req-stats").hide();
                 }
@@ -2054,35 +2155,39 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 // to render maps a little differently and also to omit unset one-of fields
                 // (or even better, be able to render unset fields differently).
                 // But we need response schema info to do that...
-                if (data.responses instanceof Array && data.responses.length > 0) {
-                    var div = $("#grpc-response-data");
-                    div.show();
-                    div.empty();
-                    var resp = data.responses;
-                    for (i = 0; i < resp.length; i++) {
-                        var container = $('<div>');
-                        container.addClass("output_container one-of-2 one-of-3 one-of-4 one-of-5 root");
-                        div.append(container);
-                        var val = resp[i];
-                        if (val.isError) {
+                if (responseData.responses instanceof Array && responseData.responses.length > 0) {
+                    const responseDiv = $("#grpc-response-data");
+                    responseDiv.empty();
+                    responseDiv.show();
+                    for (const resp of responseData.responses) {
+                        const container = $('<div>');
+                        if (resp.isError) {
                             container.html('<div class="error">Server error processing message #' + (i+1) + '</div>');
                         } else {
-                            populateResultContainer(container, 0, val.message);
+                            const textArea = $('<textarea>');
+                            textArea.val(JSON.stringify(resp.message, null, 2));
+                            textArea.addClass('grpc-response-textarea');
+                            container.append(textArea);
                         }
+                        responseDiv.append(container);
                     }
-                    // TODO(jh): button or some other mechanism to view result as raw JSON.
                 } else {
                     $("#grpc-response-data").hide();
                 }
 
-                if (data.error) {
+                if (responseData.error) {
+                    addHistory({
+                        ...history,
+                        durationMS: window.performance.now() - startTime,
+                        responseData: responseData,
+                    });
                     $("#grpc-response-error").show();
-                    $("#grpc-response-error-desc").text(data.error.name);
-                    $("#grpc-response-error-num").text('(' + data.error.code + ')');
-                    if (data.error.message !== data.error.name) {
+                    $("#grpc-response-error-desc").text(responseData.error.name);
+                    $("#grpc-response-error-num").text('(' + responseData.error.code + ')');
+                    if (responseData.error.message !== responseData.error.name) {
                         var msg = $("#grpc-response-error-msg");
                         msg.show();
-                        msg.text(data.error.message);
+                        msg.text(responseData.error.message);
                     } else {
                         $("#grpc-response-error-msg").hide();
                     }
@@ -2090,28 +2195,33 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                     // show response messages above
                     $("#grpc-response-error-details").hide();
                 } else {
+                    addHistory({
+                        ...history,
+                        durationMS: window.performance.now() - startTime,
+                        responseData: responseData,
+                    });
                     $("#grpc-response-error").hide();
                 }
 
                 // TODO(jh): "copy as grpcurl" button? This would provide a
                 // command-line for grpcurl that does the same thing as clicking
-                // the "invoke" button for the current request data and metadata.
+                // the "invoke" button for the current request responseData and metadata.
 
                 // TODO(jh): "paste as grpcurl" button? This would provide a
                 // way to paste in a grpcurl command-line which would then select
-                // the right method, and populate the request data and metadata.
+                // the right method, and populate the request responseData and metadata.
 
-                if (data.trailers instanceof Array && data.trailers.length > 0) {
+                if (responseData.trailers instanceof Array && responseData.trailers.length > 0) {
                     var tlrs = $("#grpc-response-trailers");
                     tlrs.empty();
-                    for (i = 0; i < data.trailers.length; i++) {
+                    for (i = 0; i < responseData.trailers.length; i++) {
                         var tlrRow = $('<tr>');
                         tlrs.append(tlrRow);
                         var tlrCell = $('<td>');
-                        tlrCell.text(data.trailers[i].name);
+                        tlrCell.text(responseData.trailers[i].name);
                         tlrRow.append(tlrCell);
                         tlrCell = $('<td>');
-                        tlrCell.text(data.trailers[i].value);
+                        tlrCell.text(responseData.trailers[i].value);
                         tlrRow.append(tlrCell);
                     }
                 } else {
@@ -2122,10 +2232,16 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
                 t.tabs("enable", 2);
                 t.tabs("option", "active", 2);
             })
-            .fail(function(data, status) {
+            .fail(function(failureData, status) {
+                addHistory({
+                    ...history,
+                    durationMS: window.performance.now() - startTime,
+                    failureStatus: status,
+                    failureData: failureData,
+                });
                 alert("Unexpected error: " + status);
                 if (debug) {
-                    console.trace(data.responseText);
+                    console.trace(failureData.responseText);
                 }
             })
             .always(function() {
@@ -2136,6 +2252,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // Renders the given response value to the given DIV element. The depth
     // parameter is used to add CSS styles to container elements (in the same
     // way that pathLen is used in the add*ToForm functions above).
+    // TODO: Wire this back into results rendering if pretty results are still desirable.
     function populateResultContainer(div, depth, val) {
         if (val === null) {
             div.html('<span class="null">null</span>');
@@ -2200,7 +2317,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // Returns true if the currently configured validation function is for
     // the given element
     function isValidating(element) {
-        return !isUndefined(validation) && validation.element === element;
+        return !isUnset(validation) && validation.element === element;
     }
 
     // Sets the current validation to the given element function. The given
@@ -2237,11 +2354,14 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // returns, the element will have an "invalid-input" CSS class if and only
     // if it failed validation.
     function checkValidation() {
-        if (!isUndefined(validation)) {
+        if (!isUnset(validation)) {
             var err = '';
             try {
                 validation.func(validation.element);
             } catch (ex) {
+                if (debug) {
+                    console.trace(ex);
+                }
                 if (ex.message) {
                     err = ex.message
                 } else {
@@ -2252,9 +2372,6 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
             var el = $(validation.element);
             if (err) {
                 alert(err);
-                if (debug) {
-                    console.trace(err);
-                }
                 el.addClass('invalid-input');
                 return false;
             } else {
@@ -2296,6 +2413,164 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         }
     }
 
+    let history = [];
+    const maxHistory = 100;
+    const target = $(".target").text();
+
+    const storageKey = `grpcui-history-${window.location.host}-${target}`;
+
+    const loadHistory = () => {
+        const json = localStorage.getItem(storageKey);
+        if (json) {
+            history = (JSON.parse(json))
+        }
+        updateHistoryUI();
+    }
+
+    const onHistoryChange = () => {
+        localStorage.setItem(storageKey, JSON.stringify(history));
+        updateHistoryUI();
+    }
+
+    const clearHistory = () => {
+        if (confirm('Are you sure you wish to delete all history? This action is permanent and cannot be undone.')) {
+            history = [];
+            onHistoryChange();
+        }
+    }
+
+    const addHistory = (item) => {
+        history = history.slice(0, maxHistory - 1);
+        history.unshift(item);
+        onHistoryChange();
+    }
+
+    const updateHistoryUI = () => {
+        const list = $('#grpc-history-list');
+        list.empty();
+        const accordion = $('<div>');
+        list.append(accordion);
+        for (let i = 0; i < history.length; i++) {
+            const item = history[i];
+            const id = `grpc-history-item-${i}`;
+            const dataString = JSON.stringify(item.request.data, null, 4);
+            const valid = services[item.service] && services[item.service].includes(item.method);
+            let result = '';
+            let messages = '&nbsp;';
+            let err = false;
+            if (item.failureStatus) {
+                result = `Failure: ${item.failureStatus}`;
+                err = true;
+            } else if (item.responseData.error) {
+                // for errors, show if any response messages were sent
+                let numMsgs = item.responseData?.responses?.length ?? 0;
+                if (numMsgs === 1) {
+                    messages = `1 response message`; // singular
+                } else if (numMsgs > 1) {
+                    messages = `${numMsgs} response messages`;
+                }
+                result = item.responseData.error.name ?? 'FAILED';
+                err = true;
+            } else {
+                // on success, only show number of response messages if more than one (e.g. a stream)
+                messages = (item.responseData?.responses?.length ?? 0) > 1 ? `${item.responseData.responses.length} response messages` : '';
+                result = 'OK';
+            }
+            accordion.append(`<div class="history-item-header" id="${id}">
+                <span class="history-item-delete"><button class="delete" id="delete-${id}">X</button></span>
+                <span class="history-item-load">
+                    <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
+                </span>
+                <span class="history-item-time">${new Date(item.startTime).toLocaleString()}</span>
+                <span class="history-item-duration">${item.durationMS.toFixed(2)}ms</span>
+                <span class="history-item-result ${err ? 'error' : ''}">${result}</span>
+                <span class="history-item-method ${valid ? '' : 'invalid-history'}"
+                      ${valid ? '' : 'title="Service or method no longer available"'}
+                >
+                    ${item.service}.${item.method}
+                </span>
+                <span class="history-item-messages">${messages}</span>
+            </div>`);
+            accordion.append(`<div class="history-item-panel">
+                <div class="history-detail-request">
+                    <div class="history-detail-heading">Request</div>
+                    <span><pre class="request-json">${dataString.slice(0, 250)}${dataString.length > 250 ? '...' : ''}</pre></span>
+                </div>
+                ${item.request.metadata.length === 0 ? '' : `
+                <div class="history-detail-metadata">
+                    <div class="history-detail-heading">Metadata</div>
+                    <table>
+                        ${item.request.metadata.map((item) => `
+                        <tr><th>${item.name}</th><td>${item.value}</td></tr>
+                        `).join('\n')}
+                    </table>
+                </div>`}
+            </div>`);
+            $(`#delete-${id}`).click((evt) => {
+                deleteHistoryItem(i);
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+            });
+            $(`#load-${id}`).click((evt) => {
+                loadHistoryItem(i);
+                // These prevent the accordion from opening or folding when clicking load...
+                evt.preventDefault();
+                evt.stopImmediatePropagation();
+            });
+        }
+        accordion.accordion({
+            animate: 200,
+            active: false,
+            collapsible: true,
+            icons: false,
+            header: ".history-item-header",
+            heightStyle: "content",
+        });
+    }
+
+    const loadHistoryItem = (index) => {
+        const t = $("#grpc-request-response");
+        t.tabs("option", "active", 0);
+        const item = history[index];
+        $("#grpc-request-timeout input").val(item.timeout);
+        $("#grpc-service").val(item.service);
+        formServiceSelected(() => {
+            $("#grpc-method").val(item.method);
+            formMethodSelected(() => {
+                jsonRawTextArea.val(JSON.stringify(item.request.data, null, 2));
+                validateJSON();
+                //remove all rows
+                $("tr").remove('.metadataRow');
+                for (let metadata of item.request.metadata) {
+                    addMetadataRow(metadata.name, metadata.value);
+                }
+            });
+        });
+    }
+
+    const deleteHistoryItem = (index) => {
+        history.splice(index, 1);
+        onHistoryChange();
+    }
+
+    $("#grpc-request-timeout input").focus(function() {
+        var inp = this;
+        setValidation(inp, function() {
+            var val = $(inp).val();
+            if (val === "" || val === undefined) {
+                return;
+            }
+            var num = Number(val);
+            if (Number.isNaN(num)) {
+                throw new Error("numeric value required");
+            }
+            if (num <= 0) {
+                $(inp).val(undefined);
+                throw new Error("timeout value must be greater than zero");
+            }
+        });
+    });
+
     $("#grpc-request-response").tabs(
         {
             beforeActivate: function(e) {
@@ -2315,6 +2590,10 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
         }
     });
 
+    $('#grpc-history-clear').click(() => clearHistory());
+
+    loadHistory();
+
     // TODO(jh): support populating the selected method and even request
     // data and metadata from URL hash fragment (and add a way for user to
     // get URL with hash fragment for currently selected method and data)
@@ -2322,6 +2601,12 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug) {
     // initialize methods drop-down based on selected service
     formServiceSelected();
 
-    // add a single blank entry to request metadata table
-    addMetadataRow();
+    if (isUnset(headers) || headers.length === 0) {
+        // add a single blank entry to request metadata table
+        addMetadataRow();
+    } else {
+        for (let metadata of headers) {
+            addMetadataRow(metadata.name, metadata.value);
+        }
+    }
 };

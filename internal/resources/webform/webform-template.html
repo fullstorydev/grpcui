@@ -1,5 +1,5 @@
 <div id="grpc-form">
-  <div class="grpc-select" id="grpc-service-select"><span class="grpc-form-label">Service name:</span>
+  <div class="grpc-desc" id="grpc-service-select"><span class="grpc-form-label">Service name:</span>
     <select name="grpc-service" id="grpc-service">
       {{ range .Services }}
       <option value="{{.}}">{{.}}</option>
@@ -7,7 +7,7 @@
     </select>
   </div>
 
-  <div class="grpc-select" id="grpc-method-select"><span class="grpc-form-label">Method name:</span>
+  <div class="grpc-desc" id="grpc-method-select"><span class="grpc-form-label">Method name:</span>
     <select name="grpc-method" id="grpc-method">
       <!-- populated by JavaScript when grpc-service is selected -->
     </select>
@@ -18,6 +18,7 @@
         <li id="#grpc-request-tab-button"><a href="#grpc-request-tab">Request Form</a></li>
         <li id="#grpc-request-raw-tab-button"><a href="#grpc-request-raw-tab">Raw Request (JSON)</a></li>
         <li id="#grpc-response-tab-button"><a href="#grpc-response-tab">Response</a></li>
+        <li id="#grpc-history-tab-button"><a href="#grpc-history-tab">History</a></li>
     </ul>
     <div class="grpc-tabcontent" id="grpc-request-tab">
       <h3>Request Metadata</h3>
@@ -30,6 +31,11 @@
 
       <h3>Request Data</h3>
       <div id="grpc-request-form"></div>
+
+      <h3>Request Timeout</h3>
+      <div id="grpc-request-timeout">
+        <input/> seconds
+      </div>
 
       <button class="grpc-invoke" disabled>Invoke</button>
     </div>
@@ -55,6 +61,11 @@
       <h3>Response Trailers</h3>
       <table class="grpc-metadata-table" id="grpc-response-trailers"></table>
     </div>
+    <div class="grpc-tabcontent" id="grpc-history-tab">
+      <button class="grpc-history-clear" id="grpc-history-clear">Clear History</button>
+      <div class="grpc-history-list" id="grpc-history-list">
+      </div>
+    </div>
   </div>
 </div>
 
@@ -71,7 +82,12 @@
         ],
     {{- end}}
     };
+    var headers = [
+    {{- range .DefaultMetadata}}
+        {"name": "{{.Name}}", "value": "{{.Value}}"},
+    {{- end}}
+    ];
 
-    initGRPCForm(services, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }});
+    initGRPCForm(services, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers);
 })();
 </script>
