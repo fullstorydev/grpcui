@@ -127,7 +127,7 @@ func getIndexContents(tmpl *template.Template, target string, webFormHTML []byte
 		}
 	}
 	data := WebFormContainerTemplateData{
-		Target:          target,
+		Target:          template.HTML([]byte(target)),
 		WebFormContents: template.HTML(webFormHTML),
 		AddlResources:   addlHTML,
 	}
@@ -193,6 +193,7 @@ func computeETag(contents []byte) string {
 	return base64.RawURLEncoding.EncodeToString(hasher.Sum(nil))
 }
 
+/*
 // HandlerViaReflection tries to query the provided connection for all services
 // and methods supported by the server, and constructs a handler to serve the UI.
 //

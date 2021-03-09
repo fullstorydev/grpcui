@@ -10,7 +10,7 @@ import (
 // should expect a value of this type.
 type WebFormContainerTemplateData struct {
 	// Target is the name of the machine we are making requests to (for display purposes).
-	Target string
+	Target template.HTML
 
 	// WebFormContents is the generated form HTML from your ServiceDescriptors.
 	WebFormContents template.HTML
