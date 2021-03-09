@@ -12,4 +12,4 @@ require (
 	google.golang.org/grpc v1.36.0
 )
 
-replace github.com/fullstorydev/grpcui => github.com/pradeepmvn/grpcui v0.0.1
+replace github.com/fullstorydev/grpcui => github.com/pradeepmvn/grpcui v0.3.0
