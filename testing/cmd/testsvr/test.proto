@@ -216,19 +216,21 @@ message Maps {
     map<uint64, Void> uint64_set = 5;
     map<sint32, Void> sint32_set = 6;
     map<sint64, Void> sint64_set = 7;
-    map<fixed32, google.protobuf.Empty> fixed32_set = 8;
-    map<fixed64, google.protobuf.Empty> fixed64_set = 9;
-    map<sfixed32, google.protobuf.Empty> sfixed32_set = 10;
-    map<sfixed64, google.protobuf.Empty> sfixed64_set = 11;
+    map<bool, Void> bool_set = 8;
+    map<fixed32, google.protobuf.Empty> fixed32_set = 9;
+    map<fixed64, google.protobuf.Empty> fixed64_set = 10;
+    map<sfixed32, google.protobuf.Empty> sfixed32_set = 11;
+    map<sfixed64, google.protobuf.Empty> sfixed64_set = 12;
 
-    map<int32, Person> people_by_employee_num = 12;
-    map<int32, State> states = 13;
+    map<int32, Person> people_by_employee_num = 13;
+    map<int32, State> states = 14;
+    map<string, Arrays> arrays_by_kind = 15;
 
-    map<string, string> string_names = 14;
-    map<string, bytes> bytes_names = 15;
-    map<string, bool> bool_names = 16;
-    map<string, double> double_names = 17;
-    map<string, float> float_names = 18;
+    map<string, string> string_names = 16;
+    map<string, bytes> bytes_names = 17;
+    map<string, bool> bool_names = 18;
+    map<string, double> double_names = 19;
+    map<string, float> float_names = 20;
 }
 
 message TestMessage {
