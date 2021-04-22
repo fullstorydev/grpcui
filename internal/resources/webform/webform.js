@@ -409,14 +409,25 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         var arrayVal = [];
         for (var k in value) {
             if (value.hasOwnProperty(k)) {
+                var keyField = mapEntryFields[0];
+                var valField = mapEntryFields[1];
+                if (keyField.type !== "string") {
+                    // k should be a number or a bool
+                    try {
+                        k = JSON.parse(k);
+                        // success!
+                    } catch {
+                        // failure! leave k alone
+                    }
+                }
                 var v = value[k];
                 if (isUnset(v)) {
                     // Null value? Use zero value instead.
-                    v = getInitialValue(schema, mapEntryFields[1]);
+                    v = getInitialValue(schema, valField);
                 }
                 var entry = {};
-                entry[mapEntryFields[0].name] = k;
-                entry[mapEntryFields[1].name] = v;
+                entry[keyField.name] = k;
+                entry[valField.name] = v;
                 arrayVal.push(entry);
                 input.childKeys.push(k);
             }
