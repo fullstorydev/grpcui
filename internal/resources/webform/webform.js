@@ -2125,6 +2125,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 data: JSON.stringify({timeout_seconds: timeout, metadata: metadata, data: data}),
             })
             .done(function(responseData) {
+                const durationMS = window.performance.now() - startTime;
                 if (responseData.headers instanceof Array && responseData.headers.length > 0) {
                     var hdrs = $("#grpc-response-headers");
                     hdrs.empty();
@@ -2178,7 +2179,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 if (responseData.error) {
                     addHistory({
                         ...history,
-                        durationMS: window.performance.now() - startTime,
+                        durationMS: durationMS,
                         responseData: responseData,
                     });
                     $("#grpc-response-error").show();
@@ -2197,7 +2198,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 } else {
                     addHistory({
                         ...history,
-                        durationMS: window.performance.now() - startTime,
+                        durationMS: durationMS,
                         responseData: responseData,
                     });
                     $("#grpc-response-error").hide();
