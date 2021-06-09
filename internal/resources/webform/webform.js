@@ -1446,7 +1446,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     var dateFormat = /^\d+-\d+-\d+T\d+:\d\d:\d\d(\.\d+)?Z(-?\d+:?\d\d)?$/;
-    var timeFormat = /^\d+:\d\d(:\d\d(\.\d+)?)?(\s*(am|pm))?\s*((Z|GMT)?\s*-?(\d+:?\d\d)?)?$/;
+    var timeFormat = /^\d+:\d\d(:\d\d(\.\d+)?)?(\s*(am|pm))?\s*((Z|GMT)?\s*(-|\+)?(\d+:?\d\d)?)?$/;
 
     function addTimestampToForm(container, parent, value, fld) {
         if (typeof value !== 'string') {
