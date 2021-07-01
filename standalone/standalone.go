@@ -212,3 +212,18 @@ func HandlerViaReflection(ctx context.Context, cc grpc.ClientConnInterface, targ
 
 	return Handler(cc, target, m, f, opts...), nil
 }
+
+// HandlerViaProtoFiles uses the given proto files to determine the services
+// and methods supported by the server, and constructs a handler to serve the UI.
+//
+// The handler has the same properties as the one returned by Handler.
+func HandlerViaProtoFiles(ctx context.Context, cc grpc.ClientConnInterface, protoFiles []string, target string, opts ...HandlerOption) (http.Handler, error) {
+	f, err := grpcui.AllFilesViaProtoFiles(protoFiles...)
+	if err != nil {
+		return nil, err
+	}
+
+	m := grpcui.AllMethodsForFiles(f)
+
+	return Handler(cc, target, m, f, opts...), nil
+}

@@ -2,6 +2,7 @@ package grpcui
 
 import (
 	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/desc/protoparse"
 	"github.com/jhump/protoreflect/grpcreflect"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -21,4 +22,11 @@ func AllFilesViaReflection(ctx context.Context, cc grpc.ClientConnInterface) ([]
 	cli.ListServices()
 	source := grpcurl.DescriptorSourceFromServer(ctx, cli)
 	return grpcurl.GetAllFiles(source)
+}
+
+// AllFilesViaReflection returns a slice that contains the file descriptors
+// for the given proto files
+func AllFilesViaProtoFiles(filenames ...string) ([]*desc.FileDescriptor, error) {
+	parser := protoparse.Parser{}
+	return parser.ParseFiles(filenames...)
 }

@@ -8,6 +8,16 @@ import (
 	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
 
+// AllMethodsForFiles returns a slice that contains the method descriptors
+// for all methods in the given files.
+func AllMethodsForFiles(descs []*desc.FileDescriptor) []*desc.MethodDescriptor {
+	var allMethods []*desc.MethodDescriptor
+	for _, fd := range descs {
+		allMethods = append(allMethods, AllMethodsForServices(fd.GetServices())...)
+	}
+	return allMethods
+}
+
 // AllMethodsForServices returns a slice that contains the method descriptors
 // for all methods in the given services.
 func AllMethodsForServices(descs []*desc.ServiceDescriptor) []*desc.MethodDescriptor {
