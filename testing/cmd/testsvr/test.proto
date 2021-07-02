@@ -9,7 +9,7 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/wrappers.proto";
 
-option go_package = "main";
+option go_package = ".;main";
 
 // A service that allows testing all kinds of permutations of message
 // and field types in the grpcui web form.
