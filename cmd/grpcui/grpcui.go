@@ -110,6 +110,10 @@ var (
 		The port on which the web UI is exposed.`))
 	bind = flags.String("bind", "127.0.0.1", prettify(`
 		The address on which the web UI is exposed.`))
+	basePath = flags.String("base-path", "/", prettify(`
+		The path on which the web UI is exposed.
+		Defaults to slash ("/"), which is the root of the server.
+		Example: "/debug/grpcui".`))
 	services multiString
 	methods  multiString
 )
@@ -259,6 +263,9 @@ func main() {
 	}
 	if len(importPaths) > 0 && len(protoFiles) == 0 {
 		warn("The -import-path argument is not used unless -proto files are used.")
+	}
+	if len(*basePath) == 0 || (*basePath)[0] != '/' {
+		fail(nil, "The -base-path should be non-empty and begin with a slash (\"/\")")
 	}
 
 	configs, err := computeSvcConfigs()
@@ -444,13 +451,20 @@ func main() {
 			logInfof("%s %s %s %d %dms %dbytes", r.RemoteAddr, r.Method, r.RequestURI, cs.code, millis, cs.size)
 		})
 	}
+	if *basePath != "/" {
+		handler = http.StripPrefix(*basePath, handler)
+	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *bind, *port))
 	if err != nil {
 		fail(err, "Failed to listen on port %d", *port)
 	}
 
-	url := fmt.Sprintf("http://%s:%d/", *bind, listener.Addr().(*net.TCPAddr).Port)
+	path := *basePath
+	if len(path) > 1 {
+		path += "/"
+	}
+	url := fmt.Sprintf("http://%s:%d%s", *bind, listener.Addr().(*net.TCPAddr).Port, path)
 	fmt.Printf("gRPC Web UI available at %s\n", url)
 
 	if *openBrowser {
