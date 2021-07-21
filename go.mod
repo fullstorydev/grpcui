@@ -3,12 +3,12 @@ module github.com/fullstorydev/grpcui
 go 1.13
 
 require (
-	github.com/fullstorydev/grpcurl v1.8.1
+	github.com/fullstorydev/grpcurl v1.8.2
 	github.com/go-bindata/go-bindata v0.0.0-20191126083508-8639be0519b3 // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/gordonklaus/ineffassign v0.0.0-20200309095847-7953dde2c7bf // indirect
 	github.com/goreleaser/goreleaser v0.134.0 // indirect
-	github.com/jhump/protoreflect v1.8.2
+	github.com/jhump/protoreflect v1.9.0
 	github.com/nishanths/predeclared v0.0.0-20200524104333-86fad755b4d3 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
