@@ -759,7 +759,7 @@ func dial(ctx context.Context, network, addr string, creds credentials.Transport
 	if err := errCreds.err(); err != nil {
 		return nil, err
 	}
-	// otherwise, use the error the dialer last error
+	// otherwise, use the error the dialer last observed
 	if err := dialer.err(); err != nil {
 		return nil, err
 	}
