@@ -18,6 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fullstorydev/grpcurl"
@@ -79,6 +80,12 @@ var (
 	connectTimeout = flags.Float64("connect-timeout", 0, prettify(`
 		The maximum time, in seconds, to wait for connection to be established.
 		Defaults to 10 seconds.`))
+	connectFailFast = flags.Bool("connect-fail-fast", true, prettify(`
+		If true, non-temporary errors (such as "connection refused" during
+		initial connection will cause the program to immediately abort. This
+		is the default and is appropriate for interactive uses of grpcui. But
+		long-lived server use (like as a sidecar to a gRPC server) will prefer
+		to set this to false for more robust startup.`))
 	keepaliveTime = flags.Float64("keepalive-time", 0, prettify(`
 		If present, the maximum idle time in seconds, after which a keepalive
 		probe is sent. If the connection remains idle and no keepalive response
@@ -292,7 +299,7 @@ func main() {
 	if *connectTimeout > 0 {
 		dialTime = time.Duration(*connectTimeout * float64(time.Second))
 	}
-	ctx, cancel := context.WithTimeout(ctx, dialTime)
+	dialCtx, cancel := context.WithTimeout(ctx, dialTime)
 	defer cancel()
 	var opts []grpc.DialOption
 	if *keepaliveTime > 0 {
@@ -325,7 +332,7 @@ func main() {
 	if isUnixSocket != nil && isUnixSocket() {
 		network = "unix"
 	}
-	cc, err := grpcurl.BlockingDial(ctx, network, target, creds, opts...)
+	cc, err := dial(dialCtx, network, target, creds, *connectFailFast, opts...)
 	if err != nil {
 		fail(err, "Failed to dial target host %q", target)
 	}
@@ -717,4 +724,92 @@ func logErrorf(format string, args ...interface{}) {
 func logInfof(format string, args ...interface{}) {
 	prefix := "INFO: " + time.Now().Format("2006/01/02 15:04:05") + " "
 	log.Printf(prefix+format, args...)
+}
+
+func dial(ctx context.Context, network, addr string, creds credentials.TransportCredentials, failFast bool, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	if failFast {
+		return grpcurl.BlockingDial(ctx, network, addr, creds, opts...)
+	}
+	// BlockingDial will return the first error returned. It is meant for interactive use.
+	// If we don't want to fail fast, then we need to do a more customized dial.
+
+	// TODO: perhaps this logic should be added to the grpcurl package, like in a new
+	// BlockingDialNoFailFast function?
+
+	dialer := &errTrackingDialer{
+		dialer:  &net.Dialer{},
+		network: network,
+	}
+	var errCreds errTrackingCreds
+	if creds == nil {
+		opts = append(opts, grpc.WithInsecure())
+	} else {
+		errCreds = errTrackingCreds{
+			TransportCredentials: creds,
+		}
+		opts = append(opts, grpc.WithTransportCredentials(&errCreds))
+	}
+
+	cc, err := grpc.DialContext(ctx, addr, append(opts, grpc.WithBlock(), grpc.WithContextDialer(dialer.dial))...)
+	if err == nil {
+		return cc, nil
+	}
+
+	// prefer last observed TLS handshake error if there is one
+	if err := errCreds.err(); err != nil {
+		return nil, err
+	}
+	// otherwise, use the error the dialer last observed
+	if err := dialer.err(); err != nil {
+		return nil, err
+	}
+	// if we have no better source of error message, use what grpc.DialContext returned
+	return nil, err
+}
+
+type errTrackingCreds struct {
+	credentials.TransportCredentials
+
+	mu      sync.Mutex
+	lastErr error
+}
+
+func (c *errTrackingCreds) ClientHandshake(ctx context.Context, addr string, rawConn net.Conn) (net.Conn, credentials.AuthInfo, error) {
+	conn, auth, err := c.TransportCredentials.ClientHandshake(ctx, addr, rawConn)
+	if err != nil {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		c.lastErr = err
+	}
+	return conn, auth, err
+}
+
+func (c *errTrackingCreds) err() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.lastErr
+}
+
+type errTrackingDialer struct {
+	dialer  *net.Dialer
+	network string
+
+	mu      sync.Mutex
+	lastErr error
+}
+
+func (c *errTrackingDialer) dial(ctx context.Context, addr string) (net.Conn, error) {
+	conn, err := c.dialer.DialContext(ctx, c.network, addr)
+	if err != nil {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		c.lastErr = err
+	}
+	return conn, err
+}
+
+func (c *errTrackingDialer) err() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.lastErr
 }
