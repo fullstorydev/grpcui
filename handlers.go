@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -402,6 +403,10 @@ func invokeRPC(ctx context.Context, methodName string, ch grpcdynamic.Channel, d
 	if input.TimeoutSeconds > 0 {
 		var cancel context.CancelFunc
 		timeout := time.Duration(input.TimeoutSeconds * float32(time.Second))
+		// If the timeout is too huge that it overflows int64, cap it off.
+		if timeout < 0 {
+			timeout = time.Duration(math.MaxInt64)
+		}
 		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
