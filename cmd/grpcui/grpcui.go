@@ -452,7 +452,7 @@ func main() {
 		})
 	}
 	if *basePath != "/" {
-		handler = http.StripPrefix(*basePath, handler)
+		handler = http.StripPrefix(strings.TrimSuffix(*basePath, "/"), handler)
 	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *bind, *port))
