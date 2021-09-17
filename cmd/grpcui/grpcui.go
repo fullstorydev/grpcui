@@ -461,7 +461,7 @@ func main() {
 	}
 
 	path := *basePath
-	if len(path) > 1 {
+	if !strings.HasSuffix(path, "/") {
 		path += "/"
 	}
 	url := fmt.Sprintf("http://%s:%d%s", *bind, listener.Addr().(*net.TCPAddr).Port, path)
