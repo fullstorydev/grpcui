@@ -264,8 +264,8 @@ func main() {
 	if len(importPaths) > 0 && len(protoFiles) == 0 {
 		warn("The -import-path argument is not used unless -proto files are used.")
 	}
-	if len(*basePath) == 0 || (*basePath)[0] != '/' {
-		fail(nil, "The -base-path should be non-empty and begin with a slash (\"/\")")
+	if !strings.HasPrefix(*basePath, "/") {
+		fail(nil, `The -base-path must begin with a slash ("/")`)
 	}
 
 	configs, err := computeSvcConfigs()
