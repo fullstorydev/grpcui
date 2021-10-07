@@ -2179,7 +2179,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                     addHistory({
                         ...history,
                         durationMS: window.performance.now() - startTime,
-                        responseData: responseData,
+                        responseData: historyResponseData(responseData),
                     });
                     $("#grpc-response-error").show();
                     $("#grpc-response-error-desc").text(responseData.error.name);
@@ -2198,7 +2198,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                     addHistory({
                         ...history,
                         durationMS: window.performance.now() - startTime,
-                        responseData: responseData,
+                        responseData: historyResponseData(responseData),
                     });
                     $("#grpc-response-error").hide();
                 }
@@ -2237,7 +2237,6 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                     ...history,
                     durationMS: window.performance.now() - startTime,
                     failureStatus: status,
-                    failureData: failureData,
                 });
                 alert("Unexpected error: " + status);
                 if (debug) {
@@ -2247,6 +2246,20 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             .always(function() {
                 $(".grpc-invoke").prop("disabled", false);
             });
+    }
+
+    function historyResponseData(responseData) {
+        // extract the minimum info from responseData for showing summary of
+        // operation in history UI
+        let result = {};
+        if (responseData.error) {
+            result.error = {
+                name: responseData.error.name,
+                code: responseData.error.code,
+            };
+        }
+        result.responseMsgCount = responseData.responses?.length ?? 0;
+        return result;
     }
 
     // Renders the given response value to the given DIV element. The depth
@@ -2414,7 +2427,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     let history = [];
+    // TODO: add ability to customize these max history values
     const maxHistory = 100;
+    const maxHistorySize = 1024*1024; // 1mb
     const target = $(".target").text();
 
     const storageKey = `grpcui-history-${window.location.host}-${target}`;
@@ -2428,7 +2443,27 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     }
 
     const onHistoryChange = () => {
-        localStorage.setItem(storageKey, JSON.stringify(history));
+        let data = '';
+        while (true) {
+            data = JSON.stringify(history);
+            if (data.length <= maxHistorySize) {
+                break;
+            }
+            // purge oldest item from history to see if that makes enough room
+            history = history.slice(0, history.length - 1);
+        }
+
+        try {
+            localStorage.setItem(storageKey, data);
+        } catch (e) {
+            // Likely no room in local storage quota. This can still happen, despite
+            // above code to limit the size, because there could be other keys in
+            // storage OR we could be in incognito mode, which doesn't allow writing
+            // to local storage...
+            //
+            // Log the error and keep going.
+            console.trace(e);
+        }
         updateHistoryUI();
     }
 
@@ -2461,9 +2496,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             if (item.failureStatus) {
                 result = `Failure: ${item.failureStatus}`;
                 err = true;
-            } else if (item.responseData.error) {
+            } else if (item.responseData?.error) {
                 // for errors, show if any response messages were sent
-                let numMsgs = item.responseData?.responses?.length ?? 0;
+                let numMsgs = item.responseData.responseMsgCount ?? 0;
                 if (numMsgs === 1) {
                     messages = `1 response message`; // singular
                 } else if (numMsgs > 1) {
@@ -2472,8 +2507,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 result = item.responseData.error.name ?? 'FAILED';
                 err = true;
             } else {
-                // on success, only show number of response messages if more than one (e.g. a stream)
-                messages = (item.responseData?.responses?.length ?? 0) > 1 ? `${item.responseData.responses.length} response messages` : '';
+                // on success, only show number of response messages if not one (e.g. a stream)
+                messages = (item.responseData?.responseMsgCount ?? 1) !== 1 ? `${item.responseData.responseMsgCount } response messages` : '';
                 result = 'OK';
             }
             accordion.append(`<div class="history-item-header" id="${id}">
@@ -2539,7 +2574,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             formMethodSelected(() => {
                 jsonRawTextArea.val(JSON.stringify(item.request.data, null, 2));
                 validateJSON();
-                //remove all rows
+                // remove all rows
                 $("tr").remove('.metadataRow');
                 for (let metadata of item.request.metadata) {
                     addMetadataRow(metadata.name, metadata.value);
@@ -2578,8 +2613,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             }
         });
 
-    $("#grpc-service").change(formServiceSelected);
-    $("#grpc-method").change(formMethodSelected);
+    $("#grpc-service").change(() => formServiceSelected());
+    $("#grpc-method").change(() => formMethodSelected());
 
     $("#grpc-request-metadata-add-row").click(function() {
         addMetadataRow();
