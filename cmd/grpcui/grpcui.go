@@ -317,11 +317,11 @@ func main() {
 	}
 	var creds credentials.TransportCredentials
 	if !*plaintext {
-		var err error
-		creds, err = grpcurl.ClientTransportCredentials(*insecure, *cacert, *cert, *key)
+		tlsConf, err := grpcurl.ClientTLSConfig(*insecure, *cacert, *cert, *key)
 		if err != nil {
-			fail(err, "Failed to configure transport credentials")
+			fail(err, "Failed to create TLS config")
 		}
+		creds = credentials.NewTLS(tlsConf)
 		if *serverName != "" {
 			if err := creds.OverrideServerName(*serverName); err != nil {
 				fail(err, "Failed to override server name as %q", *serverName)

@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine as builder
+FROM golang:1.15-alpine as builder
 MAINTAINER FullStory Engineering
 
 # create non-privileged group and user
@@ -13,8 +13,6 @@ COPY standalone /tmp/fullstorydev/grpcui/standalone
 # and build a completely static binary (so we can use
 # scratch as basis for the final image)
 ENV CGO_ENABLED=0
-ENV GOOS=linux
-ENV GOARCH=amd64
 ENV GO111MODULE=on
 RUN go build -o /grpcui \
     -ldflags "-w -extldflags \"-static\" -X \"main.version=$(cat VERSION)\"" \
