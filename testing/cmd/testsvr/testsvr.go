@@ -93,23 +93,24 @@ func (s testSvr) UploadMany(stream KitchenSink_UploadManyServer) error {
 		stream.SetTrailer(tlrs)
 	}
 
-	var m *TestMessage
+	var lastReq *TestMessage
 	count := 0
 	for {
 		var err error
-		m, err = stream.Recv()
+		m, err := stream.Recv()
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return err
 		}
+		lastReq = m
 		count++
 	}
-	if m == nil {
+	if lastReq == nil {
 		return status.Error(codes.InvalidArgument, "must provide at least one request message")
 	}
-	m.NeededNumA = proto.Float32(float32(count))
-	return stream.SendAndClose(m)
+	lastReq.NeededNumA = proto.Float32(float32(count))
+	return stream.SendAndClose(lastReq)
 }
 
 func (s testSvr) DownloadMany(m *TestMessage, stream KitchenSink_DownloadManyServer) error {
