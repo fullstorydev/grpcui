@@ -452,7 +452,11 @@ func main() {
 		})
 	}
 	if *basePath != "/" {
-		handler = http.StripPrefix(strings.TrimSuffix(*basePath, "/"), handler)
+		withoutSlash := strings.TrimSuffix(*basePath, "/")
+		mux := http.NewServeMux()
+		// the mux will correctly redirect the bare path (without trailing slash)
+		mux.Handle(withoutSlash + "/", http.StripPrefix(withoutSlash, handler))
+		handler = mux
 	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *bind, *port))
