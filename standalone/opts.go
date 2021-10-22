@@ -38,6 +38,7 @@ func WithIndexTemplate(tmpl *template.Template) HandlerOption {
 func WithCSS(css []byte) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
 		opts.css = css
+		opts.cssPublic = false
 	})
 }
 
@@ -50,7 +51,7 @@ func WithCSS(css []byte) HandlerOption {
 // the order they are passed.
 func AddJS(filename string, js []byte) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
-		opts.tmplResources = append(opts.tmplResources, newResource(path.Join("/s", filename), js, "text/javascript; charset=utf-8"))
+		opts.tmplResources = append(opts.tmplResources, newResource(path.Join("/s", filename), js, "text/javascript; charset=utf-8", false))
 	})
 }
 
@@ -63,7 +64,7 @@ func AddJS(filename string, js []byte) HandlerOption {
 // the order they are passed.
 func AddCSS(filename string, css []byte) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
-		opts.tmplResources = append(opts.tmplResources, newResource(path.Join("/s", filename), css, "text/css; charset=utf-8"))
+		opts.tmplResources = append(opts.tmplResources, newResource(path.Join("/s", filename), css, "text/css; charset=utf-8", false))
 	})
 }
 
@@ -76,7 +77,7 @@ func AddCSS(filename string, css []byte) HandlerOption {
 // in the AddlResources field of the WebFormContainerTemplateData.
 func ServeAsset(filename string, contents []byte) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
-		opts.servedOnlyResources = append(opts.servedOnlyResources, newResource(path.Join("/s", filename), contents, ""))
+		opts.servedOnlyResources = append(opts.servedOnlyResources, newResource(path.Join("/s", filename), contents, "", false))
 	})
 }
 
@@ -106,6 +107,7 @@ func (f optFunc) apply(opts *handlerOptions) {
 type handlerOptions struct {
 	indexTmpl           *template.Template
 	css                 []byte
+	cssPublic           bool
 	tmplResources       []*resource
 	servedOnlyResources []*resource
 	defaultMetadata     []string
