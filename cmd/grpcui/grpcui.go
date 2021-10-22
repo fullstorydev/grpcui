@@ -462,7 +462,7 @@ func main() {
 		withoutSlash := strings.TrimSuffix(*basePath, "/")
 		mux := http.NewServeMux()
 		// the mux will correctly redirect the bare path (without trailing slash)
-		mux.Handle(withoutSlash + "/", http.StripPrefix(withoutSlash, handler))
+		mux.Handle(withoutSlash+"/", http.StripPrefix(withoutSlash, handler))
 		handler = mux
 	}
 
