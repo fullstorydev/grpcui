@@ -42,6 +42,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	uiOpts := &handlerOptions{
 		indexTmpl: defaultIndexTemplate,
 		css:       grpcui.WebFormSampleCSS(),
+		cssPublic: true,
 	}
 	for _, o := range opts {
 		o.apply(uiOpts)
@@ -56,12 +57,12 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 			continue
 		}
 		resourcePath := "/" + assetName
-		handle(&mux, newResource(resourcePath, standalone.MustAsset(assetName), ""))
+		handle(&mux, newResource(resourcePath, standalone.MustAsset(assetName), "", true))
 	}
 
 	// Add resources from WebFormPackage
-	handle(&mux, newResource("/grpc-web-form.js", grpcui.WebFormScript(), "text/javascript; charset=UTF-8"))
-	handle(&mux, newResource("/grpc-web-form.css", uiOpts.css, "text/css; charset=UTF-8"))
+	handle(&mux, newResource("/grpc-web-form.js", grpcui.WebFormScript(), "text/javascript; charset=UTF-8", true))
+	handle(&mux, newResource("/grpc-web-form.css", uiOpts.css, "text/css; charset=UTF-8", uiOpts.cssPublic))
 
 	// Add optional resources to mux
 	for _, res := range uiOpts.addlServedResources() {
@@ -75,7 +76,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	}
 	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", methods, formOpts)
 	indexContents := getIndexContents(uiOpts.indexTmpl, target, webFormHTML, uiOpts.tmplResources)
-	indexResource := newResource("/", indexContents, "text/html; charset=utf-8")
+	indexResource := newResource("/", indexContents, "text/html; charset=utf-8", false)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			indexResource.ServeHTTP(w, r)
@@ -145,9 +146,10 @@ type resource struct {
 	Data        []byte
 	ContentType string
 	ETag        string
+	Public      bool
 }
 
-func newResource(uriPath string, data []byte, contentType string) *resource {
+func newResource(uriPath string, data []byte, contentType string, public bool) *resource {
 	if contentType == "" {
 		contentType = mime.TypeByExtension(path.Ext(uriPath))
 	}
@@ -156,6 +158,7 @@ func newResource(uriPath string, data []byte, contentType string) *resource {
 		Data:        data,
 		ContentType: contentType,
 		ETag:        computeETag(data),
+		Public:      public,
 	}
 }
 
@@ -170,7 +173,11 @@ func (res *resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", res.ContentType)
-	w.Header().Set("Cache-Control", "public, max-age=3600")
+	if res.Public {
+		w.Header().Set("Cache-Control", "public, max-age=3600")
+	} else {
+		w.Header().Set("Cache-Control", "private, max-age=3600")
+	}
 	w.Header().Set("ETag", res.ETag)
 	_, _ = w.Write(res.Data)
 }
