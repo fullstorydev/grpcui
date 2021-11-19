@@ -19,6 +19,10 @@
     height: 30px;
 }
 
+#grpc-method-description {
+    line-height: 30px;
+}
+
 #grpc-request-response {
     margin-top: 24px;
     border: none;

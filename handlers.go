@@ -150,6 +150,7 @@ type schema struct {
 	RequestStream bool                    `json:"requestStream"`
 	MessageTypes  map[string][]fieldDef   `json:"messageTypes"`
 	EnumTypes     map[string][]enumValDef `json:"enumTypes"`
+	Comment       string                  `json:"comment"`
 }
 
 type fieldDef struct {
@@ -234,6 +235,7 @@ func gatherMetadataForMethod(md *desc.MethodDescriptor) (*schema, error) {
 		RequestStream: md.IsClientStreaming(),
 		MessageTypes:  map[string][]fieldDef{},
 		EnumTypes:     map[string][]enumValDef{},
+		Comment:       md.GetSourceInfo().GetLeadingComments(),
 	}
 
 	result.visitMessage(msg)

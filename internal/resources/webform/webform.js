@@ -120,6 +120,9 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         if (schema.requestStream) {
             requestObj = [requestObj];
         }
+
+        $('#grpc-method-description').text(schema.comment)
+
         try {
             rebuildRequestForm(requestObj, true);
         } catch (e) {
