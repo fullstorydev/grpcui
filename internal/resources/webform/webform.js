@@ -1,6 +1,10 @@
-window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers) {
+window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers, showComments) {
 
     var requestForm = $("#grpc-request-form");
+
+    if (debug) {
+        console.log("display of comments is", showComments ? "enabled" : "disabled");
+    }
 
     function formServiceSelected(callback) {
         var methods = services[$("#grpc-service").val()];
@@ -121,7 +125,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             requestObj = [requestObj];
         }
 
-        if (schema.comment) {
+        if (showComments && schema.comment) {
             $('#grpc-method-description').text(schema.comment);
         }
 
@@ -1041,7 +1045,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         var labelName = $('<strong>');
         labelName.text(fld.protoName);
         cell.prepend($('<br>'));
-        if (!isOneOf(fld) && fld.comment) {
+        if (showComments && !isOneOf(fld) && fld.comment) {
             var description = $('<span>', {
                 class: 'field-description',
                 text: '?',

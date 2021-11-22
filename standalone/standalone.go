@@ -72,6 +72,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	// Add the index page (not bundled in standalone)
 	formOpts := grpcui.WebFormOptions{
 		DefaultMetadata: uiOpts.defaultMetadata,
+		Comments:        uiOpts.comments,
 		Debug:           uiOpts.debug,
 	}
 	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", methods, formOpts)

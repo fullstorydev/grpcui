@@ -13,9 +13,12 @@
     </select>
   </div>
 
+  {{- if .Comments }}
   <div class="grpc-desc"><span class="grpc-form-label">Description:</span>
+    <!-- populated by JavaScript when grpc-method is selected -->
     <span id="grpc-method-description">&nbsp;</span>
   </div>
+  {{- end }}
 
   <div id="grpc-request-response">
     <ul>
@@ -92,6 +95,6 @@
     {{- end}}
     ];
 
-    initGRPCForm(services, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers);
+    initGRPCForm(services, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers, {{ .Comments }});
 })();
 </script>

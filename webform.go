@@ -55,6 +55,10 @@ type WebFormOptions struct {
 	// The set of metadata to show in the web form by default. Each value in
 	// the slice should be in the form "name: value"
 	DefaultMetadata []string
+	// Enables the display of proto comments in the web form. When using the
+	// protoset option it has to be compiled with –include_source_info. Most gRPC
+	// libraries do not return comments when using server reflection.
+	Comments bool
 	// If non-nil and true, the web form JS code will log debug information
 	// to the JS console. If nil, whether debug is enabled or not depends on
 	// an environment variable: GRPC_WEBFORM_DEBUG (if it's not blank, then
@@ -76,11 +80,13 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.Met
 		Services        []string
 		Methods         map[string][]string
 		DefaultMetadata []metadataEntry
+		Comments        bool
 		Debug           bool
 	}{
 		InvokeURI:   invokeURI,
 		MetadataURI: metadataURI,
 		Methods:     map[string][]string{},
+		Comments:    opts.Comments,
 		// TODO(jh): parameter for enabling this instead of env var?
 		Debug: os.Getenv("GRPC_WEBFORM_DEBUG") != "",
 	}

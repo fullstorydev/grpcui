@@ -89,6 +89,13 @@ func WithDefaultMetadata(headers []string) HandlerOption {
 	})
 }
 
+// WithComments enables display of proto comments in the web form
+func WithComments(comments bool) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.comments = comments
+	})
+}
+
 // WithDebug enables console logging in the client JS. This prints extra
 // information as the UI processes user input.
 func WithDebug(debug bool) HandlerOption {
@@ -111,6 +118,7 @@ type handlerOptions struct {
 	tmplResources       []*resource
 	servedOnlyResources []*resource
 	defaultMetadata     []string
+	comments            bool
 	debug               *bool
 }
 

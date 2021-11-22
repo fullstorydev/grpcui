@@ -112,6 +112,10 @@ var (
 		This defaults to true when grpcui is used in an interactive mode; e.g.
 		when the tool detects that stdin is a terminal/tty. Otherwise, this
 		defaults to false.`))
+	comments = flags.Bool("comments", false, prettify(`
+		Enable the display of proto comments in UI. When using the protoset option,
+		it has to be compiled with –include_source_info. Most gRPC libraries do
+		not return comments when using server reflection.`))
 
 	port = flags.Int("port", 0, prettify(`
 		The port on which the web UI is exposed.`))
@@ -401,6 +405,9 @@ func main() {
 	var handlerOpts []standalone.HandlerOption
 	if len(defHeaders) > 0 {
 		handlerOpts = append(handlerOpts, standalone.WithDefaultMetadata(defHeaders))
+	}
+	if *comments {
+		handlerOpts = append(handlerOpts, standalone.WithComments(*comments))
 	}
 	if debug.set {
 		handlerOpts = append(handlerOpts, standalone.WithDebug(debug.val))
