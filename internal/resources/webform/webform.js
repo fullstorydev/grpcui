@@ -1046,8 +1046,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 class: 'field-description',
                 text: '?',
                 title: fld.comment,
-            }).tooltip()
-            cell.prepend(description)
+            }).tooltip();
+            cell.prepend(description);
         }
         cell.prepend(labelName);
 
