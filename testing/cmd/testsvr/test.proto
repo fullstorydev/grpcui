@@ -15,7 +15,12 @@ option go_package = ".;main";
 // and field types in the grpcui web form.
 
 service KitchenSink {
+
+    // This is the description of the Ping method.
+    // The second line of the description.
     rpc Ping (google.protobuf.Empty) returns (google.protobuf.Empty);
+
+    // The Exchange method is very useful!
     rpc Exchange (TestMessage) returns (TestMessage);
     rpc UploadMany (stream TestMessage) returns (TestMessage);
     rpc DownloadMany (TestMessage) returns (stream TestMessage);
@@ -232,7 +237,11 @@ message Maps {
 }
 
 message TestMessage {
+
+    // To recurse or not to recurse
     optional TestMessage recurse = 2;
+
+    // It's even possible to do this repeatedly!
     repeated TestMessage repeated_recurse = 3;
 
     required Person person = 4;
