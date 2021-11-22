@@ -164,6 +164,7 @@ type fieldDef struct {
 	IsMap       bool        `json:"isMap"`
 	IsRequired  bool        `json:"isRequired"`
 	DefaultVal  interface{} `json:"defaultVal"`
+	Comment     string      `json:"comment"`
 }
 
 type enumValDef struct {
@@ -280,6 +281,7 @@ func (s *schema) processField(fd *desc.FieldDescriptor) fieldDef {
 		IsMap:      fd.IsMap(),
 		IsRequired: fd.IsRequired(),
 		DefaultVal: fd.GetDefaultValue(),
+		Comment:    fd.GetSourceInfo().GetLeadingComments(),
 	}
 
 	if def.IsMap {

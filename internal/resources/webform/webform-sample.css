@@ -258,6 +258,21 @@ table#grpc-request-metadata-form {
     font-size: 120%;
 }
 
+#grpc-request-form .field-description {
+    display: inline-block;
+    font-family: "Courier New", Courier, monospace;
+    text-align: center;
+    vertical-align: top;
+    width: 1rem;
+    height: 1rem;
+    margin-left: 4px;
+    background-color: #eee;
+    color: #333 ;
+    border: 1px solid #333;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
 #grpc-request-form td.toggle_presence {
     width: 1px;
 }

@@ -217,6 +217,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             isMap: false,
             isRequired: false,
             defaultVal: null,
+            comment: "",
         };
         requestForm.empty();
 
@@ -319,7 +320,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 isArray: true,
                 isMap: false,
                 isRequired: false,
-                defaultVal: null
+                defaultVal: null,
+                comment: fld.comment,
             };
             return addArrayToForm(schema, container, parent, pathLen, value, allowMissing, fld.type, elemType);
         }
@@ -1037,6 +1039,14 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         var labelName = $('<strong>');
         labelName.text(fld.protoName);
         cell.prepend($('<br>'));
+        if (!isOneOf(fld) && fld.comment) {
+            var description = $('<span>', {
+                class: 'field-description',
+                text: '?',
+                title: fld.comment,
+            }).tooltip()
+            cell.prepend(description)
+        }
         cell.prepend(labelName);
 
         return cell;
