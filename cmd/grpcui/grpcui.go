@@ -80,12 +80,12 @@ var (
 	connectTimeout = flags.Float64("connect-timeout", 0, prettify(`
 		The maximum time, in seconds, to wait for connection to be established.
 		Defaults to 10 seconds.`))
-	connectFailFast = flags.Bool("connect-fail-fast", true, prettify(`
-		If true, non-temporary errors (such as "connection refused" during
+	noConnectFailFast = flags.Bool("no-connect-fail-fast", false, prettify(`
+		If false, non-temporary errors (such as "connection refused" during
 		initial connection will cause the program to immediately abort. This
 		is the default and is appropriate for interactive uses of grpcui. But
 		long-lived server use (like as a sidecar to a gRPC server) will prefer
-		to set this to false for more robust startup.`))
+		to set this to true for more robust startup.`))
 	keepaliveTime = flags.Float64("keepalive-time", 0, prettify(`
 		If present, the maximum idle time in seconds, after which a keepalive
 		probe is sent. If the connection remains idle and no keepalive response
@@ -339,7 +339,7 @@ func main() {
 	if isUnixSocket != nil && isUnixSocket() {
 		network = "unix"
 	}
-	cc, err := dial(dialCtx, network, target, creds, *connectFailFast, opts...)
+	cc, err := dial(dialCtx, network, target, creds, *noConnectFailFast, opts...)
 	if err != nil {
 		fail(err, "Failed to dial target host %q", target)
 	}
