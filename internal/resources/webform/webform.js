@@ -1923,7 +1923,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             case "google.protobuf.BoolValue":
                 return false;
             case "google.protobuf.Value":
-                return null;
+                return {};
             case "google.protobuf.ListValue":
                 return [];
             default:
