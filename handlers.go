@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math"
 	"net/http"
 	"sort"
@@ -414,7 +413,7 @@ func (e errReadFail) Error() string {
 }
 
 func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterface, descSource grpcurl.DescriptorSource, reqHdrs http.Header, body io.Reader, options *InvokeOptions) (*rpcResult, error) {
-	js, err := ioutil.ReadAll(body)
+	js, err := io.ReadAll(body)
 	if err != nil {
 		return nil, errReadFail{err: err}
 	}

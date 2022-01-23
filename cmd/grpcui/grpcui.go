@@ -11,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net"
 	"net/http"
@@ -433,7 +432,7 @@ func main() {
 
 	if verbosity == 1 {
 		// verbose will let grpc package print warnings and errors
-		grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, os.Stdout, ioutil.Discard))
+		grpclog.SetLoggerV2(grpclog.NewLoggerV2(io.Discard, os.Stdout, io.Discard))
 	} else if verbosity > 1 {
 		// very verbose will let grpc package log info
 		// and very very verbose turns up the verbosity
@@ -441,7 +440,7 @@ func main() {
 		if verbosity > 2 {
 			grpcVerbosity = 5
 		}
-		grpclog.SetLoggerV2(grpclog.NewLoggerV2WithVerbosity(os.Stdout, ioutil.Discard, ioutil.Discard, grpcVerbosity))
+		grpclog.SetLoggerV2(grpclog.NewLoggerV2WithVerbosity(os.Stdout, io.Discard, io.Discard, grpcVerbosity))
 	}
 
 	var examplesOpt standalone.HandlerOption
@@ -458,7 +457,7 @@ func main() {
 			defer func() {
 				_ = f.Close()
 			}()
-			data, err := ioutil.ReadAll(f)
+			data, err := io.ReadAll(f)
 			if err != nil {
 				fail(err, "Failed to read contents of %q", *examplesFile)
 			}
