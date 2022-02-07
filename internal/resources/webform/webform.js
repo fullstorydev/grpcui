@@ -2104,7 +2104,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         } else {
             cloneData = $.extend(true, {}, originalData)
         }
-        const history = {
+        const historyItem = {
             request: {
                 timeout: timeoutStr,
                 metadata: $.extend([], metadata),
@@ -2125,116 +2125,12 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 data: JSON.stringify({timeout_seconds: timeout, metadata: metadata, data: data}),
             })
             .done(function(responseData) {
-                if (responseData.headers instanceof Array && responseData.headers.length > 0) {
-                    var hdrs = $("#grpc-response-headers");
-                    hdrs.empty();
-                    for (var i = 0; i < responseData.headers.length; i++) {
-                        var hdrRow = $('<tr>');
-                        hdrs.append(hdrRow);
-                        var hdrCell = $('<td>');
-                        hdrCell.text(responseData.headers[i].name);
-                        hdrRow.append(hdrCell);
-                        hdrCell = $('<td>');
-                        hdrCell.text(responseData.headers[i].value);
-                        hdrRow.append(hdrCell);
-                    }
-                } else {
-                    $("#grpc-response-headers").html('<tr><td class="none">None</td></tr>');
-                }
-
-                if (responseData.requests && responseData.requests.total !== responseData.requests.sent) {
-                    var stats = $("#grpc-response-req-stats");
-                    stats.show();
-                    stats.text('Only ' + responseData.requests.sent + ' of ' + responseData.requests.total + ' requests accepted');
-                } else {
-                    $("#grpc-response-req-stats").hide();
-                }
-
-                // TODO(jh): better presentation of responses?
-                // It would be really nice to show type information. It would also be nice
-                // to render maps a little differently and also to omit unset one-of fields
-                // (or even better, be able to render unset fields differently).
-                // But we need response schema info to do that...
-                if (responseData.responses instanceof Array && responseData.responses.length > 0) {
-                    const responseDiv = $("#grpc-response-data");
-                    responseDiv.empty();
-                    responseDiv.show();
-                    for (const resp of responseData.responses) {
-                        const container = $('<div>');
-                        if (resp.isError) {
-                            container.html('<div class="error">Server error processing message #' + (i+1) + '</div>');
-                        } else {
-                            const textArea = $('<textarea>');
-                            textArea.val(JSON.stringify(resp.message, null, 2));
-                            textArea.addClass('grpc-response-textarea');
-                            container.append(textArea);
-                        }
-                        responseDiv.append(container);
-                    }
-                } else {
-                    $("#grpc-response-data").hide();
-                }
-
-                if (responseData.error) {
-                    addHistory({
-                        ...history,
-                        durationMS: window.performance.now() - startTime,
-                        responseData: historyResponseData(responseData),
-                    });
-                    $("#grpc-response-error").show();
-                    $("#grpc-response-error-desc").text(responseData.error.name);
-                    $("#grpc-response-error-num").text('(' + responseData.error.code + ')');
-                    if (responseData.error.message !== responseData.error.name) {
-                        var msg = $("#grpc-response-error-msg");
-                        msg.show();
-                        msg.text(responseData.error.message);
-                    } else {
-                        $("#grpc-response-error-msg").hide();
-                    }
-                    // TODO(jh): show error details, in the same way as we
-                    // show response messages above
-                    $("#grpc-response-error-details").hide();
-                } else {
-                    addHistory({
-                        ...history,
-                        durationMS: window.performance.now() - startTime,
-                        responseData: historyResponseData(responseData),
-                    });
-                    $("#grpc-response-error").hide();
-                }
-
-                // TODO(jh): "copy as grpcurl" button? This would provide a
-                // command-line for grpcurl that does the same thing as clicking
-                // the "invoke" button for the current request responseData and metadata.
-
-                // TODO(jh): "paste as grpcurl" button? This would provide a
-                // way to paste in a grpcurl command-line which would then select
-                // the right method, and populate the request responseData and metadata.
-
-                if (responseData.trailers instanceof Array && responseData.trailers.length > 0) {
-                    var tlrs = $("#grpc-response-trailers");
-                    tlrs.empty();
-                    for (i = 0; i < responseData.trailers.length; i++) {
-                        var tlrRow = $('<tr>');
-                        tlrs.append(tlrRow);
-                        var tlrCell = $('<td>');
-                        tlrCell.text(responseData.trailers[i].name);
-                        tlrRow.append(tlrCell);
-                        tlrCell = $('<td>');
-                        tlrCell.text(responseData.trailers[i].value);
-                        tlrRow.append(tlrCell);
-                    }
-                } else {
-                    $("#grpc-response-trailers").html('<tr><td class="none">None</td></tr>');
-                }
-
-                var t = $("#grpc-request-response");
-                t.tabs("enable", 2);
-                t.tabs("option", "active", 2);
+                var durationMs = window.performance.now() - startTime;
+                renderResponse(historyItem, durationMs, responseData);
             })
             .fail(function(failureData, status) {
                 addHistory({
-                    ...history,
+                    ...historyItem,
                     durationMS: window.performance.now() - startTime,
                     failureStatus: status,
                 });
@@ -2246,6 +2142,118 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             .always(function() {
                 $(".grpc-invoke").prop("disabled", false);
             });
+    }
+
+    function renderResponse(historyItem, durationMs, responseData) {
+        if (responseData.headers instanceof Array && responseData.headers.length > 0) {
+            var hdrs = $("#grpc-response-headers");
+            hdrs.empty();
+            for (var i = 0; i < responseData.headers.length; i++) {
+                var hdrRow = $('<tr>');
+                hdrs.append(hdrRow);
+                var hdrCell = $('<td>');
+                hdrCell.text(responseData.headers[i].name);
+                hdrRow.append(hdrCell);
+                hdrCell = $('<td>');
+                hdrCell.text(responseData.headers[i].value);
+                hdrRow.append(hdrCell);
+            }
+        } else {
+            $("#grpc-response-headers").html('<tr><td class="none">None</td></tr>');
+        }
+
+        if (responseData.requests && responseData.requests.total !== responseData.requests.sent) {
+            var stats = $("#grpc-response-req-stats");
+            stats.show();
+            stats.text('Only ' + responseData.requests.sent + ' of ' + responseData.requests.total + ' requests accepted');
+        } else {
+            $("#grpc-response-req-stats").hide();
+        }
+
+        // TODO(jh): better presentation of responses?
+        // It would be really nice to show type information. It would also be nice
+        // to render maps a little differently and also to omit unset one-of fields
+        // (or even better, be able to render unset fields differently).
+        // But we need response schema info to do that...
+        renderMessages($("#grpc-response-data"), responseData.responses)
+
+        if (responseData.error) {
+            $("#grpc-response-error").show();
+            $("#grpc-response-error-desc").text(responseData.error.name);
+            $("#grpc-response-error-num").text('(' + responseData.error.code + ')');
+            if (responseData.error.message !== responseData.error.name) {
+                var msg = $("#grpc-response-error-msg");
+                msg.show();
+                msg.text(responseData.error.message);
+            } else {
+                $("#grpc-response-error-msg").hide();
+            }
+            if (renderMessages($("#grpc-response-error-details"), responseData.error.details)) {
+                $("#grpc-response-error-details-container").show();
+            } else {
+                $("#grpc-response-error-details-container").hide();
+            }
+        } else {
+            $("#grpc-response-error").hide();
+        }
+
+        addHistory({
+            ...historyItem,
+            durationMS: durationMs,
+            responseData: historyResponseData(responseData),
+        });
+
+        // TODO(jh): "copy as grpcurl" button? This would provide a
+        // command-line for grpcurl that does the same thing as clicking
+        // the "invoke" button for the current request responseData and metadata.
+
+        // TODO(jh): "paste as grpcurl" button? This would provide a
+        // way to paste in a grpcurl command-line which would then select
+        // the right method, and populate the request responseData and metadata.
+
+        if (responseData.trailers instanceof Array && responseData.trailers.length > 0) {
+            var tlrs = $("#grpc-response-trailers");
+            tlrs.empty();
+            for (i = 0; i < responseData.trailers.length; i++) {
+                var tlrRow = $('<tr>');
+                tlrs.append(tlrRow);
+                var tlrCell = $('<td>');
+                tlrCell.text(responseData.trailers[i].name);
+                tlrRow.append(tlrCell);
+                tlrCell = $('<td>');
+                tlrCell.text(responseData.trailers[i].value);
+                tlrRow.append(tlrCell);
+            }
+        } else {
+            $("#grpc-response-trailers").html('<tr><td class="none">None</td></tr>');
+        }
+
+        var t = $("#grpc-request-response");
+        t.tabs("enable", 2);
+        t.tabs("option", "active", 2);
+    }
+
+    function renderMessages(enclosingDiv, messages) {
+        enclosingDiv.empty();
+        if (messages instanceof Array && messages.length > 0) {
+            enclosingDiv.show();
+            for (const msg of messages) {
+                const container = $('<div>');
+                if (msg.isError) {
+                    container.html('<div class="error">Server error processing message #' + (i+1) + '</div>');
+                } else {
+                    const textArea = $('<textarea>');
+                    textArea.val(JSON.stringify(msg.message, null, 2));
+                    textArea.addClass('grpc-response-textarea');
+                    container.append(textArea);
+                }
+                enclosingDiv.append(container);
+            }
+            return true;
+        } else {
+            enclosingDiv.hide();
+            return false;
+        }
     }
 
     function historyResponseData(responseData) {

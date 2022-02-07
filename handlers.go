@@ -526,6 +526,6 @@ func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message) rpcR
 			// should never happen... here's a dumb fallback
 			b = []byte(strconv.Quote(err.Error()))
 		}
-		return rpcResponseElement{Data: json.RawMessage(b), IsError: true}
+		return rpcResponseElement{Data: b, IsError: true}
 	}
 }

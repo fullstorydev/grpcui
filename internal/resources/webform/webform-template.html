@@ -48,14 +48,17 @@
       <table class="grpc-metadata-table" id="grpc-response-headers"></table>
       <h3>Response Data</h3>
       <div id="grpc-response-req-stats"></div>
-      <div id="grpc-response-data"></div>
+      <div class="grpc-response-messages" id="grpc-response-data"></div>
       <div id="grpc-response-error">
         <div id="grpc-response-error-summary">
             <span id="grpc-response-error-desc"></span> <span id="grpc-response-error-num"></span>
         </div>
         <div id = "response-error-extra">
           <span id="grpc-response-error-msg"></span>
-          <table class="grpc-errors-table" id="grpc-response-error-details"></table>
+          <div id="grpc-response-error-details-container">
+            <h4>Error Details:</h4>
+            <div class="grpc-response-messages" id="grpc-response-error-details"></div>
+          </div>
         </div>
       </div>
       <h3>Response Trailers</h3>
