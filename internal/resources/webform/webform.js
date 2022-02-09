@@ -1487,12 +1487,12 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             timeStr = timeStr.replace('am', ' am').replace('pm', ' pm');
 
             // now test with known good day, for final verification that time is valid
-            if (!isFinite(new Date('2018-10-31 ' + timeStr).getDate())) {
+            if (!isFinite(new Date('2018-10-31T' + timeStr).getDate())) {
                 throw new Error('timestamp is not valid');
             }
 
             // now try to update value using date input
-            var dateTime = new Date(date.val() + " " + timeStr);
+            var dateTime = new Date(date.val() + "T" + timeStr);
             if (isFinite(dateTime.getDate())) {
                 input.setValue(dateTime.toISOString());
             }
