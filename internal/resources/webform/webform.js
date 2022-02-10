@@ -1508,7 +1508,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             $.datepicker.parseDate('yy-mm-dd', date.val());
 
             // now try to update value using time input
-            var dateTime = new Date(date.val() + " " + time.val());
+            var dateTime = new Date(date.val() + "T" + time.val());
             if (isFinite(dateTime.getDate())) {
                 input.setValue(dateTime.toISOString());
             }
