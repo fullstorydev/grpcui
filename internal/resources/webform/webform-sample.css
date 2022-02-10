@@ -416,6 +416,15 @@ textarea.grpc-response-textarea {
     height: 200px;
 }
 
+#grpc-response-error-details textarea.grpc-response-textarea {
+    height: 100px;
+}
+
+#grpc-response-error-details-container h4 {
+    margin: 12px 0 6px 0;
+    font-size: 90%;
+}
+
 #grpc-response-req-stats {
     font-size: 110%;
     padding-bottom: 8px;

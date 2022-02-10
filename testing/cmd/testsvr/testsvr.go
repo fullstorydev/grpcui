@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	spb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -165,6 +166,30 @@ func (s testSvr) DoManyThings(stream KitchenSink_DoManyThingsServer) error {
 			return err
 		}
 	}
+}
+
+func (s testSvr) Fail(req *FailRequest, stream KitchenSink_FailServer) error {
+	msg := &TestMessage{
+		Person: &Person{
+			Id:   proto.Uint64(123),
+			Name: proto.String("123"),
+		},
+		State:      State_COMPLETE.Enum(),
+		NeededNumA: proto.Float32(1.23),
+		NeededNumB: proto.Float64(12.3),
+	}
+	for i := int32(0); i < req.GetNumResponses(); i++ {
+		msg.OpaqueId = []byte{byte(i + 1)}
+		if err := stream.Send(msg); err != nil {
+			return err
+		}
+	}
+	statProto := spb.Status{
+		Code:    int32(req.GetCode()),
+		Message: req.GetMessage(),
+		Details: req.GetDetails(),
+	}
+	return status.FromProto(&statProto).Err()
 }
 
 func (s testSvr) SendTimestamp(context.Context, *timestamppb.Timestamp) (*emptypb.Empty, error) {
