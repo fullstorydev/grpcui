@@ -29,6 +29,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	insecurecreds "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
@@ -75,8 +76,11 @@ var (
 	reflHeaders multiString
 	defHeaders  multiString
 	authority   = flags.String("authority", "", prettify(`
-		Value of :authority pseudo-header to be use with underlying HTTP/2
-		requests. It defaults to the given address.`))
+		The authoritative name of the remote server. This value is passed as the
+		value of the ":authority" pseudo-header in the HTTP/2 protocol. When TLS
+		is used, this will also be used as the server name when verifying the
+		server's certificate. It defaults to the address that is provided in the
+		positional arguments.`))
 	connectTimeout = flags.Float64("connect-timeout", 0, prettify(`
 		The maximum time, in seconds, to wait for connection to be established.
 		Defaults to 10 seconds.`))
@@ -106,7 +110,12 @@ var (
 		Enable the most verbose output, which includes traces of all HTTP
 		requests and responses.`))
 	serverName = flags.String("servername", "", prettify(`
-		Override servername when validating TLS certificate.`))
+		Override server name when validating TLS certificate. This flag is
+		ignored if -plaintext or -insecure is used.
+		NOTE: Prefer -authority. This flag may be removed in the future. It is
+		an error to use both -authority and -servername (though this will be
+		permitted if they are both set to the same value, to increase backwards
+		compatibility with earlier releases that allowed both to be set).`))
 	openBrowser = flags.Bool("open-browser", false, prettify(`
 		When true, grpcui will try to open a browser pointed at the UI's URL.
 		This defaults to true when grpcui is used in an interactive mode; e.g.
@@ -319,9 +328,6 @@ func main() {
 	if *maxMsgSz > 0 {
 		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(*maxMsgSz)))
 	}
-	if *authority != "" {
-		opts = append(opts, grpc.WithAuthority(*authority))
-	}
 	var creds credentials.TransportCredentials
 	if !*plaintext {
 		tlsConf, err := grpcurl.ClientTLSConfig(*insecure, *cacert, *cert, *key)
@@ -329,11 +335,25 @@ func main() {
 			fail(err, "Failed to create TLS config")
 		}
 		creds = credentials.NewTLS(tlsConf)
-		if *serverName != "" {
-			if err := creds.OverrideServerName(*serverName); err != nil {
-				fail(err, "Failed to override server name as %q", *serverName)
+
+		// can use either -servername or -authority; but not both
+		if *serverName != "" && *authority != "" {
+			if *serverName == *authority {
+				warn("Both -servername and -authority are present; prefer only -authority.")
+			} else {
+				fail(nil, "Cannot specify different values for -servername and -authority.")
 			}
 		}
+		overrideName := *serverName
+		if overrideName == "" {
+			overrideName = *authority
+		}
+
+		if overrideName != "" {
+			opts = append(opts, grpc.WithAuthority(overrideName))
+		}
+	} else if *authority != "" {
+		opts = append(opts, grpc.WithAuthority(*authority))
 	}
 	network := "tcp"
 	if isUnixSocket != nil && isUnixSocket() {
@@ -760,7 +780,7 @@ func dial(ctx context.Context, network, addr string, creds credentials.Transport
 	}
 	var errCreds errTrackingCreds
 	if creds == nil {
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecurecreds.NewCredentials()))
 	} else {
 		errCreds = errTrackingCreds{
 			TransportCredentials: creds,
