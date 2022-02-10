@@ -5,6 +5,7 @@ import (
 	"github.com/jhump/protoreflect/grpcreflect"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
 
@@ -58,6 +59,25 @@ func AllMethodsViaReflection(ctx context.Context, cc grpc.ClientConnInterface) (
 		if err != nil {
 			return nil, err
 		}
+		if sd.GetFullyQualifiedName() == "grpc.reflection.v1alpha.ServerReflection" {
+			continue // skip reflection service
+		}
+		descs = append(descs, sd)
+	}
+	return AllMethodsForServices(descs), nil
+}
+
+// AllMethodsViaInProcess returns a slice that contains the method descriptors
+// for all methods exposed by the given server.
+// This automatically skips the reflection service, since it is assumed this is not
+// a desired inclusion.
+func AllMethodsViaInProcess(svr reflection.GRPCServer) ([]*desc.MethodDescriptor, error) {
+	sds, err := grpcreflect.LoadServiceDescriptors(svr)
+	if err != nil {
+		return nil, err
+	}
+	var descs []*desc.ServiceDescriptor
+	for _, sd := range sds {
 		if sd.GetFullyQualifiedName() == "grpc.reflection.v1alpha.ServerReflection" {
 			continue // skip reflection service
 		}
