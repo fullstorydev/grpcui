@@ -17,6 +17,7 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -148,6 +149,10 @@ var (
 		Example: "/debug/grpcui".`))
 	services multiString
 	methods  multiString
+
+	extraJS     multiString
+	extraCSS    multiString
+	otherAssets multiString
 )
 
 func init() {
@@ -231,6 +236,24 @@ func init() {
 		-use-reflection is used in combination with a -proto or -protoset flag,
 		the provided descriptor sources will be used in addition to server
 		reflection to resolve messages and extensions.`))
+	flags.Var(&extraJS, "extra-js", prettify(`
+		Indicates the name of a JavaScript file to load from the web form. This
+		allows injecting custom behavior into the page. Multiple files can be
+		added by specifying multiple -extra-js flags.`))
+	flags.Var(&extraCSS, "extra-css", prettify(`
+		Indicates the name of a CSS file to load from the web form. This allows
+		injecting custom styles into the page, to customize the look. Multiple
+		files can be added by specifying multiple -extra-css flags.`))
+	flags.Var(&otherAssets, "also-serve", prettify(`
+		Indicates the name of an additional file or folder that the gRPC UI web
+		server can serve. This can be useful for serving other assets, like
+		images, when a custom CSS is used via -extra-css flags. Multiple assets
+		can be added to the server by specifying multiple -also-serve flags. The
+		named file will be available at a URI of "/<base-name>", where
+		<base-name> is the name of the file, excluding its path. If the given
+		name is a folder, the folder's contents are available at URIs that are
+		under "/<base-name>/". It is an error to specify multiple files or
+		folders that have the same base name.`))
 }
 
 type multiString []string
@@ -375,6 +398,11 @@ func main() {
 	if !strings.HasPrefix(*basePath, "/") {
 		fail(nil, `The -base-path must begin with a slash ("/")`)
 	}
+
+	assetNames := map[string]string{}
+	checkAssetNames(assetNames, extraJS, true)
+	checkAssetNames(assetNames, extraCSS, true)
+	checkAssetNames(assetNames, otherAssets, false)
 
 	// Protoset or protofiles provided and -use-reflection unset
 	if !reflection.set && (len(protoset) > 0 || len(protoFiles) > 0) {
@@ -563,6 +591,10 @@ func main() {
 	if debug.set {
 		handlerOpts = append(handlerOpts, standalone.WithClientDebug(debug.val))
 	}
+	handlerOpts = append(handlerOpts, configureJSandCSS(extraJS, standalone.AddJSFile)...)
+	handlerOpts = append(handlerOpts, configureJSandCSS(extraCSS, standalone.AddCSSFile)...)
+	handlerOpts = append(handlerOpts, configureAssets(otherAssets)...)
+
 	handler := standalone.Handler(cc, target, methods, allFiles, handlerOpts...)
 	if *maxTime > 0 {
 		timeout := time.Duration(*maxTime * float64(time.Second))
@@ -707,6 +739,71 @@ func fail(err error, msg string, args ...interface{}) {
 		fmt.Fprintf(os.Stderr, "Try '%s -help' for more details.\n", os.Args[0])
 		exit(2)
 	}
+}
+
+func checkAssetNames(soFar map[string]string, names []string, requireFile bool) {
+	for _, n := range names {
+		st, err := os.Stat(n)
+		if err != nil {
+			if os.IsNotExist(err) {
+				fail(nil, "File %q does not exist", n)
+			} else {
+				fail(err, "Failed to check existence of file %q", n)
+			}
+		}
+		if requireFile && st.IsDir() {
+			fail(nil, "Path %q is a folder, not a file", n)
+		}
+
+		base := filepath.Base(n)
+		if existing, ok := soFar[base]; ok {
+			fail(nil, "Multiple assets with the same base name specified: %s and %s", existing, n)
+		}
+		soFar[base] = n
+	}
+}
+
+func configureJSandCSS(names []string, fn func(string, func() (io.ReadCloser, error)) standalone.HandlerOption) []standalone.HandlerOption {
+	opts := make([]standalone.HandlerOption, len(names))
+	for i := range names {
+		name := names[i] // no loop variable so that we don't close over loop var in lambda below
+		open := func() (io.ReadCloser, error) {
+			return os.Open(name)
+		}
+		opts[i] = fn(filepath.Base(name), open)
+	}
+	return opts
+}
+
+func configureAssets(names []string) []standalone.HandlerOption {
+	opts := make([]standalone.HandlerOption, len(names))
+	for i := range names {
+		name := names[i] // no loop variable so that we don't close over loop var in lambdas below
+		st, err := os.Stat(name)
+		if err != nil {
+			fail(err, "failed to inspect file %q", name)
+		}
+		if st.IsDir() {
+			open := func(p string) (io.ReadCloser, error) {
+				path := filepath.Join(name, p)
+				st, err := os.Stat(path)
+				if err == nil && st.IsDir() {
+					// Strangely, os.Open does not return an error if given a directory
+					// and instead returns an empty reader :(
+					// So check that first and return a 404 if user indicates directory name
+					return nil, os.ErrNotExist
+				}
+				return os.Open(path)
+			}
+			opts[i] = standalone.ServeAssetDirectory(filepath.Base(name), open)
+		} else {
+			open := func() (io.ReadCloser, error) {
+				return os.Open(name)
+			}
+			opts[i] = standalone.ServeAssetFile(filepath.Base(name), open)
+		}
+	}
+	return opts
 }
 
 type svcConfig struct {
