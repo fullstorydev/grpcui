@@ -85,7 +85,12 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 		}
 	})
 
-	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandler(ch, methods))
+	invokeOpts := grpcui.InvokeOptions{
+		ExtraMetadata:   uiOpts.extraMetadata,
+		PreserveHeaders: uiOpts.preserveHeaders,
+		Verbosity:       uiOpts.invokeVerbosity,
+	}
+	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandlerWithOptions(ch, methods, invokeOpts))
 	mux.HandleFunc("/invoke/", func(w http.ResponseWriter, r *http.Request) {
 		// CSRF protection
 		c, _ := r.Cookie(csrfCookieName)

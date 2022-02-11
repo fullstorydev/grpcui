@@ -68,7 +68,7 @@ func AddCSS(filename string, css []byte) HandlerOption {
 	})
 }
 
-// ServeAsset will add an additional file to Hadler, serving the supplied contents
+// ServeAsset will add an additional file to Handler, serving the supplied contents
 // at the URI "/s/<filename>" with a Content-Type that is computed based on the given
 // filename's extension.
 //
@@ -89,9 +89,46 @@ func WithDefaultMetadata(headers []string) HandlerOption {
 	})
 }
 
+// WithMetadata adds extra request metadata that will be included when an RPC
+// in invoked. Each string should be in the form "name: value". If the web
+// form includes conflicting metadata, the web form input will be ignored and
+// the metadata supplied to this option will be sent instead.
+func WithMetadata(headers []string) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.extraMetadata = headers
+	})
+}
+
+// PreserveHeaders instructs the Handler to preserve the named HTTP headers
+// if they are included in the invocation request, and send them as request
+// metadata when invoking the RPC. If the web form includes conflicting
+// metadata, the web form input will be ignored and the matching header
+// value in the HTTP request will be sent instead.
+func PreserveHeaders(headerNames []string) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.preserveHeaders = headerNames
+	})
+}
+
+// WithInvokeVerbosity indicates the level of log output from the gRPC UI server
+// handler that performs RPC invocations.
+func WithInvokeVerbosity(verbosity int) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.invokeVerbosity = verbosity
+	})
+}
+
 // WithDebug enables console logging in the client JS. This prints extra
 // information as the UI processes user input.
+//
+// Deprecated: Use WithClientDebug instead.
 func WithDebug(debug bool) HandlerOption {
+	return WithClientDebug(debug)
+}
+
+// WithClientDebug enables console logging in the client JS. This prints extra
+// information as the UI processes user input.
+func WithClientDebug(debug bool) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
 		opts.debug = &debug
 	})
@@ -111,6 +148,9 @@ type handlerOptions struct {
 	tmplResources       []*resource
 	servedOnlyResources []*resource
 	defaultMetadata     []string
+	extraMetadata       []string
+	preserveHeaders     []string
+	invokeVerbosity     int
 	debug               *bool
 }
 
