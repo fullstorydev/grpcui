@@ -62,8 +62,8 @@ type WebFormOptions struct {
 	Debug *bool
 }
 
-// WebFormContentsWithDefaultMetadata is the same as WebFormContents except that
-// it accepts an additional argument, options. This can be used to toggle the JS
+// WebFormContentsWithOptions is the same as WebFormContents except that it
+// accepts an additional argument, options. This can be used to toggle the JS
 // code into debug logging and can also be used to define the set of metadata to
 // show in the web form by default (empty if unspecified).
 func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.MethodDescriptor, opts WebFormOptions) []byte {
