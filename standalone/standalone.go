@@ -8,9 +8,14 @@ import (
 	"encoding/base64"
 	"fmt"
 	"html/template"
+	"io"
+	"io/ioutil"
 	"mime"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/jhump/protoreflect/desc"
@@ -148,7 +153,8 @@ func getIndexContents(tmpl *template.Template, target string, webFormHTML []byte
 
 type resource struct {
 	Path        string
-	Data        []byte
+	Len         int
+	Open        func(string) (io.ReadCloser, error)
 	ContentType string
 	ETag        string
 	Public      bool
@@ -159,32 +165,90 @@ func newResource(uriPath string, data []byte, contentType string, public bool) *
 		contentType = mime.TypeByExtension(path.Ext(uriPath))
 	}
 	return &resource{
-		Path:        uriPath,
-		Data:        data,
+		Path: uriPath,
+		Open: func(_ string) (io.ReadCloser, error) {
+			return ioutil.NopCloser(bytes.NewReader(data)), nil
+		},
+		Len:         len(data),
 		ContentType: contentType,
 		ETag:        computeETag(data),
 		Public:      public,
 	}
 }
 
+func newDeferredResource(uriPath string, open func() (io.ReadCloser, error), contentType string) *resource {
+	if contentType == "" {
+		contentType = mime.TypeByExtension(path.Ext(uriPath))
+	}
+	return &resource{
+		Path: uriPath,
+		Open: func(_ string) (io.ReadCloser, error) {
+			return open()
+		},
+		ContentType: contentType,
+	}
+}
+
+func newDeferredResourceFolder(uriPath string, open func(string) (io.ReadCloser, error)) *resource {
+	return &resource{
+		Path: uriPath + "/",
+		Open: func(filename string) (io.ReadCloser, error) {
+			return open(filename)
+		},
+	}
+}
+
 func handle(mux *http.ServeMux, res *resource) {
 	mux.Handle(res.Path, res)
+	if withoutSlash := strings.TrimSuffix(res.Path, "/"); withoutSlash != res.Path {
+		// if res.Path is a folder, return a 404 if the base directory is
+		// requested (default behavior is a redirect to URI with trailing slash)
+		mux.Handle(withoutSlash, http.NotFoundHandler())
+	}
 }
 
 func (res *resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	name, err := filepath.Rel(res.Path, r.URL.Path)
+	var reader io.ReadCloser
+	if err == nil {
+		reader, err = res.Open(name)
+	}
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.NotFound(w, r)
+		} else {
+			http.Error(w, fmt.Sprintf("failed to open file %q: %v", r.URL.Path, err), http.StatusInternalServerError)
+		}
+		return
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+
 	etag := r.Header.Get("If-None-Match")
 	if etag != "" && etag == res.ETag {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-	w.Header().Set("Content-Type", res.ContentType)
+	ct := res.ContentType
+	if ct == "" {
+		ct = mime.TypeByExtension(path.Ext(r.URL.Path))
+	}
+	if ct != "" {
+		w.Header().Set("Content-Type", ct)
+	}
 	if res.Public {
 		w.Header().Set("Cache-Control", "public, max-age=3600")
 	} else {
 		w.Header().Set("Cache-Control", "private, max-age=3600")
 	}
-	w.Header().Set("ETag", res.ETag)
-	_, _ = w.Write(res.Data)
+	if res.ETag != "" {
+		w.Header().Set("ETag", res.ETag)
+	}
+	if res.Len > 0 {
+		w.Header().Set("Content-Length", strconv.Itoa(res.Len))
+	}
+	_, _ = io.Copy(w, reader)
 }
 
 // AsHTMLTag returns an HTML string corresponding to a tag that would load this resource (by inspecting ContentType).

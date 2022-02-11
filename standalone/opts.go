@@ -2,6 +2,7 @@ package standalone
 
 import (
 	"html/template"
+	"io"
 	"path"
 )
 
@@ -55,6 +56,16 @@ func AddJS(filename string, js []byte) HandlerOption {
 	})
 }
 
+// AddJSFile is like AddJS except that the contents are provided in the form of
+// a function that is used to "open" the file to read. This means that the
+// contents of the file need not be eagerly loaded into memory. Each time a
+// request is received for this file, the function is called.
+func AddJSFile(filename string, open func() (io.ReadCloser, error)) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.tmplResources = append(opts.tmplResources, newDeferredResource(path.Join("/s", filename), open, "text/javascript; charset=utf-8"))
+	})
+}
+
 // AddCSS adds a CSS file to Handler, serving the supplied contents at the URI
 // "/s/<filename>" with a Content-Type of "text/css; charset=UTF-8". It
 // will also be added to the AddlResources field of the WebFormContainerTemplateData
@@ -68,6 +79,16 @@ func AddCSS(filename string, css []byte) HandlerOption {
 	})
 }
 
+// AddCSSFile is like AddCSS except that the contents are provided in the form
+// of a function that is used to "open" the file to read. This means that the
+// contents of the file need not be eagerly loaded into memory. Each time a
+// request is received for this file, the function is called.
+func AddCSSFile(filename string, open func() (io.ReadCloser, error)) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.tmplResources = append(opts.tmplResources, newDeferredResource(path.Join("/s", filename), open, "text/css; charset=utf-8"))
+	})
+}
+
 // ServeAsset will add an additional file to Handler, serving the supplied contents
 // at the URI "/s/<filename>" with a Content-Type that is computed based on the given
 // filename's extension.
@@ -78,6 +99,33 @@ func AddCSS(filename string, css []byte) HandlerOption {
 func ServeAsset(filename string, contents []byte) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
 		opts.servedOnlyResources = append(opts.servedOnlyResources, newResource(path.Join("/s", filename), contents, "", false))
+	})
+}
+
+// ServeAssetFile is like ServeAsset except that the contents are provided in
+// the form of a function that is used to "open" the file to read. This means
+// that the contents of the file need not be eagerly loaded into memory. Each
+// time a request is received for this file, the function is called.
+func ServeAssetFile(filename string, open func() (io.ReadCloser, error)) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.servedOnlyResources = append(opts.servedOnlyResources, newDeferredResource(path.Join("/s", filename), open, ""))
+	})
+}
+
+// ServeAssetDirectory is similar to ServeAssetFile except the give name is the
+// root of a subtree, which can be used to serve a directory of assets. When a
+// request is received, the remaining relative path is provided to the open
+// function, to indicate which path in the subtree to open. For example, if the
+// given name is "foo/bar" and a request is made for "foo/bar/baz/buzz", then
+// the open function will be called with "baz/buzz" as the argument.
+//
+// If a given path does not exist or is a directory, not a file, the open function
+// should return an error that can be classified via os.IsNotExist, so that the
+// server can return a "404 Not Found" status. Any other error will result in the
+// server sending a "500 Internal Server Error" status.
+func ServeAssetDirectory(dirname string, open func(filename string) (io.ReadCloser, error)) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.servedOnlyResources = append(opts.servedOnlyResources, newDeferredResourceFolder(path.Join("/s", dirname), open))
 	})
 }
 
