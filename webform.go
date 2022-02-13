@@ -2,6 +2,9 @@ package grpcui
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/jhump/protoreflect/desc/builder"
+	"github.com/jhump/protoreflect/desc/protoprint"
 	"html/template"
 	"os"
 	"sort"
@@ -13,7 +16,14 @@ import (
 	"github.com/fullstorydev/grpcui/internal/resources/webform"
 )
 
-var webFormTemplate = template.Must(template.New("grpc web form").Parse(string(webform.Template())))
+var (
+	webFormTemplate = template.Must(template.New("grpc web form").Parse(string(webform.Template())))
+
+	protoPrinter = protoprint.Printer{
+		Compact: true,
+		Indent:  "   ",
+	}
+)
 
 // WebFormContents returns an HTML form that can be embedded into a web UI to
 // provide an interactive form for issuing RPCs.
@@ -74,15 +84,18 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.Met
 		InvokeURI       string
 		MetadataURI     string
 		Services        []string
+		SvcDescs        map[string]string
 		Methods         map[string][]string
+		MtdDescs        map[string]string
 		DefaultMetadata []metadataEntry
 		Debug           bool
 	}{
 		InvokeURI:   invokeURI,
 		MetadataURI: metadataURI,
+		SvcDescs:    map[string]string{},
 		Methods:     map[string][]string{},
-		// TODO(jh): parameter for enabling this instead of env var?
-		Debug: os.Getenv("GRPC_WEBFORM_DEBUG") != "",
+		MtdDescs:    map[string]string{},
+		Debug:       os.Getenv("GRPC_WEBFORM_DEBUG") != "",
 	}
 
 	if opts.Debug != nil {
@@ -99,14 +112,60 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.Met
 	}
 
 	// build list of distinct service and method names and sort them
-	uniqueServices := map[string]struct{}{}
+	uniqueServices := map[string]*desc.ServiceDescriptor{}
 	for _, md := range descs {
-		svcName := md.GetService().GetFullyQualifiedName()
-		uniqueServices[svcName] = struct{}{}
+		sd := md.GetService()
+		svcName := sd.GetFullyQualifiedName()
+		uniqueServices[svcName] = sd
 		params.Methods[svcName] = append(params.Methods[svcName], md.GetName())
+
+		desc, err := protoPrinter.PrintProtoToString(md)
+		if err != nil {
+			// generate simple description with no comments or options
+			var reqStr, respStr string
+			if md.IsClientStreaming() {
+				reqStr = "stream "
+			}
+			if md.IsServerStreaming() {
+				respStr = "stream "
+			}
+			desc = fmt.Sprintf("   rpc %s (%s%s) returns (%s%s);", md.GetName(), reqStr, md.GetInputType().GetFullyQualifiedName(), respStr, md.GetOutputType().GetFullyQualifiedName())
+		} else {
+			// indent and remove trailing newline
+			desc = strings.TrimSuffix(desc, "\n")
+			parts := strings.Split(desc, "\n")
+			for i := range parts {
+				parts[i] = "   " + parts[i]
+			}
+			desc = strings.Join(parts, "\n")
+		}
+		params.MtdDescs[md.GetFullyQualifiedName()] = desc
 	}
-	for svcName := range uniqueServices {
+	for svcName, sd := range uniqueServices {
 		params.Services = append(params.Services, svcName)
+		// for the service description, omit the methods (we just want the
+		//  service's comments and options)
+		sb, err := builder.FromService(sd)
+		var desc string
+		if err == nil {
+			for _, md := range sd.GetMethods() {
+				sb.RemoveMethod(md.GetName())
+			}
+			if s, e := sb.Build(); e == nil {
+				desc, err = protoPrinter.PrintProtoToString(s)
+			}
+		}
+		if err != nil {
+			desc = fmt.Sprintf("service %s {", sd.GetName())
+		} else {
+			// strip last line, trailing close brace
+			tr := "\n}"
+			if strings.HasSuffix(desc, "\n") {
+				tr += "\n"
+			}
+			desc = strings.TrimSuffix(desc, tr)
+		}
+		params.SvcDescs[sd.GetFullyQualifiedName()] = desc
 	}
 	sort.Strings(params.Services)
 	for _, methods := range params.Methods {

@@ -192,6 +192,7 @@ type fieldDef struct {
 	IsMap       bool        `json:"isMap"`
 	IsRequired  bool        `json:"isRequired"`
 	DefaultVal  interface{} `json:"defaultVal"`
+	Description string      `json:"description"`
 }
 
 type enumValDef struct {
@@ -348,6 +349,21 @@ func (s *schema) processField(fd *desc.FieldDescriptor) fieldDef {
 	default:
 		def.Type = typeMap[fd.GetType()]
 	}
+
+	desc, err := protoPrinter.PrintProtoToString(fd)
+	if err != nil {
+		// generate simple description with no comments or options
+		var label string
+		if fd.IsRequired() {
+			label = "required "
+		} else if fd.IsRepeated() {
+			label = "repeated "
+		} else if fd.IsProto3Optional() || !fd.GetFile().IsProto3() {
+			label = "optional "
+		}
+		desc = fmt.Sprintf("%s%s %s = %d;", label, def.Type, fd.GetName(), fd.GetNumber())
+	}
+	def.Description = desc
 
 	return def
 }

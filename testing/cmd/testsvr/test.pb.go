@@ -1600,7 +1600,9 @@ type TestMessage struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Recurse         *TestMessage           `protobuf:"bytes,2,opt,name=recurse" json:"recurse,omitempty"`
+	// To recurse or not to recurse
+	Recurse *TestMessage `protobuf:"bytes,2,opt,name=recurse" json:"recurse,omitempty"`
+	// It's even possible to do this repeatedly!
 	RepeatedRecurse []*TestMessage         `protobuf:"bytes,3,rep,name=repeated_recurse,json=repeatedRecurse" json:"repeated_recurse,omitempty"`
 	Person          *Person                `protobuf:"bytes,4,req,name=person" json:"person,omitempty"`
 	State           *State                 `protobuf:"varint,5,req,name=state,enum=test.State" json:"state,omitempty"`

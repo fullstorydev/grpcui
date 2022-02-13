@@ -24,7 +24,10 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KitchenSinkClient interface {
+	// This is the description of the Ping method.
+	// The second line of the description.
 	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// The Exchange method is very useful!
 	Exchange(ctx context.Context, in *TestMessage, opts ...grpc.CallOption) (*TestMessage, error)
 	UploadMany(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_UploadManyClient, error)
 	DownloadMany(ctx context.Context, in *TestMessage, opts ...grpc.CallOption) (KitchenSink_DownloadManyClient, error)
@@ -866,7 +869,10 @@ func (x *kitchenSinkSendMultipleUInt64Client) CloseAndRecv() (*emptypb.Empty, er
 // All implementations must embed UnimplementedKitchenSinkServer
 // for forward compatibility
 type KitchenSinkServer interface {
+	// This is the description of the Ping method.
+	// The second line of the description.
 	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	// The Exchange method is very useful!
 	Exchange(context.Context, *TestMessage) (*TestMessage, error)
 	UploadMany(KitchenSink_UploadManyServer) error
 	DownloadMany(*TestMessage, KitchenSink_DownloadManyServer) error

@@ -239,6 +239,7 @@ func (res *resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if ct != "" {
 		w.Header().Set("Content-Type", ct)
 	}
+	w.Header().Set("Content-Type", res.ContentType)
 	var cacheSuffix string
 	if res.MustRevalidate {
 		cacheSuffix = "must-revalidate"

@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"flag"
 	"fmt"
@@ -29,7 +30,6 @@ import (
 	"github.com/jhump/protoreflect/grpcreflect"
 	"github.com/pkg/browser"
 	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	insecurecreds "google.golang.org/grpc/credentials/insecure"
