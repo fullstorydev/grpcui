@@ -131,16 +131,32 @@ func ServeAssetDirectory(dirname string, open func(filename string) (io.ReadClos
 	})
 }
 
-// WithExamples will add examples to the UI. The examples blob is expected to be valid json.
-func WithExamples(examples ...Example) HandlerOption {
+// WithExamples will add examples to the UI. This function returns an error if
+// it is unable to convert the given examples to JSON, which could happen if an
+// example request message is not a valid request and contains invalid data or
+// types (such as a channel or function).
+func WithExamples(examples ...Example) (HandlerOption, error) {
+	data, err := json.Marshal(examples)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode examples to json: %v", err)
+	}
 	return optFunc(func(opts *handlerOptions) {
-		examplesBlob, err := json.Marshal(examples)
-		if err != nil {
-			panic(fmt.Errorf("failed to encode examples to json: %v", err))
-		}
+		opts.examples = data
+	}), nil
+}
 
-		opts.examples = examplesBlob
-	})
+// WithExampleData will add examples to the UI. The given data must be valid
+// JSON that can be unmarshalled as a []Example. If not, this function will
+// return an error.
+func WithExampleData(data []byte) (HandlerOption, error) {
+	var examples []Example
+	err := json.Unmarshal(data, &examples)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode json to examples: %v", err)
+	}
+	return optFunc(func(opts *handlerOptions) {
+		opts.examples = data
+	}), nil
 }
 
 // WithDefaultMetadata sets the default metadata in the web form to the given

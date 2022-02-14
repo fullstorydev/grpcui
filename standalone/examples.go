@@ -1,13 +1,11 @@
 package standalone
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"time"
+	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //lint:ignore SA1019 temporarily still supporting generated code from old plugin
+	protov2 "google.golang.org/protobuf/proto"
 )
 
 // Example model of an example gRPC request
@@ -26,76 +24,37 @@ type ExampleMetadataPair struct {
 
 // ExampleRequest gRPC request
 type ExampleRequest struct {
-	Timeout  time.Duration
-	Metadata []ExampleMetadataPair
-	Data     interface{}
-}
-
-// intermediateRequest intermedia type using for marshaling/unmarshaling
-type intermediateRequest struct {
-	TimeoutSeconds float64               `json:"timeout_seconds"`
+	TimeoutSeconds float64               `json:"timeout_secs"`
 	Metadata       []ExampleMetadataPair `json:"metadata"`
-	Data           json.RawMessage       `json:"data"`
+	Data           interface{}           `json:"data"`
 }
 
-func (request ExampleRequest) MarshalJSON() ([]byte, error) {
-	marshalData, err := marshalData(request.Data)
+func (r *ExampleRequest) MarshalJSON() ([]byte, error) {
+	// we override marshaling so that we can correctly handle instances
+	// of proto.Message in the Data field
+	marshalData, err := marshalData(r.Data)
 	if err != nil {
 		return nil, err
 	}
-
-	jsonRequest := intermediateRequest{
-		TimeoutSeconds: request.Timeout.Seconds(),
-		Metadata:       request.Metadata,
+	// need new named type so next step uses struct reflection to marshal
+	//  instead of re-invoking this method
+	type jsReq ExampleRequest
+	jsonRequest := jsReq{
+		TimeoutSeconds: r.TimeoutSeconds,
+		Metadata:       r.Metadata,
 		Data:           marshalData,
 	}
 
 	return json.Marshal(jsonRequest)
 }
 
-func marshalData(data interface{}) ([]byte, error) {
-	var marshalData []byte
-	var err error
-
-	if protoMsg, ok := data.(proto.Message); ok {
-		marshalData, err = toJSON(protoMsg)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		marshalData, err = json.Marshal(data)
-		if err != nil {
-			return nil, err
-		}
+func marshalData(data interface{}) (json.RawMessage, error) {
+	switch data := data.(type) {
+	case protov2.Message:
+		return protojson.Marshal(data)
+	case proto.Message:
+		return protojson.Marshal(proto.MessageV2(data))
+	default:
+		return json.Marshal(data)
 	}
-
-	return marshalData, nil
-}
-
-func toJSON(msg proto.Message) ([]byte, error) {
-	jsm := jsonpb.Marshaler{}
-	var b bytes.Buffer
-	if err := jsm.Marshal(&b, msg); err != nil {
-		return nil, err
-	}
-	return b.Bytes(), nil
-}
-
-func (request *ExampleRequest) UnmarshalJSON(b []byte) (returnedErr error) {
-	var intermediate intermediateRequest
-	if err := json.Unmarshal(b, &intermediate); err != nil {
-		return fmt.Errorf("failed to unmarshal input as object: %v", err)
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			returnedErr = fmt.Errorf("failed to unmarshal input: %v", r)
-		}
-	}()
-
-	request.Timeout = time.Duration(intermediate.TimeoutSeconds*1000) * time.Millisecond
-	request.Metadata = intermediate.Metadata
-	request.Data = intermediate.Data
-
-	return nil
 }

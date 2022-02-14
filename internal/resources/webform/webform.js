@@ -2131,7 +2131,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         const historyItem = {
             request: {
-                timeout_seconds: timeoutStr,
+                timeout_seconds: timeout,
                 metadata: $.extend([], metadata),
                 data: cloneData
             },
@@ -2477,19 +2477,19 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                 examples = data;
                 updateExamplesUI();
             },
-            error: function(data) {
-                console.log("Failed to load examples")
+            error: function(e) {
+                console.log("Failed to load examples: " + e);
             }
         });
     }
 
     const updateExamplesUI = () => {
         // only populate the example list if we have some
-        if (examples.length == 0) {
-            return
+        if (!examples) {
+            return;
         }
 
-        let examplesList = $("#grpc-request-examples")
+        let examplesList = $("#grpc-request-examples");
         examples.forEach(example => {
             let exampleItem = $(`<li class="grpc-request-example">${example.name}</li>`);
             examplesList.append(exampleItem);
@@ -2501,14 +2501,14 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                     loadRequest(examples[index])
                 });
             }
-        })
-        $("#grpc-request-examples-container").show()
+        });
+        $("#grpc-request-examples-container").show();
     }
 
     const loadHistory = () => {
         const json = localStorage.getItem(historyStorageKey);
         if (json) {
-            history = (JSON.parse(json))
+            history = (JSON.parse(json));
         }
         updateHistoryUI();
     }
@@ -2559,7 +2559,27 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     }
 
     const saveHistory = () => {
-        download('history.json', JSON.stringify(history, null, 2));
+        let savedHistory = [];
+        for (let i = 0; i < history.length; i++) {
+            let item = $.extend({}, history[i]); // make a copy before mutating
+            item.name = "Example #" + (i+1) + " @ " + item.startTime;
+            delete item.startTime;
+            delete item.durationMS;
+            delete item.responseData;
+            let req = item.request;
+            if (req.hasOwnProperty('timeout')) {
+                req = $.extend({}, req); // make a copy before mutating
+                item.request = req;
+                // if old history item has 'timeout' property, convert it to 'timeout_seconds'
+                let timeout = Number(req.timeout);
+                timeout = (timeoutStr === "" || Number.isNaN(timeout)) ? undefined : timeout;
+                req.timeout_seconds = timeout;
+                delete req.timeout;
+            }
+            savedHistory.push(item);
+        }
+
+        download('history.json', JSON.stringify(savedHistory, null, 2));
     }
 
     const addHistory = (item) => {
@@ -2654,7 +2674,16 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     const loadRequest = (item) => {
         const t = $("#grpc-request-response");
         t.tabs("option", "active", 0);
-        $("#grpc-request-timeout input").val(item.request.timeout_seconds);
+        let timeout = "";
+        if (item.request.timeout_seconds) {
+            timeout = item.request.timeout_seconds + "";
+        } else if (item.request.timeout) {
+            // older versions stored string in 'timeout' attribute; so support
+            // that in case someone loads an item from history from older
+            // version of grpcui
+            timeout = item.request.timeout;
+        }
+        $("#grpc-request-timeout input").val(timeout);
         $("#grpc-service").val(item.service);
         formServiceSelected(() => {
             $("#grpc-method").val(item.method);

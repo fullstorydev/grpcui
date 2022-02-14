@@ -591,8 +591,10 @@ textarea.grpc-response-textarea {
     color: #c00;
 }
 
-#grpc-history-clear, #grpc-history-save {
-    margin-bottom: 20px;
+button#grpc-history-clear, button#grpc-history-save {
+    margin-bottom: 16px;
+    font-size: 96%;
+    padding: 8px 15px;
 }
 
 #grpc-history-list button.delete {

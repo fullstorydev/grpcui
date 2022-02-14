@@ -1,15 +1,12 @@
 package standalone
 
 import (
-	"bytes"
 	"encoding/json"
+	"google.golang.org/protobuf/encoding/protojson"
+	"reflect"
 	"testing"
-	"time"
 
-	"github.com/google/go-cmp/cmp"
-
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
@@ -22,7 +19,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		{
 			name: "Full request, complex data",
 			request: ExampleRequest{
-				Timeout: 1 * time.Second,
+				TimeoutSeconds: 1.0,
 				Metadata: []ExampleMetadataPair{
 					{
 						"key",
@@ -37,7 +34,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		{
 			name: "Full request, string data",
 			request: ExampleRequest{
-				Timeout: 2 * time.Millisecond,
+				TimeoutSeconds: 0.002,
 				Metadata: []ExampleMetadataPair{
 					{
 						"key",
@@ -64,7 +61,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		{
 			name: "no data",
 			request: ExampleRequest{
-				Timeout: 1 * time.Millisecond,
+				TimeoutSeconds: 0.001,
 				Metadata: []ExampleMetadataPair{
 					{
 						"key",
@@ -76,7 +73,7 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 		{
 			name: "only timeout",
 			request: ExampleRequest{
-				Timeout: 24 * time.Hour,
+				TimeoutSeconds: 86400,
 			},
 		},
 		{
@@ -111,22 +108,14 @@ func TestRequest_MarshalUnmarshal(t *testing.T) {
 				t.Fatalf("unmarshal failed: %v", err)
 			}
 
-			if diff := cmp.Diff(test.request.Timeout, unmarshaled.Timeout); diff != "" {
-				t.Fatalf("new stack mismatch (-want +got):\n%s", diff)
+			if test.request.TimeoutSeconds != unmarshaled.TimeoutSeconds {
+				t.Fatalf("round trip failure: want %v, got %v", test.request.TimeoutSeconds, unmarshaled.TimeoutSeconds)
 			}
-			if diff := cmp.Diff(test.request.Metadata, unmarshaled.Metadata); diff != "" {
-				t.Fatalf("new stack mismatch (-want +got):\n%s", diff)
+			if !reflect.DeepEqual(test.request.Metadata, unmarshaled.Metadata) {
+				t.Fatalf("round trip failure: want %#v, got %#v", test.request.Metadata, unmarshaled.Metadata)
 			}
-
-			b, _ := unmarshaled.Data.(json.RawMessage).MarshalJSON()
-			var dataUnmarshaled interface{}
-			err = json.Unmarshal(b, &dataUnmarshaled)
-			if err != nil {
-				t.Fatalf("unmarshal failed: %v", err)
-			}
-
-			if diff := cmp.Diff(test.request.Data, dataUnmarshaled); diff != "" {
-				t.Fatalf("new stack mismatch (-want +got):\n%s", diff)
+			if !reflect.DeepEqual(test.request.Data, unmarshaled.Data) {
+				t.Fatalf("round trip failure: want %#v, got %#v", test.request.Data, unmarshaled.Data)
 			}
 		})
 	}
@@ -185,42 +174,13 @@ func TestRequest_MarshalJSON_ProtoData(t *testing.T) {
 
 			b, _ := raw.Data.MarshalJSON()
 			var got descriptor.DescriptorProto
-			err = jsonpb.Unmarshal(bytes.NewReader(b), &got)
+			err = protojson.Unmarshal(b, &got)
 			if err != nil {
 				t.Fatalf("unmarshal failed: %v", err)
 			}
 
 			if !proto.Equal(test.want, &got) {
 				t.Fatal("Decoded version does not match")
-			}
-		})
-	}
-}
-
-func TestRequest_UnmarshalJSON_Invalid(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-	}{
-		{
-			name:  "Invalid timeout",
-			input: "{\"timeout_seconds\": \"1s\"}",
-		},
-		{
-			name:  "Top level not an object",
-			input: "\"boom\"",
-		},
-		{
-			name:  "Invalid metadata",
-			input: "{\"metadata\": \"string\"}",
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			var unmarshaled ExampleRequest
-			err := json.Unmarshal([]byte(test.input), &unmarshaled)
-			if err == nil {
-				t.Error("unmarshal should fail")
 			}
 		})
 	}
