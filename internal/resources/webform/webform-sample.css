@@ -20,7 +20,11 @@
 }
 
 #grpc-method-description {
-    line-height: 30px;
+    display: inline-block;
+    vertical-align: top;
+    margin-left: 10px;
+    line-height: 1.5rem;
+    white-space: pre;
 }
 
 #grpc-request-response {

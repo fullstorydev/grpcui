@@ -11,14 +11,11 @@
     <select name="grpc-method" id="grpc-method">
       <!-- populated by JavaScript when grpc-service is selected -->
     </select>
-  </div>
-
-  {{- if .Comments }}
-  <div class="grpc-desc"><span class="grpc-form-label">Description:</span>
+    {{- if .Comments }}
     <!-- populated by JavaScript when grpc-method is selected -->
-    <span id="grpc-method-description">&nbsp;</span>
+    <code id="grpc-method-description">&nbsp;</code>
+    {{- end }}
   </div>
-  {{- end }}
 
   <div id="grpc-request-response">
     <ul>
