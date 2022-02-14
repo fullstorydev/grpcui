@@ -2131,7 +2131,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         const historyItem = {
             request: {
-                timeout: timeoutStr,
+                timeout_seconds: timeout,
                 metadata: $.extend([], metadata),
                 data: cloneData
             },
@@ -2460,6 +2460,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     }
 
     let history = [];
+    let examples = [];
     // TODO: add ability to customize these max history values
     const maxHistory = 100;
     const maxHistorySize = 1024*1024; // 1mb
@@ -2468,10 +2469,50 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     const historyStorageKey = `grpcui-history-${window.location.host}-${target}`;
     const expandDescStorageKey = `grpcui-expand-description`;
 
+    const loadExamples = () => {
+        $.ajax({
+            url: 'examples',
+            type: 'GET',
+            success: function(data) {
+                examples = data;
+                // only populate the example list if we have some
+                if (examples && examples.length > 0) {
+                    showExamplesUI();
+                }
+            },
+            error: function(e) {
+                console.log("Failed to load examples: " + e);
+            }
+        });
+    }
+
+    const showExamplesUI = () => {
+        let examplesList = $("#grpc-request-examples");
+        examples.forEach(example => {
+            let exampleItem = $('<li class="grpc-request-example">');
+            exampleItem.addClass("grpc-request-example");
+            exampleItem.text(example.name);
+            if (example.description) {
+                exampleItem.prop('title', example.description);
+                exampleItem.tooltip();
+            }
+            examplesList.append(exampleItem);
+        })
+        examplesList.selectable({
+            stop: function() {
+                $(".ui-selected", this).each(function() {
+                    const index = $("li", examplesList).index(this);
+                    loadRequest(examples[index])
+                });
+            }
+        });
+        $("#grpc-request-examples-container").show();
+    }
+
     const loadHistory = () => {
         const json = localStorage.getItem(historyStorageKey);
         if (json) {
-            history = (JSON.parse(json))
+            history = (JSON.parse(json));
         }
         updateHistoryUI();
     }
@@ -2506,6 +2547,44 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             history = [];
             onHistoryChange();
         }
+    }
+
+    const download = (filename, text) => {
+        let element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+
+        element.style.display = 'none';
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
+    }
+
+    const saveHistory = () => {
+        let savedHistory = [];
+        for (let i = 0; i < history.length; i++) {
+            let item = $.extend({}, history[i]); // make a copy before mutating
+            item.name = "Example #" + (i+1) + " @ " + item.startTime;
+            item.description = "";
+            delete item.startTime;
+            delete item.durationMS;
+            delete item.responseData;
+            let req = item.request;
+            if (req.hasOwnProperty('timeout')) {
+                req = $.extend({}, req); // make a copy before mutating
+                item.request = req;
+                // if old history item has 'timeout' property, convert it to 'timeout_seconds'
+                let timeout = Number(req.timeout);
+                timeout = (timeoutStr === "" || Number.isNaN(timeout)) ? undefined : timeout;
+                req.timeout_seconds = timeout;
+                delete req.timeout;
+            }
+            savedHistory.push(item);
+        }
+
+        download('history.json', JSON.stringify(savedHistory, null, 2));
     }
 
     const addHistory = (item) => {
@@ -2597,11 +2676,19 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         });
     }
 
-    const loadHistoryItem = (index) => {
+    const loadRequest = (item) => {
         const t = $("#grpc-request-response");
         t.tabs("option", "active", 0);
-        const item = history[index];
-        $("#grpc-request-timeout input").val(item.timeout);
+        let timeout = "";
+        if (item.request.timeout_seconds) {
+            timeout = item.request.timeout_seconds + "";
+        } else if (item.request.timeout) {
+            // older versions stored string in 'timeout' attribute; so support
+            // that in case someone loads an item from history from older
+            // version of grpcui
+            timeout = item.request.timeout;
+        }
+        $("#grpc-request-timeout input").val(timeout);
         $("#grpc-service").val(item.service);
         formServiceSelected(() => {
             $("#grpc-method").val(item.method);
@@ -2615,6 +2702,15 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                 }
             });
         });
+    }
+
+    const clearExampleSelection = () => {
+        $('#grpc-request-examples .ui-selected').removeClass('ui-selected')
+    }
+
+    const loadHistoryItem = (index) => {
+        clearExampleSelection();
+        loadRequest(history[index]);
     }
 
     const deleteHistoryItem = (index) => {
@@ -2648,7 +2744,10 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         });
 
     $("#grpc-service").change(() => formServiceSelected());
-    $("#grpc-method").change(() => formMethodSelected());
+    $("#grpc-method").change(() => {
+        clearExampleSelection();
+        formMethodSelected();
+    });
 
     $("#grpc-request-metadata-add-row").click(function() {
         addMetadataRow();
@@ -2678,7 +2777,9 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     });
 
     $('#grpc-history-clear').click(() => clearHistory());
+    $('#grpc-history-save').click(() => saveHistory());
 
+    loadExamples();
     loadHistory();
 
     // TODO(jh): support populating the selected method and even request

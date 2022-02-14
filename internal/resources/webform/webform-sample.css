@@ -65,10 +65,34 @@
     padding-bottom:14px;
 }
 
+#grpc-container {
+    display: flex;
+}
+
+#grpc-request-examples-container {
+    flex: 1;
+    max-width: 200px;
+    margin-right: 10px;
+    margin-top: 25px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+#grpc-request-examples-container h3 {
+    margin: 0;
+    padding-top: 1px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #d8d8d8;
+    text-align: center;
+    font-size: 18px;
+}
+
 #grpc-request-response {
     margin-top: 24px;
     border: none;
     padding: 0;
+    flex: 1;
 }
 
 #grpc-request-response ul.ui-tabs-nav {
@@ -123,6 +147,29 @@
     margin-bottom: 16px;
     font-weight: bold;
     font-size: 18px;
+}
+
+#grpc-request-examples {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+ol#grpc-request-examples {
+    margin-top: 16px;
+}
+
+#grpc-request-examples li {
+    padding: 10px;
+}
+
+#grpc-request-examples li:hover {
+    background-color: #f4f4f4;
+}
+
+#grpc-request-examples .ui-selected {
+    background: #f0f0f0;
+    font-weight: 500;
 }
 
 #grpc-form button {
@@ -556,8 +603,10 @@ textarea.grpc-response-textarea {
     color: #c00;
 }
 
-#grpc-history-clear {
-    margin-bottom: 20px;
+button#grpc-history-clear, button#grpc-history-save {
+    margin-bottom: 16px;
+    font-size: 96%;
+    padding: 8px 15px;
 }
 
 #grpc-history-list button.delete {

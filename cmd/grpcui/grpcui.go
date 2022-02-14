@@ -137,6 +137,13 @@ var (
 		This defaults to true when grpcui is used in an interactive mode; e.g.
 		when the tool detects that stdin is a terminal/tty. Otherwise, this
 		defaults to false.`))
+	examplesFile = flags.String("examples", "", prettify(`
+		Load examples from the given JSON file. The examples are shown in the UI
+		which lets users pick pre-defined RPC and request data, like a recipe.
+		This can be templates for common requests or could even represent a test
+		suite as a sequence of RPCs. This is similar to the "collections" feature
+		in postman. The format of this file is the same as used when saving
+		history from the gRPC UI "History" tab.`))
 	reflection = optionalBoolFlag{val: true}
 
 	port = flags.Int("port", 0, prettify(`
@@ -437,6 +444,31 @@ func main() {
 		grpclog.SetLoggerV2(grpclog.NewLoggerV2WithVerbosity(os.Stdout, ioutil.Discard, ioutil.Discard, grpcVerbosity))
 	}
 
+	var examplesOpt standalone.HandlerOption
+	if *examplesFile != "" {
+		func() {
+			f, err := os.Open(*examplesFile)
+			if err != nil {
+				if os.IsNotExist(err) {
+					fail(nil, "File %q does not exist", *examplesFile)
+				} else {
+					fail(err, "Failed to open %q", *examplesFile)
+				}
+			}
+			defer func() {
+				_ = f.Close()
+			}()
+			data, err := ioutil.ReadAll(f)
+			if err != nil {
+				fail(err, "Failed to read contents of %q", *examplesFile)
+			}
+			examplesOpt, err = standalone.WithExampleData(data)
+			if err != nil {
+				fail(err, "Failed to process contents of %q", *examplesFile)
+			}
+		}()
+	}
+
 	ctx := context.Background()
 	dialTime := 10 * time.Second
 	if *connectTimeout > 0 {
@@ -590,6 +622,9 @@ func main() {
 	}
 	if debug.set {
 		handlerOpts = append(handlerOpts, standalone.WithClientDebug(debug.val))
+	}
+	if examplesOpt != nil {
+		handlerOpts = append(handlerOpts, examplesOpt)
 	}
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraJS, standalone.AddJSFile)...)
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraCSS, standalone.AddCSSFile)...)
