@@ -80,7 +80,12 @@
 }
 
 #grpc-request-examples-container h3 {
+    margin: 0;
+    padding-top: 1px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #d8d8d8;
     text-align: center;
+    font-size: 18px;
 }
 
 #grpc-request-response {
@@ -150,14 +155,21 @@
     padding: 0;
 }
 
+ol#grpc-request-examples {
+    margin-top: 16px;
+}
+
+#grpc-request-examples li {
+    padding: 10px;
+}
+
 #grpc-request-examples li:hover {
-    background-color: lightgray;
-    cursor: default;
+    background-color: #f4f4f4;
 }
 
 #grpc-request-examples .ui-selected {
-    background: darkgray;
-    color: white;
+    background: #f0f0f0;
+    font-weight: 500;
 }
 
 #grpc-form button {

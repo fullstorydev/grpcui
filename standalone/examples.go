@@ -10,10 +10,11 @@ import (
 
 // Example model of an example gRPC request
 type Example struct {
-	Name    string         `json:"name"`
-	Service string         `json:"service"`
-	Method  string         `json:"method"`
-	Request ExampleRequest `json:"request"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Service     string         `json:"service"`
+	Method      string         `json:"method"`
+	Request     ExampleRequest `json:"request"`
 }
 
 // ExampleMetadataPair (name, value) pair

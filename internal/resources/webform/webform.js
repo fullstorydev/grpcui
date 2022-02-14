@@ -2473,9 +2473,12 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         $.ajax({
             url: 'examples',
             type: 'GET',
-            success: function(data){
+            success: function(data) {
                 examples = data;
-                updateExamplesUI();
+                // only populate the example list if we have some
+                if (examples && examples.length > 0) {
+                    showExamplesUI();
+                }
             },
             error: function(e) {
                 console.log("Failed to load examples: " + e);
@@ -2483,21 +2486,22 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         });
     }
 
-    const updateExamplesUI = () => {
-        // only populate the example list if we have some
-        if (!examples) {
-            return;
-        }
-
+    const showExamplesUI = () => {
         let examplesList = $("#grpc-request-examples");
         examples.forEach(example => {
-            let exampleItem = $(`<li class="grpc-request-example">${example.name}</li>`);
+            let exampleItem = $('<li class="grpc-request-example">');
+            exampleItem.addClass("grpc-request-example");
+            exampleItem.text(example.name);
+            if (example.description) {
+                exampleItem.prop('title', example.description);
+                exampleItem.tooltip();
+            }
             examplesList.append(exampleItem);
         })
-        $("#grpc-request-examples").selectable({
+        examplesList.selectable({
             stop: function() {
-                $( ".ui-selected", this ).each(function() {
-                    const index = $( "li", examplesList ).index( this );
+                $(".ui-selected", this).each(function() {
+                    const index = $("li", examplesList).index(this);
                     loadRequest(examples[index])
                 });
             }
@@ -2563,6 +2567,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         for (let i = 0; i < history.length; i++) {
             let item = $.extend({}, history[i]); // make a copy before mutating
             item.name = "Example #" + (i+1) + " @ " + item.startTime;
+            item.description = "";
             delete item.startTime;
             delete item.durationMS;
             delete item.responseData;
