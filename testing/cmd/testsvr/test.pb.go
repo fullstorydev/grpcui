@@ -391,8 +391,11 @@ type Person struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      *uint64  `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
-	Name    *string  `protobuf:"bytes,2,req,name=name" json:"name,omitempty"`
+	// The unique ID of the person
+	Id *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
+	// The person's full name
+	Name *string `protobuf:"bytes,2,req,name=name" json:"name,omitempty"`
+	// The person's address
 	Address *Address `protobuf:"bytes,3,opt,name=address" json:"address,omitempty"`
 	Xyz     *float64 `protobuf:"fixed64,4,opt,name=xyz,def=3.14159" json:"xyz,omitempty"`
 	Title   *string  `protobuf:"bytes,5,opt,name=title,def=overseer" json:"title,omitempty"`

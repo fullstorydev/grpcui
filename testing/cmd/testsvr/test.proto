@@ -16,32 +16,87 @@ option go_package = ".;main";
 
 service KitchenSink {
 
-    // This is the description of the Ping method.
-    // The second line of the description.
+    // Ping is a no-op method, usable to test that a given channel works. No data is exchanged.
     rpc Ping (google.protobuf.Empty) returns (google.protobuf.Empty);
 
-    // The Exchange method is very useful!
+    // The Exchange method can be useful for testing the UI. It's complicated request type
+    // exercises many of the feature in gRPC UI's request form building code. The server will
+    // echo back in response metadata all request metadata values it receives. If the metadata
+    // key ends with "-t", it is sent back as trailer metadata. Otherwise, it is sent back as
+    // header metadata. The response will be the same as the request.
     rpc Exchange (TestMessage) returns (TestMessage);
+
+    // The UploadMany method is like Exchange, except that it is for testing RPCs that accept
+    // a stream from the client. The server will reply with the last request message it
+    // received, but with the needed_num_a field set to the number of messages observed. If
+    // the client stream includes zero messages, the server will reply with an "Invalid
+    // Argument" error code.
     rpc UploadMany (stream TestMessage) returns (TestMessage);
+
+    // The DownloadMany method is like Exchange, except that it is for testing RPCs that have
+    // a stream from the server. The value in the request for the numbers.needed_num_1 field
+    // controls how many messages are included in the response stream. Each response sent is
+    // a copy of the request.
     rpc DownloadMany (TestMessage) returns (stream TestMessage);
+
+    // The DoManyThings method is like Exchange, except that it is for testing RPCs that
+    // have bidirectional streams. The response stream will be a copy of the request
+    // stream, so each request is mirrored to the response stream as it is received.
     rpc DoManyThings (stream TestMessage) returns (stream TestMessage);
+
+    // Fail is useful for testing errors. The num_responses request field controls how many
+    // response messages are sent before returning an error. The other request fields are
+    // used to construct the error that will be returned.
     rpc Fail (FailRequest) returns (stream TestMessage);
 
+    // SendTimestamp is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a timestamp.
     rpc SendTimestamp(google.protobuf.Timestamp) returns (google.protobuf.Empty);
+    // SendDuration is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a duration.
     rpc SendDuration(google.protobuf.Duration) returns (google.protobuf.Empty);
+    // SendAny is for testing the UI web form, that it can construct a request
+    // form that has only the single Any message input.
     rpc SendAny(google.protobuf.Any) returns (google.protobuf.Empty);
+    // SendStruct is for testing the UI web form, that it can construct a request
+    // form that has only the single, text area input for a JSON object.
     rpc SendStruct(google.protobuf.Struct) returns (google.protobuf.Empty);
+    // SendValue is for testing the UI web form, that it can construct a request
+    // form that has only the single, text area input for a JSON value.
     rpc SendValue(google.protobuf.Value) returns (google.protobuf.Empty);
+    // SendListValue is for testing the UI web form, that it can construct a request
+    // form that has just the input(s) for a JSON array.
     rpc SendListValue(google.protobuf.ListValue) returns (google.protobuf.Empty);
+    // SendBytes is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a bytes value.
     rpc SendBytes(google.protobuf.BytesValue) returns (google.protobuf.Empty);
+    // SendString is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a string value.
     rpc SendString(google.protobuf.StringValue) returns (google.protobuf.Empty);
+    // SendBool is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a boolean value.
     rpc SendBool(google.protobuf.BoolValue) returns (google.protobuf.Empty);
+    // SendDouble is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a double value.
     rpc SendDouble(google.protobuf.DoubleValue) returns (google.protobuf.Empty);
+    // SendFloat is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a float value.
     rpc SendFloat(google.protobuf.FloatValue) returns (google.protobuf.Empty);
+    // SendInt32 is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a signed 32-bit int value.
     rpc SendInt32(google.protobuf.Int32Value) returns (google.protobuf.Empty);
+    // SendInt64 is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for a signed 64-bit int value.
     rpc SendInt64(google.protobuf.Int64Value) returns (google.protobuf.Empty);
+    // SendUInt32 is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for an unsigned 32-bit int value.
     rpc SendUInt32(google.protobuf.UInt32Value) returns (google.protobuf.Empty);
+    // SendUInt64 is for testing the UI web form, that it can construct a request
+    // form that has only the single scalar input for an unsigned 64-bit int value.
     rpc SendUInt64(google.protobuf.UInt64Value) returns (google.protobuf.Empty);
+
+    // These are the same as the ones above, but for testing all of the same combinations
+    // as request streams instead of singular inputs.
 
     rpc SendMultipleTimestamp(stream google.protobuf.Timestamp) returns (google.protobuf.Empty);
     rpc SendMultipleDuration(stream google.protobuf.Duration) returns (google.protobuf.Empty);
@@ -78,8 +133,11 @@ enum Void {
 }
 
 message Person {
+    // The unique ID of the person
     required uint64 id = 1;
+    // The person's full name
     required string name = 2;
+    // The person's address
     optional Address address = 3;
     optional double xyz = 4 [default = 3.14159];
     optional string title = 5 [default = "overseer"];

@@ -8,8 +8,8 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         var svcDesc = svcDescs[svcName];
         var methods = services[svcName];
         var svcDescEnd = "";
-        if (svcDesc.length !== 0) {
-            svcDescEnd = '   // ... ' + (methods.length - 1) + ' more methods\n}';
+        if (svcDesc) {
+            svcDescEnd = '   // ... ' + (methods.length - 1) + ' more methods ...\n}';
         }
         $("#grpc-service-description").text(svcDesc);
         $("#grpc-service-description-end").text(svcDescEnd);
