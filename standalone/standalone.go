@@ -82,6 +82,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", methods, formOpts)
 	indexContents := getIndexContents(uiOpts.indexTmpl, target, webFormHTML, uiOpts.tmplResources)
 	indexResource := newResource("/", indexContents, "text/html; charset=utf-8", false)
+	indexResource.MustRevalidate = true
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			indexResource.ServeHTTP(w, r)
@@ -152,12 +153,13 @@ func getIndexContents(tmpl *template.Template, target string, webFormHTML []byte
 }
 
 type resource struct {
-	Path        string
-	Len         int
-	Open        func(string) (io.ReadCloser, error)
-	ContentType string
-	ETag        string
-	Public      bool
+	Path           string
+	Len            int
+	Open           func(string) (io.ReadCloser, error)
+	ContentType    string
+	ETag           string
+	Public         bool
+	MustRevalidate bool
 }
 
 func newResource(uriPath string, data []byte, contentType string, public bool) *resource {
@@ -237,10 +239,16 @@ func (res *resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if ct != "" {
 		w.Header().Set("Content-Type", ct)
 	}
-	if res.Public {
-		w.Header().Set("Cache-Control", "public, max-age=3600")
+	var cacheSuffix string
+	if res.MustRevalidate {
+		cacheSuffix = "must-revalidate"
 	} else {
-		w.Header().Set("Cache-Control", "private, max-age=3600")
+		cacheSuffix = "max-age=3600"
+	}
+	if res.Public {
+		w.Header().Set("Cache-Control", "public, "+cacheSuffix)
+	} else {
+		w.Header().Set("Cache-Control", "private, "+cacheSuffix)
 	}
 	if res.ETag != "" {
 		w.Header().Set("ETag", res.ETag)
