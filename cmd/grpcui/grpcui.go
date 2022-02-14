@@ -458,7 +458,7 @@ func main() {
 			defer func() {
 				_ = f.Close()
 			}()
-			data, err := io.ReadAll(f)
+			data, err := ioutil.ReadAll(f)
 			if err != nil {
 				fail(err, "Failed to read contents of %q", *examplesFile)
 			}
