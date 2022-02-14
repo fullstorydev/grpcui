@@ -391,8 +391,11 @@ type Person struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id      *uint64  `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
-	Name    *string  `protobuf:"bytes,2,req,name=name" json:"name,omitempty"`
+	// The unique ID of the person
+	Id *uint64 `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
+	// The person's full name
+	Name *string `protobuf:"bytes,2,req,name=name" json:"name,omitempty"`
+	// The person's address
 	Address *Address `protobuf:"bytes,3,opt,name=address" json:"address,omitempty"`
 	Xyz     *float64 `protobuf:"fixed64,4,opt,name=xyz,def=3.14159" json:"xyz,omitempty"`
 	Title   *string  `protobuf:"bytes,5,opt,name=title,def=overseer" json:"title,omitempty"`
@@ -1600,7 +1603,9 @@ type TestMessage struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Recurse         *TestMessage           `protobuf:"bytes,2,opt,name=recurse" json:"recurse,omitempty"`
+	// To recurse or not to recurse
+	Recurse *TestMessage `protobuf:"bytes,2,opt,name=recurse" json:"recurse,omitempty"`
+	// It's even possible to do this repeatedly!
 	RepeatedRecurse []*TestMessage         `protobuf:"bytes,3,rep,name=repeated_recurse,json=repeatedRecurse" json:"repeated_recurse,omitempty"`
 	Person          *Person                `protobuf:"bytes,4,req,name=person" json:"person,omitempty"`
 	State           *State                 `protobuf:"varint,5,req,name=state,enum=test.State" json:"state,omitempty"`

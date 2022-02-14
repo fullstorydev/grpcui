@@ -1,9 +1,19 @@
-window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers) {
+window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadataURI, debug, headers) {
 
+    var descriptionsShown = false;
     var requestForm = $("#grpc-request-form");
 
     function formServiceSelected(callback) {
-        var methods = services[$("#grpc-service").val()];
+        var svcName = $("#grpc-service").val();
+        var svcDesc = svcDescs[svcName];
+        var methods = services[svcName];
+        var svcDescEnd = "";
+        if (svcDesc) {
+            svcDescEnd = '   // ... ' + (methods.length - 1) + ' more methods ...\n}';
+        }
+        $("#grpc-service-description").text(svcDesc);
+        $("#grpc-service-description-end").text(svcDescEnd);
+
         var methodList = $("#grpc-method");
         methodList.empty();
         for (var i = 0; i < methods.length; i++) {
@@ -19,12 +29,16 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     function formMethodSelected(callback) {
         var service = $("#grpc-service").val();
         var method = $("#grpc-method").val();
+        var fullMethod = service + "." + method;
+
+        var mtdDesc = mtdDescs[fullMethod];
+        $("#grpc-method-description").text(mtdDesc);
 
         requestForm.empty();
         // disable the invoke button until we get the schema
         resetInvoke(false);
 
-        $.ajax(metadataURI + "?method=" + service + "." + method)
+        $.ajax(metadataURI + "?method=" + fullMethod)
             .done(function(data) {
                 buildRequestForm(data);
                 callback?.();
@@ -120,6 +134,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         if (schema.requestStream) {
             requestObj = [requestObj];
         }
+
         try {
             rebuildRequestForm(requestObj, true);
         } catch (e) {
@@ -214,6 +229,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
             isMap: false,
             isRequired: false,
             defaultVal: null,
+            description: "",
         };
         requestForm.empty();
 
@@ -316,7 +332,8 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
                 isArray: true,
                 isMap: false,
                 isRequired: false,
-                defaultVal: null
+                defaultVal: null,
+                description: fld.description,
             };
             return addArrayToForm(schema, container, parent, pathLen, value, allowMissing, fld.type, elemType);
         }
@@ -1034,6 +1051,14 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         var labelName = $('<strong>');
         labelName.text(fld.protoName);
         cell.prepend($('<br>'));
+        if (fld.description) {
+            labelName.prop('title', fld.description);
+            labelName.tooltip({
+                classes: {
+                    "ui-tooltip": "grpc-field-description"
+                }
+            });
+        }
         cell.prepend(labelName);
 
         return cell;
@@ -2440,10 +2465,11 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
     const maxHistorySize = 1024*1024; // 1mb
     const target = $(".target").text();
 
-    const storageKey = `grpcui-history-${window.location.host}-${target}`;
+    const historyStorageKey = `grpcui-history-${window.location.host}-${target}`;
+    const expandDescStorageKey = `grpcui-expand-description`;
 
     const loadHistory = () => {
-        const json = localStorage.getItem(storageKey);
+        const json = localStorage.getItem(historyStorageKey);
         if (json) {
             history = (JSON.parse(json))
         }
@@ -2462,7 +2488,7 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         }
 
         try {
-            localStorage.setItem(storageKey, data);
+            localStorage.setItem(historyStorageKey, data);
         } catch (e) {
             // Likely no room in local storage quota. This can still happen, despite
             // above code to limit the size, because there could be other keys in
@@ -2631,6 +2657,24 @@ window.initGRPCForm = function(services, invokeURI, metadataURI, debug, headers)
         if (onlyIfValid(e)) {
             invoke();
         }
+    });
+
+    if (localStorage.getItem(expandDescStorageKey) === "true") {
+        descriptionsShown = true;
+        $("#grpc-descriptions-toggle").text("«")
+    } else {
+        $("#grpc-descriptions pre").hide();
+    }
+    $("#grpc-descriptions-toggle").click(() => {
+        if (descriptionsShown) {
+            $("#grpc-descriptions pre").hide();
+            $("#grpc-descriptions-toggle").text("»")
+        } else {
+            $("#grpc-descriptions pre").show();
+            $("#grpc-descriptions-toggle").text("«")
+        }
+        descriptionsShown = !descriptionsShown;
+        localStorage.setItem(expandDescStorageKey, descriptionsShown+"");
     });
 
     $('#grpc-history-clear').click(() => clearHistory());

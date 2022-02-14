@@ -24,26 +24,77 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KitchenSinkClient interface {
+	// Ping is a no-op method, usable to test that a given channel works. No data is exchanged.
 	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// The Exchange method can be useful for testing the UI. It's complicated request type
+	// exercises many of the feature in gRPC UI's request form building code. The server will
+	// echo back in response metadata all request metadata values it receives. If the metadata
+	// key ends with "-t", it is sent back as trailer metadata. Otherwise, it is sent back as
+	// header metadata. The response will be the same as the request.
 	Exchange(ctx context.Context, in *TestMessage, opts ...grpc.CallOption) (*TestMessage, error)
+	// The UploadMany method is like Exchange, except that it is for testing RPCs that accept
+	// a stream from the client. The server will reply with the last request message it
+	// received, but with the needed_num_a field set to the number of messages observed. If
+	// the client stream includes zero messages, the server will reply with an "Invalid
+	// Argument" error code.
 	UploadMany(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_UploadManyClient, error)
+	// The DownloadMany method is like Exchange, except that it is for testing RPCs that have
+	// a stream from the server. The value in the request for the numbers.needed_num_1 field
+	// controls how many messages are included in the response stream. Each response sent is
+	// a copy of the request.
 	DownloadMany(ctx context.Context, in *TestMessage, opts ...grpc.CallOption) (KitchenSink_DownloadManyClient, error)
+	// The DoManyThings method is like Exchange, except that it is for testing RPCs that
+	// have bidirectional streams. The response stream will be a copy of the request
+	// stream, so each request is mirrored to the response stream as it is received.
 	DoManyThings(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_DoManyThingsClient, error)
+	// Fail is useful for testing errors. The num_responses request field controls how many
+	// response messages are sent before returning an error. The other request fields are
+	// used to construct the error that will be returned.
 	Fail(ctx context.Context, in *FailRequest, opts ...grpc.CallOption) (KitchenSink_FailClient, error)
+	// SendTimestamp is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a timestamp.
 	SendTimestamp(ctx context.Context, in *timestamppb.Timestamp, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendDuration is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a duration.
 	SendDuration(ctx context.Context, in *durationpb.Duration, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendAny is for testing the UI web form, that it can construct a request
+	// form that has only the single Any message input.
 	SendAny(ctx context.Context, in *anypb.Any, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendStruct is for testing the UI web form, that it can construct a request
+	// form that has only the single, text area input for a JSON object.
 	SendStruct(ctx context.Context, in *structpb.Struct, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendValue is for testing the UI web form, that it can construct a request
+	// form that has only the single, text area input for a JSON value.
 	SendValue(ctx context.Context, in *structpb.Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendListValue is for testing the UI web form, that it can construct a request
+	// form that has just the input(s) for a JSON array.
 	SendListValue(ctx context.Context, in *structpb.ListValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendBytes is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a bytes value.
 	SendBytes(ctx context.Context, in *wrapperspb.BytesValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendString is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a string value.
 	SendString(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendBool is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a boolean value.
 	SendBool(ctx context.Context, in *wrapperspb.BoolValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendDouble is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a double value.
 	SendDouble(ctx context.Context, in *wrapperspb.DoubleValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendFloat is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a float value.
 	SendFloat(ctx context.Context, in *wrapperspb.FloatValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendInt32 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a signed 32-bit int value.
 	SendInt32(ctx context.Context, in *wrapperspb.Int32Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendInt64 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a signed 64-bit int value.
 	SendInt64(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendUInt32 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for an unsigned 32-bit int value.
 	SendUInt32(ctx context.Context, in *wrapperspb.UInt32Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendUInt64 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for an unsigned 64-bit int value.
 	SendUInt64(ctx context.Context, in *wrapperspb.UInt64Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	SendMultipleTimestamp(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleTimestampClient, error)
 	SendMultipleDuration(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleDurationClient, error)
@@ -866,26 +917,77 @@ func (x *kitchenSinkSendMultipleUInt64Client) CloseAndRecv() (*emptypb.Empty, er
 // All implementations must embed UnimplementedKitchenSinkServer
 // for forward compatibility
 type KitchenSinkServer interface {
+	// Ping is a no-op method, usable to test that a given channel works. No data is exchanged.
 	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	// The Exchange method can be useful for testing the UI. It's complicated request type
+	// exercises many of the feature in gRPC UI's request form building code. The server will
+	// echo back in response metadata all request metadata values it receives. If the metadata
+	// key ends with "-t", it is sent back as trailer metadata. Otherwise, it is sent back as
+	// header metadata. The response will be the same as the request.
 	Exchange(context.Context, *TestMessage) (*TestMessage, error)
+	// The UploadMany method is like Exchange, except that it is for testing RPCs that accept
+	// a stream from the client. The server will reply with the last request message it
+	// received, but with the needed_num_a field set to the number of messages observed. If
+	// the client stream includes zero messages, the server will reply with an "Invalid
+	// Argument" error code.
 	UploadMany(KitchenSink_UploadManyServer) error
+	// The DownloadMany method is like Exchange, except that it is for testing RPCs that have
+	// a stream from the server. The value in the request for the numbers.needed_num_1 field
+	// controls how many messages are included in the response stream. Each response sent is
+	// a copy of the request.
 	DownloadMany(*TestMessage, KitchenSink_DownloadManyServer) error
+	// The DoManyThings method is like Exchange, except that it is for testing RPCs that
+	// have bidirectional streams. The response stream will be a copy of the request
+	// stream, so each request is mirrored to the response stream as it is received.
 	DoManyThings(KitchenSink_DoManyThingsServer) error
+	// Fail is useful for testing errors. The num_responses request field controls how many
+	// response messages are sent before returning an error. The other request fields are
+	// used to construct the error that will be returned.
 	Fail(*FailRequest, KitchenSink_FailServer) error
+	// SendTimestamp is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a timestamp.
 	SendTimestamp(context.Context, *timestamppb.Timestamp) (*emptypb.Empty, error)
+	// SendDuration is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a duration.
 	SendDuration(context.Context, *durationpb.Duration) (*emptypb.Empty, error)
+	// SendAny is for testing the UI web form, that it can construct a request
+	// form that has only the single Any message input.
 	SendAny(context.Context, *anypb.Any) (*emptypb.Empty, error)
+	// SendStruct is for testing the UI web form, that it can construct a request
+	// form that has only the single, text area input for a JSON object.
 	SendStruct(context.Context, *structpb.Struct) (*emptypb.Empty, error)
+	// SendValue is for testing the UI web form, that it can construct a request
+	// form that has only the single, text area input for a JSON value.
 	SendValue(context.Context, *structpb.Value) (*emptypb.Empty, error)
+	// SendListValue is for testing the UI web form, that it can construct a request
+	// form that has just the input(s) for a JSON array.
 	SendListValue(context.Context, *structpb.ListValue) (*emptypb.Empty, error)
+	// SendBytes is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a bytes value.
 	SendBytes(context.Context, *wrapperspb.BytesValue) (*emptypb.Empty, error)
+	// SendString is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a string value.
 	SendString(context.Context, *wrapperspb.StringValue) (*emptypb.Empty, error)
+	// SendBool is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a boolean value.
 	SendBool(context.Context, *wrapperspb.BoolValue) (*emptypb.Empty, error)
+	// SendDouble is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a double value.
 	SendDouble(context.Context, *wrapperspb.DoubleValue) (*emptypb.Empty, error)
+	// SendFloat is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a float value.
 	SendFloat(context.Context, *wrapperspb.FloatValue) (*emptypb.Empty, error)
+	// SendInt32 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a signed 32-bit int value.
 	SendInt32(context.Context, *wrapperspb.Int32Value) (*emptypb.Empty, error)
+	// SendInt64 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a signed 64-bit int value.
 	SendInt64(context.Context, *wrapperspb.Int64Value) (*emptypb.Empty, error)
+	// SendUInt32 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for an unsigned 32-bit int value.
 	SendUInt32(context.Context, *wrapperspb.UInt32Value) (*emptypb.Empty, error)
+	// SendUInt64 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for an unsigned 64-bit int value.
 	SendUInt64(context.Context, *wrapperspb.UInt64Value) (*emptypb.Empty, error)
 	SendMultipleTimestamp(KitchenSink_SendMultipleTimestampServer) error
 	SendMultipleDuration(KitchenSink_SendMultipleDurationServer) error

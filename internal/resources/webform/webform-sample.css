@@ -4,19 +4,65 @@
 }
 
 .grpc-desc {
-    margin-bottom: 8px;
-    margin-left: 16px;
+    margin-bottom: 0;
 }
 
-.grpc-desc span.grpc-form-label {
-    font-size: 125%;
-    width: 130px;
-    float: left;
-    line-height: 30px;
+.grpc-desc td {
+    vertical-align: top;
+}
+
+#grpc-desc-selects td {
+    padding-top: 12px;
 }
 
 .grpc-desc select {
     height: 30px;
+}
+
+.grpc-desc pre {
+    margin: 0 0 0 36px;
+    padding-left: 20px;
+    border-left: 1px solid #d8d8d8;
+    color: #777;
+}
+
+.grpc-desc button#grpc-descriptions-toggle {
+    position: absolute;
+    z-index: 3;
+    padding: 0;
+    margin-top: 10px;
+    margin-left: 10px;
+    border: none;
+    background: white;
+    font-size: 150%;
+}
+
+.grpc-desc div.grpc-form-label {
+    font-size: 110%;
+    width: 128px;
+    line-height: 30px;
+    text-align: right;
+    margin-right: 12px;
+}
+
+#grpc-descriptions {
+    width: 100%;
+    overflow: scroll;
+}
+
+#grpc-service-description {
+    padding-top:14px;
+}
+
+#grpc-method-description {
+    font-weight: bold;
+    color: black;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+#grpc-service-description-end {
+    padding-bottom:14px;
 }
 
 #grpc-request-response {
@@ -34,8 +80,7 @@
 
 #grpc-request-response li.ui-tabs-tab {
     border: 1px solid #ccc;
-    margin: 0;
-    margin-right: -1px;
+    margin: 0 -1px 0 0;
     padding: 4px 8px;
     border-top-right-radius: 6px;
     border-top-left-radius: 6px;
@@ -118,8 +163,7 @@ textarea#grpc-request-raw-text {
 }
 
 table#grpc-request-metadata-form {
-    margin: 0;
-    margin-left: 4px;
+    margin: 0 0 0 4px;
     border-collapse: collapse;
 }
 
@@ -174,7 +218,7 @@ table#grpc-request-metadata-form {
 
 #grpc-request-form td {
     padding: 16px 0 0 16px;
-    font-size: 13.2px;
+    font-size: 13px;
 }
 
 #grpc-request-form td:first-of-type {
@@ -252,6 +296,12 @@ table#grpc-request-metadata-form {
 
 #grpc-request-form td.name strong {
     font-size: 120%;
+}
+
+.ui-tooltip.grpc-field-description {
+    white-space: pre;
+    font-family: "Courier New", Courier, monospace;
+    max-width: none;
 }
 
 #grpc-request-form td.toggle_presence {
@@ -442,7 +492,7 @@ textarea.grpc-response-textarea {
 
 #grpc-response-data td {
     padding: 12px 0 0 12px;
-    font-size: 13.2px;
+    font-size: 13px;
     font-family: "courier new", courier, monospace;
 }
 

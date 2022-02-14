@@ -1,17 +1,42 @@
 <div id="grpc-form">
-  <div class="grpc-desc" id="grpc-service-select"><span class="grpc-form-label">Service name:</span>
-    <select name="grpc-service" id="grpc-service">
-      {{ range .Services }}
-      <option value="{{.}}">{{.}}</option>
-      {{ end }}
-    </select>
-  </div>
-
-  <div class="grpc-desc" id="grpc-method-select"><span class="grpc-form-label">Method name:</span>
-    <select name="grpc-method" id="grpc-method">
-      <!-- populated by JavaScript when grpc-service is selected -->
-    </select>
-  </div>
+  <table class="grpc-desc">
+    <tr>
+      <td>
+        <table id="grpc-desc-selects">
+          <!-- service -->
+          <tr>
+            <td>
+              <div class="grpc-form-label">Service name:</div>
+            </td>
+            <td id="grpc-service-select">
+              <select name="grpc-service" id="grpc-service">
+                {{ range .Services }}
+                <option value="{{.}}">{{.}}</option>
+                {{ end }}
+              </select>
+            </td>
+          </tr>
+          <!-- method -->
+          <tr>
+            <td>
+              <div class="grpc-form-label">Method name:</div>
+            </td>
+            <td id="grpc-method-select">
+              <select name="grpc-method" id="grpc-method">
+                <!-- populated by JavaScript when grpc-service is selected -->
+              </select>
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td id="grpc-descriptions">
+        <button id="grpc-descriptions-toggle">»</button>
+        <pre id="grpc-service-description"></pre>
+        <pre id="grpc-method-description"></pre>
+        <pre id="grpc-service-description-end"></pre>
+      </td>
+    </tr>
+  </table>
 
   <div id="grpc-request-response">
     <ul>
@@ -85,12 +110,22 @@
         ],
     {{- end}}
     };
+    var svcDescs = {
+    {{- range $name, $desc := .SvcDescs}}
+        "{{$name}}": "{{$desc}}",
+    {{- end}}
+    };
+    var mtdDescs = {
+    {{- range $name, $desc := .MtdDescs}}
+        "{{$name}}": "{{$desc}}",
+    {{- end}}
+    };
     var headers = [
     {{- range .DefaultMetadata}}
         {"name": "{{.Name}}", "value": "{{.Value}}"},
     {{- end}}
     ];
 
-    initGRPCForm(services, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers);
+    initGRPCForm(services, svcDescs, mtdDescs, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers);
 })();
 </script>
