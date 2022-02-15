@@ -11,11 +11,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jhump/protoreflect/desc/sourceinfo/srcinforeflection"
 	spb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-//go:generate protoc --go_out=. --go-grpc_out=. test.proto
+//go:generate protoc --go_out=. --go-grpc_out=. --gosrcinfo_out=. test.proto
 
 func main() {
 	port := flag.Int("port", 0, "Port on which to listen")
@@ -47,7 +47,7 @@ func main() {
 
 	svr := grpc.NewServer()
 	RegisterKitchenSinkServer(svr, &testSvr{})
-	reflection.Register(svr)
+	srcinforeflection.Register(svr)
 	if err := svr.Serve(l); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to start gRPC server: %v\n", err)
 		os.Exit(1)
