@@ -374,10 +374,10 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             return addDoubleToForm(container, parent, value, fld);
 
             case "string": case "google.protobuf.StringValue":
-            return addStringToForm(container, parent, value, fld, false);
+            return addStringToForm(container, parent, value, fld);
 
             case "bytes": case "google.protobuf.BytesValue":
-            return addStringToForm(container, parent, value, fld, true);
+            return addBytesToForm(container, parent, value, fld);
 
             case "bool": case "google.protobuf.BoolValue":
             return addBoolToForm(container, parent, value, fld);
@@ -1400,7 +1400,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         return input;
     }
 
-    function addStringToForm(container, parent, value, fld, base64) {
+    function addStringToForm(container, parent, value, fld) {
         var disabled = false;
         if (isUnset(value)) {
             value = fld.defaultVal;
@@ -1408,9 +1408,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         if (typeof value !== 'string') {
             throw typeError(fld.type, value, "string");
-        }
-        if (base64 && !isBase64(value)) {
-            throw new Error("value for type " + fld.type + " is not a valid base64-encoded string: " + JSON.stringify(value));
         }
 
         var inp = $('<textarea>');
@@ -1427,7 +1424,65 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             var inp = this;
             setValidation(inp, function() {
                 var str = $(inp).val();
-                if (base64 && !isBase64(str)) {
+                input.setValue(str);
+            });
+        });
+        return input;
+    }
+
+    function addBytesToForm(container, parent, value, fld) {
+        var disabled = false;
+        if (isUnset(value)) {
+            value = fld.defaultVal;
+            disabled = true;
+        }
+        if (typeof value !== 'string') {
+            throw typeError(fld.type, value, "string");
+        }
+        if (!isBase64(value)) {
+            throw new Error("value for type " + fld.type + " is not a valid base64-encoded string: " + JSON.stringify(value));
+        }
+
+        var box = $('<div>');
+        box.addClass('grpc-bytes-container')
+        var inp = $('<textarea>');
+        inp.attr('cols', 40);
+        inp.attr('rows', 1);
+        inp.text(value);
+        if (disabled) {
+            inp.prop('disabled', true);
+        }
+        var lbl = $('<label>')
+        lbl.addClass('grpc-file-button');
+        lbl.text('Choose File');
+        if (disabled) {
+            lbl.addClass('disabled');
+        }
+        var fileInput = $('<input>');
+        fileInput.attr('type', 'file');
+        fileInput.attr('style', 'display:none');
+        if (disabled) {
+            fileInput.prop('disabled', true);
+        }
+        lbl.append(fileInput);
+        box.append(inp);
+        box.append(lbl);
+        container.append(box);
+
+        fileInput.on('change', function() {
+            var reader = new FileReader();
+            reader.addEventListener("load", function () {
+                inp.text(btoa(this.result));
+            }, false);
+            reader.readAsBinaryString(fileInput[0].files[0]);
+        })
+
+        var input = new Input(parent, [], value);
+        inp.focus(function() {
+            var inp = this;
+            setValidation(inp, function() {
+                var str = $(inp).val();
+                if (!isBase64(str)) {
                     throw new Error("value for type " + fld.type + " is not a valid base64-encoded string: " + JSON.stringify(value));
                 }
                 input.setValue(str);
