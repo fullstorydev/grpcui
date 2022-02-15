@@ -1432,7 +1432,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     function addBytesToForm(container, parent, value, fld) {
         var disabled = false;
-        if (isUndefined(value)) {
+        if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
         }
@@ -1443,6 +1443,8 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             throw new Error("value for type " + fld.type + " is not a valid base64-encoded string: " + JSON.stringify(value));
         }
 
+        var box = $('<div>');
+        box.addClass('grpc-bytes-container')
         var inp = $('<textarea>');
         inp.attr('cols', 40);
         inp.attr('rows', 1);
@@ -1450,25 +1452,30 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         if (disabled) {
             inp.prop('disabled', true);
         }
-
-        var fileInput = $('<input/>');
-        
+        var lbl = $('<label>')
+        lbl.addClass('grpc-file-button');
+        lbl.text('Choose File');
+        if (disabled) {
+            lbl.addClass('disabled');
+        }
+        var fileInput = $('<input>');
         fileInput.attr('type', 'file');
+        fileInput.attr('style', 'display:none');
         if (disabled) {
             fileInput.prop('disabled', true);
         }
+        lbl.append(fileInput);
+        box.append(inp);
+        box.append(lbl);
+        container.append(box);
 
         fileInput.on('change', function() {
             var reader = new FileReader();
             reader.addEventListener("load", function () {
-                var cleanedResult = this.result.split("base64,")[1];
-                inp.text(cleanedResult);
+                inp.text(btoa(this.result));
             }, false);
-
-            reader.readAsDataURL(fileInput[0].files[0]);
+            reader.readAsBinaryString(fileInput[0].files[0]);
         })
-        container.append(inp);
-        container.append(fileInput)
 
         var input = new Input(parent, [], value);
         inp.focus(function() {

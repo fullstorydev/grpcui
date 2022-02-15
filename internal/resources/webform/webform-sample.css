@@ -345,6 +345,28 @@ table#grpc-request-metadata-form {
     font-size: 120%;
 }
 
+#grpc-request-form .grpc-bytes-container {
+    display: flex;
+    align-items: center;
+}
+
+#grpc-request-form .grpc-bytes-container label.grpc-file-button {
+    border-radius: 2px;
+    background: #f0f0f0;
+    border-top: 1px solid #ccc;
+    border-right: 1px solid #bbb;
+    border-bottom: 1px solid #aaa;
+    border-left: 1px solid #ccc;
+    padding: 4px 8px;
+    font-size: 90%;
+}
+
+#grpc-request-form .grpc-bytes-container label.grpc-file-button.disabled {
+    border: 1px solid #ddd;
+    color: #ccc;
+    background: #f8f8f8;
+}
+
 .ui-tooltip.grpc-field-description {
     white-space: pre;
     font-family: "Courier New", Courier, monospace;
