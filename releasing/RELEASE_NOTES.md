@@ -1,4 +1,11 @@
 ## Changes
+_Include other useful notes at the top, such as changes to supported architectures, changes to release artifacts, etc..._
+
+### Web UI
+These changes impact usage of both the command-line tool and the Go packages.
+
+* _In this list, describe the changes to the web form UI._
+* _Use one bullet per change. Include both bug-fixes and improvements. Omit this section if there are no changes that impact the web form._
 
 ### Command-line tool
 
