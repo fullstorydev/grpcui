@@ -12,11 +12,12 @@
 }
 
 #grpc-desc-selects td {
-    padding-top: 12px;
+    padding-top: 8px;
 }
 
 .grpc-desc select {
     height: 30px;
+    font-size: 14px;
 }
 
 .grpc-desc pre {
@@ -30,7 +31,7 @@
     position: absolute;
     z-index: 3;
     padding: 0;
-    margin-top: 10px;
+    margin-top: 6px;
     margin-left: 10px;
     border: none;
     background: white;
@@ -39,7 +40,7 @@
 
 .grpc-desc div.grpc-form-label {
     font-size: 110%;
-    width: 128px;
+    width: 124px;
     line-height: 30px;
     text-align: right;
     margin-right: 12px;
@@ -51,18 +52,18 @@
 }
 
 #grpc-service-description {
-    padding-top:14px;
+    padding-top: 6px;
 }
 
 #grpc-method-description {
     font-weight: bold;
-    color: black;
+    color: #333;
     padding-top: 12px;
     padding-bottom: 12px;
 }
 
 #grpc-service-description-end {
-    padding-bottom:14px;
+    padding-bottom: 10px;
 }
 
 #grpc-container {
