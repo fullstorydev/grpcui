@@ -11,11 +11,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jhump/protoreflect/desc/sourceinfo/srcinforeflection"
+	"github.com/jhump/protoreflect/desc/sourceinfo"
 	spb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/reflection"
+	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -47,7 +49,12 @@ func main() {
 
 	svr := grpc.NewServer()
 	RegisterKitchenSinkServer(svr, &testSvr{})
-	srcinforeflection.Register(svr)
+	refSvc := reflection.NewServer(reflection.ServerOptions{
+		Services:           svr,
+		DescriptorResolver: sourceinfo.GlobalFiles,
+		ExtensionResolver:  sourceinfo.GlobalFiles,
+	})
+	reflectionpb.RegisterServerReflectionServer(svr, refSvc)
 	if err := svr.Serve(l); err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to start gRPC server: %v\n", err)
 		os.Exit(1)
