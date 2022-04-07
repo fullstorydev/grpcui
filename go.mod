@@ -3,7 +3,6 @@ module github.com/echo-health/grpcui
 go 1.15
 
 require (
-	github.com/echo-health/grpcui v1.3.0
 	github.com/fullstorydev/grpcurl v1.8.6
 	github.com/golang/protobuf v1.5.2
 	github.com/jhump/protoreflect v1.12.0
