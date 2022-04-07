@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/fullstorydev/grpcui/internal"
+	"github.com/echo-health/grpcui/internal"
 	"github.com/fullstorydev/grpcurl"
 )
 

@@ -3,6 +3,7 @@
 This document provides instructions for building a release of `grpcui`.
 
 The release process consists of a handful of tasks:
+
 1. Drop a release tag in git.
 2. Build binaries for various platforms. This is done using the local `go` tool and uses `GOOS` and `GOARCH` environment variables to cross-compile for supported platforms.
 3. Creates a release in GitHub, uploads the binaries, and creates provisional release notes (in the form of a change log).
@@ -30,9 +31,10 @@ Wasn't that easy! There is one last step: update the release notes in GitHub. By
 
 That should be all there is to it! If things go wrong and you have to re-do part of the process, see the sections below.
 
-----
+---
 
 ### GitHub Releases
+
 The GitHub release is the first step performed by the `do-release.sh` script. So generally, if there is an issue with that step, you can re-try the whole script.
 
 Note, if running the script did something wrong, you may have to first login to GitHub and remove uploaded artifacts for a botched release attempt. In general, this is _very undesirable_. Releases should usually be considered immutable. Instead of removing uploaded assets and providing new ones, it is often better to remove uploaded assets (to make bad binaries no longer available) and then _release a new patch version_. (You can edit the release notes for the botched version explaining why there are no artifacts for it.)
@@ -74,7 +76,7 @@ The last step is to update the Homebrew recipe to use the latest version. First,
 
 ```sh
 # download the source archive from GitHub
-URL=https://github.com/fullstorydev/grpcui/archive/v2.3.4.tar.gz
+URL=https://github.com/echo-health/grpcui/archive/v2.3.4.tar.gz
 curl -L -o tmp.tgz $URL
 # and compute the SHA
 SHA="$(sha256sum < tmp.tgz | awk '{ print $1 }')"

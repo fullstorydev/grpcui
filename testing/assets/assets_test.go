@@ -1,8 +1,8 @@
 package test_assets
 
 import (
-	"github.com/fullstorydev/grpcui/internal/resources/standalone"
-	"github.com/fullstorydev/grpcui/internal/resources/webform"
+	"github.com/echo-health/grpcui/internal/resources/standalone"
+	"github.com/echo-health/grpcui/internal/resources/webform"
 	"testing"
 )
 

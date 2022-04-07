@@ -1,6 +1,7 @@
 # gRPC UI
+
 [![Build Status](https://circleci.com/gh/fullstorydev/grpcui/tree/master.svg?style=svg)](https://circleci.com/gh/fullstorydev/grpcui/tree/master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/fullstorydev/grpcui)](https://goreportcard.com/report/github.com/fullstorydev/grpcui)
+[![Go Report Card](https://goreportcard.com/badge/github.com/echo-health/grpcui)](https://goreportcard.com/report/github.com/echo-health/grpcui)
 
 `grpcui` is a command-line tool that lets you interact with gRPC servers via a browser.
 It's sort of like [Postman](https://www.getpostman.com/), but for gRPC APIs instead of
@@ -21,10 +22,11 @@ reflection, you will either need the proto source files that define the service 
 protoset files that `grpcui` can use.
 
 This repo also provides two library packages
-1. `github.com/fullstorydev/grpcui`: This package contains the building blocks for embedding a
+
+1. `github.com/echo-health/grpcui`: This package contains the building blocks for embedding a
    gRPC web form into any Go HTTP server. It has functions for accessing the HTML form, the
    JavaScript code that powers it, as well as a sample CSS file, for styling the form.
-2. `github.com/fullstorydev/grpcui/standalone`: This package goes a step further and supplies
+2. `github.com/echo-health/grpcui/standalone`: This package goes a step further and supplies
    a single, simple HTTP handler that provides the entire gRPC web UI. You can just wire this
    handler into your HTTP server to embed a gRPC web page that looks exactly like the one you
    see when you use the `grpcui` command-line program. This single handler uses the above
@@ -32,6 +34,7 @@ This repo also provides two library packages
    and jQuery-UI), and additional CSS and image resources.
 
 ## Features
+
 `grpcui` supports all kinds of RPC methods, including streaming methods. However, it requires
 you to construct the entire stream of request messages all at once and then renders the entire
 resulting stream of response messages all at once (so you can't interact with bidirectional
@@ -60,9 +63,11 @@ the form of an HTML table.
 ## Installation
 
 ### From Source
+
 You can use the `go` tool to install `grpcui`:
+
 ```shell
-go install github.com/fullstorydev/grpcui/cmd/grpcui@latest
+go install github.com/echo-health/grpcui/cmd/grpcui@latest
 ```
 
 This installs the command into the `bin` sub-folder of wherever your `$GOPATH`
@@ -77,7 +82,9 @@ If you encounter compile errors, you could have out-dated versions of `grpcui`'s
 dependencies. You can update the dependencies by running `make updatedeps`.
 
 ## Usage
+
 The usage doc for the tool explains the numerous options:
+
 ```shell
 grpcui -help
 ```
@@ -89,6 +96,7 @@ no port is specified, an ephemeral port will be used (so likely a different port
 time it is run, allocated by the operating system).
 
 ### Web Form
+
 When you run `grpcui`, it will show you a URL to put into a browser in order to access
 the web UI.
 
@@ -117,6 +125,7 @@ The third tab shows the response data. This tab is grayed out and disabled until
 actually click the "Invoke" button, which can be found at the bottom of the page.
 
 ### Request Form
+
 The first thing to note about the form is that it will generally be a table, where each row
 is a field. The table has three important columns:
 
@@ -143,7 +152,7 @@ One-ofs are rendered a little differently. Instead of two columns indicating the
 and value of the field, they include a nested table showing all of the possible fields
 in the one-of. However, the middle column is a radio button instead of a checkbox, so that
 only one of the fields can be present at any given time. In addition to a row for each
-field in the one-of, there is also an option named *None*, which indicates a one-of where
+field in the one-of, there is also an option named _None_, which indicates a one-of where
 no value is set.
 
 Here's an example form for a message that has two required fields (`id` and `name`), one
@@ -156,7 +165,7 @@ required fields at the top). In the second, several field values are present.
   <img alt="web UI message fields, with some values" width="420" align="top" src="doc-images/fields-filled-out.png">
 </p>
 
-For RPCs that accept a *stream* of requests, the web form allows the user to define multiple
+For RPCs that accept a _stream_ of requests, the web form allows the user to define multiple
 messages in the stream. It defaults to a single request, but the user can remove it to send none
 or can send many. A stream resembles a repeated field, but the repeated "thing" is the entire
 request:
@@ -178,6 +187,7 @@ where a date picker is shown:
 </p>
 
 ### Raw Request JSON
+
 The second tab lets you view the JSON representation of the request data you have defined on the
 first tab. You can also directly edit the JSON data -- including pasting in an entire JSON message.
 
@@ -191,6 +201,7 @@ When working with an RPC that has a streaming request, the JSON data will be a J
 each element is a single message in the stream.
 
 ### Responses
+
 When the "Invoke" button is pressed, the request data is sent to the server and the selected RPC
 method is invoked. The web form will then navigate to the third tab to show the server's response.
 
@@ -198,7 +209,7 @@ The response tab has three sections:
 
 1. Response Headers: Any response header metadata is shown here.
 2. Response Data: Any response messages are shown here as are any error messages. RPC methods with
-   a streaming response may show both message data *and* an error. Error messages show the gRPC
+   a streaming response may show both message data _and_ an error. Error messages show the gRPC
    status code and the server-defined message text.
 3. Response Trailers: Finally, any response trailer metadata is shown.
 
@@ -211,6 +222,7 @@ their structure closely resembles how messages are structured on the "Request Fo
 have nested messages will include a nested table.
 
 ## Descriptor Sources
+
 The `grpcui` tool can operate on a variety of sources for descriptors. The descriptors
 are required, in order for `grpcui` to understand the RPC schema, translate inputs
 into the protobuf binary format as well as translate responses from the binary format
@@ -218,11 +230,13 @@ into text. The sections below document the supported sources and what command-li
 are needed to use them.
 
 ### Server Reflection
+
 Without any additional command-line flags, `grpcui` will try to use [server reflection](https://github.com/grpc/grpc/blob/master/src/proto/grpc/reflection/v1alpha/reflection.proto).
 
 Examples for how to set up server reflection can be found [here](https://github.com/grpc/grpc/blob/master/doc/server-reflection.md#known-implementations).
 
 ### Proto Source Files
+
 To use `grpcui` on servers that do not support reflection, you can use `.proto` source
 files.
 
@@ -230,12 +244,13 @@ In addition to using `-proto` flags to point `grpcui` at the relevant proto sour
 you may also need to supply `-import-path` flags to tell `grpcui` the folders from which
 dependencies can be imported.
 
-Just like when compiling with `protoc`, you do *not* need to provide an import path for the
+Just like when compiling with `protoc`, you do _not_ need to provide an import path for the
 location of the standard protos included with `protoc` (which contain various "well-known
 types" with a package definition of `google.protobuf`). These files are "known" by `grpcui`
 as a snapshot of their descriptors is built into the `grpcui` binary.
 
 ### Protoset Files
+
 You can also use compiled protoset files with `grpcui`. Protoset files contain binary
 encoded `google.protobuf.FileDescriptorSet` protos. To create a protoset file, invoke
 `protoc` with the `*.proto` files that define the service:
