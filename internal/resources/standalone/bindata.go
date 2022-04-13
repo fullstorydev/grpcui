@@ -3,7 +3,7 @@
 // index-template.html
 // grpc-bg.svg
 // jquery-ui-1.12.1.min.css
-// jquery-3.4.1.min.js
+// jquery-3.6.0.min.js
 // grpc-logo.png
 // favicon.png
 // jquery-ui-1.12.1.min.js
@@ -148,7 +148,7 @@ var _jquery341MinJs = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\xb4\xbd\x
 func jquery341MinJsBytes() ([]byte, error) {
 	return bindataRead(
 		_jquery341MinJs,
-		"jquery-3.4.1.min.js",
+		"jquery-3.6.0.min.js",
 	)
 }
 
@@ -158,7 +158,7 @@ func jquery341MinJs() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "jquery-3.4.1.min.js", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
+	info := bindataFileInfo{name: "jquery-3.6.0.min.js", size: 0, mode: os.FileMode(0), modTime: time.Unix(0, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -278,7 +278,7 @@ var _bindata = map[string]func() (*asset, error){
 	"index-template.html":      indexTemplateHtml,
 	"grpc-bg.svg":              grpcBgSvg,
 	"jquery-ui-1.12.1.min.css": jqueryUi1121MinCss,
-	"jquery-3.4.1.min.js":      jquery341MinJs,
+	"jquery-3.6.0.min.js":      jquery341MinJs,
 	"grpc-logo.png":            grpcLogoPng,
 	"favicon.png":              faviconPng,
 	"jquery-ui-1.12.1.min.js":  jqueryUi1121MinJs,
@@ -329,7 +329,7 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"grpc-bg.svg":              {grpcBgSvg, map[string]*bintree{}},
 	"grpc-logo.png":            {grpcLogoPng, map[string]*bintree{}},
 	"index-template.html":      {indexTemplateHtml, map[string]*bintree{}},
-	"jquery-3.4.1.min.js":      {jquery341MinJs, map[string]*bintree{}},
+	"jquery-3.6.0.min.js":      {jquery341MinJs, map[string]*bintree{}},
 	"jquery-ui-1.12.1.min.css": {jqueryUi1121MinCss, map[string]*bintree{}},
 	"jquery-ui-1.12.1.min.js":  {jqueryUi1121MinJs, map[string]*bintree{}},
 }}
