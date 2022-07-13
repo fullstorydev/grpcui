@@ -1558,7 +1558,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         time.attr('size', 20);
         time.attr('value', "" + parts[1]);
         div.append(time);
-        
+
         var setNow = $('<button>Now</button>');
         div.append(setNow);
         container.append(div);
@@ -1619,9 +1619,9 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                                 $('#ui-datepicker-div').addClass('grpc-timestamp-picker');
                             },
                         });
-        
+
         setNow.click(function() {
-            var now = (new Date()).toUTCString();
+            var now = (new Date()).toISOString();
             var nowSplit = now.split('T', 2);
             date.val(nowSplit[0]);
             time.val(nowSplit[1]);
