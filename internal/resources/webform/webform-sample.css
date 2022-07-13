@@ -406,8 +406,8 @@ table#grpc-request-metadata-form {
 
 #grpc-request-form div.input_container button {
     padding: 2px 4px;
-	border-radius: 3px;
-	font-size: 12px;
+    border-radius: 3px;
+    font-size: 12px;
 }
 
 #grpc-form .grpc-request-table button {
