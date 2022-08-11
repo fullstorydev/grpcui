@@ -2,3 +2,5 @@ dist/
 VERSION
 .idea/
 *.iml
+.vscode/
+tmp/
