@@ -8,9 +8,14 @@ import (
 	"encoding/base64"
 	"fmt"
 	"html/template"
+	"io"
+	"io/ioutil"
 	"mime"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/jhump/protoreflect/desc"
@@ -77,6 +82,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", methods, formOpts)
 	indexContents := getIndexContents(uiOpts.indexTmpl, target, webFormHTML, uiOpts.tmplResources)
 	indexResource := newResource("/", indexContents, "text/html; charset=utf-8", false)
+	indexResource.MustRevalidate = true
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			indexResource.ServeHTTP(w, r)
@@ -85,7 +91,12 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 		}
 	})
 
-	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandler(ch, methods))
+	invokeOpts := grpcui.InvokeOptions{
+		ExtraMetadata:   uiOpts.extraMetadata,
+		PreserveHeaders: uiOpts.preserveHeaders,
+		Verbosity:       uiOpts.invokeVerbosity,
+	}
+	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandlerWithOptions(ch, methods, invokeOpts))
 	mux.HandleFunc("/invoke/", func(w http.ResponseWriter, r *http.Request) {
 		// CSRF protection
 		c, _ := r.Cookie(csrfCookieName)
@@ -99,6 +110,16 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 
 	rpcMetadataHandler := grpcui.RPCMetadataHandler(methods, files)
 	mux.Handle("/metadata", rpcMetadataHandler)
+
+	mux.HandleFunc("/examples", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(200)
+		if len(uiOpts.examples) > 0 {
+			w.Write(uiOpts.examples)
+		} else {
+			w.Write([]byte("[]"))
+		}
+	})
 
 	// make sure we always have a csrf token cookie
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -142,11 +163,13 @@ func getIndexContents(tmpl *template.Template, target string, webFormHTML []byte
 }
 
 type resource struct {
-	Path        string
-	Data        []byte
-	ContentType string
-	ETag        string
-	Public      bool
+	Path           string
+	Len            int
+	Open           func(string) (io.ReadCloser, error)
+	ContentType    string
+	ETag           string
+	Public         bool
+	MustRevalidate bool
 }
 
 func newResource(uriPath string, data []byte, contentType string, public bool) *resource {
@@ -154,32 +177,96 @@ func newResource(uriPath string, data []byte, contentType string, public bool) *
 		contentType = mime.TypeByExtension(path.Ext(uriPath))
 	}
 	return &resource{
-		Path:        uriPath,
-		Data:        data,
+		Path: uriPath,
+		Open: func(_ string) (io.ReadCloser, error) {
+			return ioutil.NopCloser(bytes.NewReader(data)), nil
+		},
+		Len:         len(data),
 		ContentType: contentType,
 		ETag:        computeETag(data),
 		Public:      public,
 	}
 }
 
+func newDeferredResource(uriPath string, open func() (io.ReadCloser, error), contentType string) *resource {
+	if contentType == "" {
+		contentType = mime.TypeByExtension(path.Ext(uriPath))
+	}
+	return &resource{
+		Path: uriPath,
+		Open: func(_ string) (io.ReadCloser, error) {
+			return open()
+		},
+		ContentType: contentType,
+	}
+}
+
+func newDeferredResourceFolder(uriPath string, open func(string) (io.ReadCloser, error)) *resource {
+	return &resource{
+		Path: uriPath + "/",
+		Open: func(filename string) (io.ReadCloser, error) {
+			return open(filename)
+		},
+	}
+}
+
 func handle(mux *http.ServeMux, res *resource) {
 	mux.Handle(res.Path, res)
+	if withoutSlash := strings.TrimSuffix(res.Path, "/"); withoutSlash != res.Path {
+		// if res.Path is a folder, return a 404 if the base directory is
+		// requested (default behavior is a redirect to URI with trailing slash)
+		mux.Handle(withoutSlash, http.NotFoundHandler())
+	}
 }
 
 func (res *resource) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	name, err := filepath.Rel(res.Path, r.URL.Path)
+	var reader io.ReadCloser
+	if err == nil {
+		reader, err = res.Open(name)
+	}
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.NotFound(w, r)
+		} else {
+			http.Error(w, fmt.Sprintf("failed to open file %q: %v", r.URL.Path, err), http.StatusInternalServerError)
+		}
+		return
+	}
+	defer func() {
+		_ = reader.Close()
+	}()
+
 	etag := r.Header.Get("If-None-Match")
 	if etag != "" && etag == res.ETag {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-	w.Header().Set("Content-Type", res.ContentType)
-	if res.Public {
-		w.Header().Set("Cache-Control", "public, max-age=3600")
-	} else {
-		w.Header().Set("Cache-Control", "private, max-age=3600")
+	ct := res.ContentType
+	if ct == "" {
+		ct = mime.TypeByExtension(path.Ext(r.URL.Path))
 	}
-	w.Header().Set("ETag", res.ETag)
-	_, _ = w.Write(res.Data)
+	if ct != "" {
+		w.Header().Set("Content-Type", ct)
+	}
+	var cacheSuffix string
+	if res.MustRevalidate {
+		cacheSuffix = "must-revalidate"
+	} else {
+		cacheSuffix = "max-age=3600"
+	}
+	if res.Public {
+		w.Header().Set("Cache-Control", "public, "+cacheSuffix)
+	} else {
+		w.Header().Set("Cache-Control", "private, "+cacheSuffix)
+	}
+	if res.ETag != "" {
+		w.Header().Set("ETag", res.ETag)
+	}
+	if res.Len > 0 {
+		w.Header().Set("Content-Length", strconv.Itoa(res.Len))
+	}
+	_, _ = io.Copy(w, reader)
 }
 
 // AsHTMLTag returns an HTML string corresponding to a tag that would load this resource (by inspecting ContentType).

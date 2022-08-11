@@ -22,8 +22,8 @@ install:
 
 .PHONY: release
 release:
-	@go install github.com/goreleaser/goreleaser@v0.134.0
-	goreleaser --rm-dist
+	@go install github.com/goreleaser/goreleaser@v1.5.0
+	goreleaser release --rm-dist
 
 .PHONY: docker
 docker:
@@ -35,6 +35,7 @@ docker:
 generate:
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@a709e31e5d12
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+	@go install github.com/jhump/protoreflect/desc/sourceinfo/cmd/protoc-gen-gosrcinfo
 	go generate ./...
 
 .PHONY: checkgofmt

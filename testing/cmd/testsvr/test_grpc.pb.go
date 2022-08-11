@@ -24,25 +24,77 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type KitchenSinkClient interface {
+	// Ping is a no-op method, usable to test that a given channel works. No data is exchanged.
 	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// The Exchange method can be useful for testing the UI. It's complicated request type
+	// exercises many of the feature in gRPC UI's request form building code. The server will
+	// echo back in response metadata all request metadata values it receives. If the metadata
+	// key ends with "-t", it is sent back as trailer metadata. Otherwise, it is sent back as
+	// header metadata. The response will be the same as the request.
 	Exchange(ctx context.Context, in *TestMessage, opts ...grpc.CallOption) (*TestMessage, error)
+	// The UploadMany method is like Exchange, except that it is for testing RPCs that accept
+	// a stream from the client. The server will reply with the last request message it
+	// received, but with the needed_num_a field set to the number of messages observed. If
+	// the client stream includes zero messages, the server will reply with an "Invalid
+	// Argument" error code.
 	UploadMany(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_UploadManyClient, error)
+	// The DownloadMany method is like Exchange, except that it is for testing RPCs that have
+	// a stream from the server. The value in the request for the numbers.needed_num_1 field
+	// controls how many messages are included in the response stream. Each response sent is
+	// a copy of the request.
 	DownloadMany(ctx context.Context, in *TestMessage, opts ...grpc.CallOption) (KitchenSink_DownloadManyClient, error)
+	// The DoManyThings method is like Exchange, except that it is for testing RPCs that
+	// have bidirectional streams. The response stream will be a copy of the request
+	// stream, so each request is mirrored to the response stream as it is received.
 	DoManyThings(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_DoManyThingsClient, error)
+	// Fail is useful for testing errors. The num_responses request field controls how many
+	// response messages are sent before returning an error. The other request fields are
+	// used to construct the error that will be returned.
+	Fail(ctx context.Context, in *FailRequest, opts ...grpc.CallOption) (KitchenSink_FailClient, error)
+	// SendTimestamp is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a timestamp.
 	SendTimestamp(ctx context.Context, in *timestamppb.Timestamp, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendDuration is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a duration.
 	SendDuration(ctx context.Context, in *durationpb.Duration, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendAny is for testing the UI web form, that it can construct a request
+	// form that has only the single Any message input.
 	SendAny(ctx context.Context, in *anypb.Any, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendStruct is for testing the UI web form, that it can construct a request
+	// form that has only the single, text area input for a JSON object.
 	SendStruct(ctx context.Context, in *structpb.Struct, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendValue is for testing the UI web form, that it can construct a request
+	// form that has only the single, text area input for a JSON value.
 	SendValue(ctx context.Context, in *structpb.Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendListValue is for testing the UI web form, that it can construct a request
+	// form that has just the input(s) for a JSON array.
 	SendListValue(ctx context.Context, in *structpb.ListValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendBytes is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a bytes value.
 	SendBytes(ctx context.Context, in *wrapperspb.BytesValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendString is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a string value.
 	SendString(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendBool is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a boolean value.
 	SendBool(ctx context.Context, in *wrapperspb.BoolValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendDouble is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a double value.
 	SendDouble(ctx context.Context, in *wrapperspb.DoubleValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendFloat is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a float value.
 	SendFloat(ctx context.Context, in *wrapperspb.FloatValue, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendInt32 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a signed 32-bit int value.
 	SendInt32(ctx context.Context, in *wrapperspb.Int32Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendInt64 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a signed 64-bit int value.
 	SendInt64(ctx context.Context, in *wrapperspb.Int64Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendUInt32 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for an unsigned 32-bit int value.
 	SendUInt32(ctx context.Context, in *wrapperspb.UInt32Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// SendUInt64 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for an unsigned 64-bit int value.
 	SendUInt64(ctx context.Context, in *wrapperspb.UInt64Value, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	SendMultipleTimestamp(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleTimestampClient, error)
 	SendMultipleDuration(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleDurationClient, error)
@@ -177,6 +229,38 @@ func (x *kitchenSinkDoManyThingsClient) Send(m *TestMessage) error {
 }
 
 func (x *kitchenSinkDoManyThingsClient) Recv() (*TestMessage, error) {
+	m := new(TestMessage)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *kitchenSinkClient) Fail(ctx context.Context, in *FailRequest, opts ...grpc.CallOption) (KitchenSink_FailClient, error) {
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[3], "/test.KitchenSink/Fail", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &kitchenSinkFailClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type KitchenSink_FailClient interface {
+	Recv() (*TestMessage, error)
+	grpc.ClientStream
+}
+
+type kitchenSinkFailClient struct {
+	grpc.ClientStream
+}
+
+func (x *kitchenSinkFailClient) Recv() (*TestMessage, error) {
 	m := new(TestMessage)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -320,7 +404,7 @@ func (c *kitchenSinkClient) SendUInt64(ctx context.Context, in *wrapperspb.UInt6
 }
 
 func (c *kitchenSinkClient) SendMultipleTimestamp(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleTimestampClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[3], "/test.KitchenSink/SendMultipleTimestamp", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[4], "/test.KitchenSink/SendMultipleTimestamp", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +438,7 @@ func (x *kitchenSinkSendMultipleTimestampClient) CloseAndRecv() (*emptypb.Empty,
 }
 
 func (c *kitchenSinkClient) SendMultipleDuration(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleDurationClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[4], "/test.KitchenSink/SendMultipleDuration", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[5], "/test.KitchenSink/SendMultipleDuration", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -388,7 +472,7 @@ func (x *kitchenSinkSendMultipleDurationClient) CloseAndRecv() (*emptypb.Empty, 
 }
 
 func (c *kitchenSinkClient) SendMultipleAny(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleAnyClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[5], "/test.KitchenSink/SendMultipleAny", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[6], "/test.KitchenSink/SendMultipleAny", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +506,7 @@ func (x *kitchenSinkSendMultipleAnyClient) CloseAndRecv() (*emptypb.Empty, error
 }
 
 func (c *kitchenSinkClient) SendMultipleStruct(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleStructClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[6], "/test.KitchenSink/SendMultipleStruct", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[7], "/test.KitchenSink/SendMultipleStruct", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -456,7 +540,7 @@ func (x *kitchenSinkSendMultipleStructClient) CloseAndRecv() (*emptypb.Empty, er
 }
 
 func (c *kitchenSinkClient) SendMultipleValue(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleValueClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[7], "/test.KitchenSink/SendMultipleValue", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[8], "/test.KitchenSink/SendMultipleValue", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -490,7 +574,7 @@ func (x *kitchenSinkSendMultipleValueClient) CloseAndRecv() (*emptypb.Empty, err
 }
 
 func (c *kitchenSinkClient) SendMultipleListValue(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleListValueClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[8], "/test.KitchenSink/SendMultipleListValue", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[9], "/test.KitchenSink/SendMultipleListValue", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +608,7 @@ func (x *kitchenSinkSendMultipleListValueClient) CloseAndRecv() (*emptypb.Empty,
 }
 
 func (c *kitchenSinkClient) SendMultipleBytes(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleBytesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[9], "/test.KitchenSink/SendMultipleBytes", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[10], "/test.KitchenSink/SendMultipleBytes", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -558,7 +642,7 @@ func (x *kitchenSinkSendMultipleBytesClient) CloseAndRecv() (*emptypb.Empty, err
 }
 
 func (c *kitchenSinkClient) SendMultipleString(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleStringClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[10], "/test.KitchenSink/SendMultipleString", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[11], "/test.KitchenSink/SendMultipleString", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -592,7 +676,7 @@ func (x *kitchenSinkSendMultipleStringClient) CloseAndRecv() (*emptypb.Empty, er
 }
 
 func (c *kitchenSinkClient) SendMultipleBool(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleBoolClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[11], "/test.KitchenSink/SendMultipleBool", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[12], "/test.KitchenSink/SendMultipleBool", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +710,7 @@ func (x *kitchenSinkSendMultipleBoolClient) CloseAndRecv() (*emptypb.Empty, erro
 }
 
 func (c *kitchenSinkClient) SendMultipleDouble(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleDoubleClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[12], "/test.KitchenSink/SendMultipleDouble", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[13], "/test.KitchenSink/SendMultipleDouble", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -660,7 +744,7 @@ func (x *kitchenSinkSendMultipleDoubleClient) CloseAndRecv() (*emptypb.Empty, er
 }
 
 func (c *kitchenSinkClient) SendMultipleFloat(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleFloatClient, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[13], "/test.KitchenSink/SendMultipleFloat", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[14], "/test.KitchenSink/SendMultipleFloat", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -694,7 +778,7 @@ func (x *kitchenSinkSendMultipleFloatClient) CloseAndRecv() (*emptypb.Empty, err
 }
 
 func (c *kitchenSinkClient) SendMultipleInt32(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleInt32Client, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[14], "/test.KitchenSink/SendMultipleInt32", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[15], "/test.KitchenSink/SendMultipleInt32", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -728,7 +812,7 @@ func (x *kitchenSinkSendMultipleInt32Client) CloseAndRecv() (*emptypb.Empty, err
 }
 
 func (c *kitchenSinkClient) SendMultipleInt64(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleInt64Client, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[15], "/test.KitchenSink/SendMultipleInt64", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[16], "/test.KitchenSink/SendMultipleInt64", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -762,7 +846,7 @@ func (x *kitchenSinkSendMultipleInt64Client) CloseAndRecv() (*emptypb.Empty, err
 }
 
 func (c *kitchenSinkClient) SendMultipleUInt32(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleUInt32Client, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[16], "/test.KitchenSink/SendMultipleUInt32", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[17], "/test.KitchenSink/SendMultipleUInt32", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -796,7 +880,7 @@ func (x *kitchenSinkSendMultipleUInt32Client) CloseAndRecv() (*emptypb.Empty, er
 }
 
 func (c *kitchenSinkClient) SendMultipleUInt64(ctx context.Context, opts ...grpc.CallOption) (KitchenSink_SendMultipleUInt64Client, error) {
-	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[17], "/test.KitchenSink/SendMultipleUInt64", opts...)
+	stream, err := c.cc.NewStream(ctx, &KitchenSink_ServiceDesc.Streams[18], "/test.KitchenSink/SendMultipleUInt64", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -833,25 +917,77 @@ func (x *kitchenSinkSendMultipleUInt64Client) CloseAndRecv() (*emptypb.Empty, er
 // All implementations must embed UnimplementedKitchenSinkServer
 // for forward compatibility
 type KitchenSinkServer interface {
+	// Ping is a no-op method, usable to test that a given channel works. No data is exchanged.
 	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+	// The Exchange method can be useful for testing the UI. It's complicated request type
+	// exercises many of the feature in gRPC UI's request form building code. The server will
+	// echo back in response metadata all request metadata values it receives. If the metadata
+	// key ends with "-t", it is sent back as trailer metadata. Otherwise, it is sent back as
+	// header metadata. The response will be the same as the request.
 	Exchange(context.Context, *TestMessage) (*TestMessage, error)
+	// The UploadMany method is like Exchange, except that it is for testing RPCs that accept
+	// a stream from the client. The server will reply with the last request message it
+	// received, but with the needed_num_a field set to the number of messages observed. If
+	// the client stream includes zero messages, the server will reply with an "Invalid
+	// Argument" error code.
 	UploadMany(KitchenSink_UploadManyServer) error
+	// The DownloadMany method is like Exchange, except that it is for testing RPCs that have
+	// a stream from the server. The value in the request for the numbers.needed_num_1 field
+	// controls how many messages are included in the response stream. Each response sent is
+	// a copy of the request.
 	DownloadMany(*TestMessage, KitchenSink_DownloadManyServer) error
+	// The DoManyThings method is like Exchange, except that it is for testing RPCs that
+	// have bidirectional streams. The response stream will be a copy of the request
+	// stream, so each request is mirrored to the response stream as it is received.
 	DoManyThings(KitchenSink_DoManyThingsServer) error
+	// Fail is useful for testing errors. The num_responses request field controls how many
+	// response messages are sent before returning an error. The other request fields are
+	// used to construct the error that will be returned.
+	Fail(*FailRequest, KitchenSink_FailServer) error
+	// SendTimestamp is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a timestamp.
 	SendTimestamp(context.Context, *timestamppb.Timestamp) (*emptypb.Empty, error)
+	// SendDuration is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a duration.
 	SendDuration(context.Context, *durationpb.Duration) (*emptypb.Empty, error)
+	// SendAny is for testing the UI web form, that it can construct a request
+	// form that has only the single Any message input.
 	SendAny(context.Context, *anypb.Any) (*emptypb.Empty, error)
+	// SendStruct is for testing the UI web form, that it can construct a request
+	// form that has only the single, text area input for a JSON object.
 	SendStruct(context.Context, *structpb.Struct) (*emptypb.Empty, error)
+	// SendValue is for testing the UI web form, that it can construct a request
+	// form that has only the single, text area input for a JSON value.
 	SendValue(context.Context, *structpb.Value) (*emptypb.Empty, error)
+	// SendListValue is for testing the UI web form, that it can construct a request
+	// form that has just the input(s) for a JSON array.
 	SendListValue(context.Context, *structpb.ListValue) (*emptypb.Empty, error)
+	// SendBytes is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a bytes value.
 	SendBytes(context.Context, *wrapperspb.BytesValue) (*emptypb.Empty, error)
+	// SendString is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a string value.
 	SendString(context.Context, *wrapperspb.StringValue) (*emptypb.Empty, error)
+	// SendBool is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a boolean value.
 	SendBool(context.Context, *wrapperspb.BoolValue) (*emptypb.Empty, error)
+	// SendDouble is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a double value.
 	SendDouble(context.Context, *wrapperspb.DoubleValue) (*emptypb.Empty, error)
+	// SendFloat is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a float value.
 	SendFloat(context.Context, *wrapperspb.FloatValue) (*emptypb.Empty, error)
+	// SendInt32 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a signed 32-bit int value.
 	SendInt32(context.Context, *wrapperspb.Int32Value) (*emptypb.Empty, error)
+	// SendInt64 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for a signed 64-bit int value.
 	SendInt64(context.Context, *wrapperspb.Int64Value) (*emptypb.Empty, error)
+	// SendUInt32 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for an unsigned 32-bit int value.
 	SendUInt32(context.Context, *wrapperspb.UInt32Value) (*emptypb.Empty, error)
+	// SendUInt64 is for testing the UI web form, that it can construct a request
+	// form that has only the single scalar input for an unsigned 64-bit int value.
 	SendUInt64(context.Context, *wrapperspb.UInt64Value) (*emptypb.Empty, error)
 	SendMultipleTimestamp(KitchenSink_SendMultipleTimestampServer) error
 	SendMultipleDuration(KitchenSink_SendMultipleDurationServer) error
@@ -889,6 +1025,9 @@ func (UnimplementedKitchenSinkServer) DownloadMany(*TestMessage, KitchenSink_Dow
 }
 func (UnimplementedKitchenSinkServer) DoManyThings(KitchenSink_DoManyThingsServer) error {
 	return status.Errorf(codes.Unimplemented, "method DoManyThings not implemented")
+}
+func (UnimplementedKitchenSinkServer) Fail(*FailRequest, KitchenSink_FailServer) error {
+	return status.Errorf(codes.Unimplemented, "method Fail not implemented")
 }
 func (UnimplementedKitchenSinkServer) SendTimestamp(context.Context, *timestamppb.Timestamp) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendTimestamp not implemented")
@@ -1100,6 +1239,27 @@ func (x *kitchenSinkDoManyThingsServer) Recv() (*TestMessage, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+func _KitchenSink_Fail_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(FailRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(KitchenSinkServer).Fail(m, &kitchenSinkFailServer{stream})
+}
+
+type KitchenSink_FailServer interface {
+	Send(*TestMessage) error
+	grpc.ServerStream
+}
+
+type kitchenSinkFailServer struct {
+	grpc.ServerStream
+}
+
+func (x *kitchenSinkFailServer) Send(m *TestMessage) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _KitchenSink_SendTimestamp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1854,6 +2014,11 @@ var KitchenSink_ServiceDesc = grpc.ServiceDesc{
 			Handler:       _KitchenSink_DoManyThings_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "Fail",
+			Handler:       _KitchenSink_Fail_Handler,
+			ServerStreams: true,
 		},
 		{
 			StreamName:    "SendMultipleTimestamp",

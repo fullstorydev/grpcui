@@ -19,11 +19,12 @@ import (
 	"github.com/golang/protobuf/proto"  //lint:ignore SA1019 we have to import this because it appears in grpcurl APIs used herein
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	"github.com/fullstorydev/grpcui/internal"
 	"github.com/fullstorydev/grpcurl"
 )
 
@@ -41,7 +42,35 @@ import (
 // Note that the returned handler does not implement any CSRF protection. To
 // provide that, you will need to wrap the returned handler with one that first
 // enforces CSRF checks.
-func RPCInvokeHandler(ch grpcdynamic.Channel, descs []*desc.MethodDescriptor) http.Handler {
+func RPCInvokeHandler(ch grpc.ClientConnInterface, descs []*desc.MethodDescriptor) http.Handler {
+	return RPCInvokeHandlerWithOptions(ch, descs, InvokeOptions{})
+}
+
+// InvokeOptions contains optional arguments when creating a gRPCui invocation
+// handler.
+type InvokeOptions struct {
+	// The set of metadata to add to all outgoing RPCs. If the invocation
+	// request includes conflicting metadata, these values override, and the
+	// values in the request will not be sent.
+	ExtraMetadata []string
+	// The set of HTTP header names that will be preserved. These are HTTP
+	// request headers included in the invocation request that will be added as
+	// request metadata when invoking the RPC. If the invocation request
+	// includes conflicting metadata, the values in the HTTP request headers
+	// will override, and the values in the request will not be sent.
+	PreserveHeaders []string
+	// If verbosity is greater than zero, the handler may log events, such as
+	// cases where the request included metadata that conflicts with the
+	// ExtraMetadata and PreserveHeaders fields above. It is an int, instead
+	// of a bool "verbose" flag, so that additional logs may be added in the
+	// future and the caller control how detailed those logs will be.
+	Verbosity int
+}
+
+// RPCInvokeHandlerWithOptions is the same as RPCInvokeHandler except that it
+// accepts an additional argument, options. This can be used to add extra
+// request metadata to all RPCs invoked.
+func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.MethodDescriptor, options InvokeOptions) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.Header().Set("Allow", "POST")
@@ -66,7 +95,7 @@ func RPCInvokeHandler(ch grpcdynamic.Channel, descs []*desc.MethodDescriptor) ht
 					http.Error(w, "Failed to create descriptor source: "+err.Error(), http.StatusInternalServerError)
 					return
 				}
-				results, err := invokeRPC(r.Context(), method, ch, descSource, r.Body)
+				results, err := invokeRPC(r.Context(), method, ch, descSource, r.Header, r.Body, &options)
 				if err != nil {
 					if _, ok := err.(errReadFail); ok {
 						http.Error(w, "Failed to read request", 499)
@@ -163,6 +192,7 @@ type fieldDef struct {
 	IsMap       bool        `json:"isMap"`
 	IsRequired  bool        `json:"isRequired"`
 	DefaultVal  interface{} `json:"defaultVal"`
+	Description string      `json:"description"`
 }
 
 type enumValDef struct {
@@ -320,6 +350,21 @@ func (s *schema) processField(fd *desc.FieldDescriptor) fieldDef {
 		def.Type = typeMap[fd.GetType()]
 	}
 
+	desc, err := protoPrinter.PrintProtoToString(fd)
+	if err != nil {
+		// generate simple description with no comments or options
+		var label string
+		if fd.IsRequired() {
+			label = "required "
+		} else if fd.IsRepeated() {
+			label = "repeated "
+		} else if fd.IsProto3Optional() || !fd.GetFile().IsProto3() {
+			label = "optional "
+		}
+		desc = fmt.Sprintf("%s%s %s = %d;", label, def.Type, fd.GetName(), fd.GetNumber())
+	}
+	def.Description = desc
+
 	return def
 }
 
@@ -368,7 +413,7 @@ func (e errReadFail) Error() string {
 	return e.err.Error()
 }
 
-func invokeRPC(ctx context.Context, methodName string, ch grpcdynamic.Channel, descSource grpcurl.DescriptorSource, body io.Reader) (*rpcResult, error) {
+func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterface, descSource grpcurl.DescriptorSource, reqHdrs http.Header, body io.Reader, options *InvokeOptions) (*rpcResult, error) {
 	js, err := ioutil.ReadAll(body)
 	if err != nil {
 		return nil, errReadFail{err: err}
@@ -389,16 +434,17 @@ func invokeRPC(ctx context.Context, methodName string, ch grpcdynamic.Channel, d
 		reqStats.Sent++
 		req := input.Data[0]
 		input.Data = input.Data[1:]
-		if err := jsonpb.Unmarshal(bytes.NewReader([]byte(req)), m); err != nil {
+		if err := jsonpb.Unmarshal(bytes.NewReader(req), m); err != nil {
 			return status.Errorf(codes.InvalidArgument, err.Error())
 		}
 		return nil
 	}
 
-	hdrs := make([]string, len(input.Metadata))
-	for i, hdr := range input.Metadata {
-		hdrs[i] = fmt.Sprintf("%s: %s", hdr.Name, hdr.Value)
+	webFormHdrs := make(metadata.MD, len(input.Metadata))
+	for _, hdr := range input.Metadata {
+		webFormHdrs.Append(hdr.Name, hdr.Value)
 	}
+	invokeHdrs := options.computeHeaders(reqHdrs, webFormHdrs)
 
 	if input.TimeoutSeconds > 0 {
 		var cancel context.CancelFunc
@@ -415,11 +461,54 @@ func invokeRPC(ctx context.Context, methodName string, ch grpcdynamic.Channel, d
 		descSource: descSource,
 		Requests:   &reqStats,
 	}
-	if err := grpcurl.InvokeRPC(ctx, descSource, ch, methodName, hdrs, &result, requestFunc); err != nil {
+	if err := grpcurl.InvokeRPC(ctx, descSource, ch, methodName, invokeHdrs, &result, requestFunc); err != nil {
 		return nil, err
 	}
 
 	return &result, nil
+}
+
+func (opts *InvokeOptions) overrideHeaders(reqHdrs http.Header) metadata.MD {
+	hdrs := grpcurl.MetadataFromHeaders(opts.ExtraMetadata)
+	for _, name := range opts.PreserveHeaders {
+		vals := reqHdrs.Values(name)
+		if opts.Verbosity > 0 {
+			if existing := hdrs.Get(name); len(existing) > 0 {
+				internal.LogInfof("preserving HTTP header %q, which overrides given extra header", name)
+			}
+		}
+		hdrs.Set(name, vals...)
+	}
+	return hdrs
+}
+
+func (opts *InvokeOptions) computeHeaders(reqHdrs http.Header, webFormHdrs metadata.MD) []string {
+	// add extra headers, overriding whatever was in the web form
+	overrideHdrs := opts.overrideHeaders(reqHdrs)
+	for k, v := range overrideHdrs {
+		if opts.Verbosity > 0 {
+			if existing := webFormHdrs.Get(k); len(existing) > 0 {
+				internal.LogInfof("web form included metadata %q, but it will be ignored due to given extra/preserved headers", k)
+			}
+		}
+		webFormHdrs[k] = v
+	}
+
+	// convert them back to the form that the grpcurl lib expects
+	totalLen := 0
+	keys := make([]string, 0, len(webFormHdrs))
+	for k, vs := range webFormHdrs {
+		totalLen += len(vs)
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	result := make([]string, 0, totalLen)
+	for _, k := range keys {
+		for _, v := range webFormHdrs[k] {
+			result = append(result, fmt.Sprintf("%s: %s", k, v))
+		}
+	}
+	return result
 }
 
 type rpcMetadata struct {
@@ -526,6 +615,6 @@ func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message) rpcR
 			// should never happen... here's a dumb fallback
 			b = []byte(strconv.Quote(err.Error()))
 		}
-		return rpcResponseElement{Data: json.RawMessage(b), IsError: true}
+		return rpcResponseElement{Data: b, IsError: true}
 	}
 }
