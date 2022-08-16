@@ -561,7 +561,7 @@ func main() {
 		}
 	}
 	if reflection.val {
-		md := grpcurl.MetadataFromHeaders(append(addlHeaders, reflHeaders))
+		md := grpcurl.MetadataFromHeaders(append(addlHeaders, reflHeaders...))
 		refCtx := metadata.NewOutgoingContext(ctx, md)
 		refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
 		reflSource := grpcurl.DescriptorSourceFromServer(ctx, refClient)
