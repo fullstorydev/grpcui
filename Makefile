@@ -33,7 +33,6 @@ docker:
 
 .PHONY: generate
 generate:
-	@go install github.com/go-bindata/go-bindata/go-bindata@8639be0519b3
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@a709e31e5d12
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 	@go install github.com/jhump/protoreflect/desc/sourceinfo/cmd/protoc-gen-gosrcinfo

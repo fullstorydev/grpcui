@@ -1,13 +1,26 @@
 package webform
 
+import _ "embed"
+
+var (
+	//go:embed "webform-template.html"
+	templateBytes []byte
+
+	//go:embed "webform.js"
+	jsBytes []byte
+
+	//go:embed "webform-sample.css"
+	cssBytes []byte
+)
+
 func Template() []byte {
-	return MustAsset("webform-template.html")
+	return templateBytes
 }
 
 func Script() []byte {
-	return MustAsset("webform.js")
+	return jsBytes
 }
 
 func SampleCSS() []byte {
-	return MustAsset("webform-sample.css")
+	return cssBytes
 }
