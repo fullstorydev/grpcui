@@ -6,18 +6,23 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"encoding/hex"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"log"
+	"mime"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fullstorydev/grpcurl"
@@ -26,9 +31,9 @@ import (
 	"github.com/jhump/protoreflect/grpcreflect"
 	"github.com/pkg/browser"
 	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	insecurecreds "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
@@ -38,6 +43,7 @@ import (
 	// Register xds so xds and xds-experimental resolver schemes work
 	_ "google.golang.org/grpc/xds"
 
+	"github.com/fullstorydev/grpcui/internal"
 	"github.com/fullstorydev/grpcui/standalone"
 )
 
@@ -68,18 +74,39 @@ var (
 	key = flags.String("key", "", prettify(`
 		File containing client private key, to present to the server. Not valid
 		with -plaintext option. Must also provide -cert option.`))
-	protoset    multiString
-	protoFiles  multiString
-	targets     multiString
-	importPaths multiString
-	reflHeaders multiString
-	defHeaders  multiString
-	authority   = flags.String("authority", "", prettify(`
-		Value of :authority pseudo-header to be use with underlying HTTP/2
-		requests. It defaults to the given address.`))
+	targets       multiString
+	protoset      multiString
+	protoFiles    multiString
+	importPaths   multiString
+	addlHeaders   multiString
+	rpcHeaders    multiString
+	reflHeaders   multiString
+	prsvHeaders   multiString
+	defHeaders    multiString
+	expandHeaders = flags.Bool("expand-headers", false, prettify(`
+		If set, headers may use '${NAME}' syntax to reference environment
+		variables. These will be expanded to the actual environment variable
+		value before sending to the server. For example, if there is an
+		environment variable defined like FOO=bar, then a header of
+		'key: ${FOO}' would expand to 'key: bar'. This applies to -H,
+		-rpc-header, -reflect-header, and -default-header options. No other
+		expansion/escaping is performed. This can be used to supply
+		credentials/secrets without having to put them in command-line arguments.`))
+	authority = flags.String("authority", "", prettify(`
+		The authoritative name of the remote server. This value is passed as the
+		value of the ":authority" pseudo-header in the HTTP/2 protocol. When TLS
+		is used, this will also be used as the server name when verifying the
+		server's certificate. It defaults to the address that is provided in the
+		positional arguments.`))
 	connectTimeout = flags.Float64("connect-timeout", 0, prettify(`
 		The maximum time, in seconds, to wait for connection to be established.
 		Defaults to 10 seconds.`))
+	connectFailFast = flags.Bool("connect-fail-fast", true, prettify(`
+		If true, non-temporary errors (such as "connection refused" during
+		initial connection will cause the program to immediately abort. This
+		is the default and is appropriate for interactive uses of grpcui. But
+		long-lived server use (like as a sidecar to a gRPC server) will prefer
+		to set this to false for more robust startup.`))
 	keepaliveTime = flags.Float64("keepalive-time", 0, prettify(`
 		If present, the maximum idle time in seconds, after which a keepalive
 		probe is sent. If the connection remains idle and no keepalive response
@@ -100,27 +127,72 @@ var (
 		Enable the most verbose output, which includes traces of all HTTP
 		requests and responses.`))
 	serverName = flags.String("servername", "", prettify(`
-		Override servername when validating TLS certificate.`))
+		Override server name when validating TLS certificate. This flag is
+		ignored if -plaintext or -insecure is used.
+		NOTE: Prefer -authority. This flag may be removed in the future. It is
+		an error to use both -authority and -servername (though this will be
+		permitted if they are both set to the same value, to increase backwards
+		compatibility with earlier releases that allowed both to be set).`))
 	openBrowser = flags.Bool("open-browser", false, prettify(`
 		When true, grpcui will try to open a browser pointed at the UI's URL.
 		This defaults to true when grpcui is used in an interactive mode; e.g.
 		when the tool detects that stdin is a terminal/tty. Otherwise, this
 		defaults to false.`))
+	examplesFile = flags.String("examples", "", prettify(`
+		Load examples from the given JSON file. The examples are shown in the UI
+		which lets users pick pre-defined RPC and request data, like a recipe.
+		This can be templates for common requests or could even represent a test
+		suite as a sequence of RPCs. This is similar to the "collections" feature
+		in postman. The format of this file is the same as used when saving
+		history from the gRPC UI "History" tab.`))
+	reflection = optionalBoolFlag{val: true}
 
 	port = flags.Int("port", 0, prettify(`
 		The port on which the web UI is exposed.`))
 	bind = flags.String("bind", "127.0.0.1", prettify(`
 		The address on which the web UI is exposed.`))
+	basePath = flags.String("base-path", "/", prettify(`
+		The path on which the web UI is exposed.
+		Defaults to slash ("/"), which is the root of the server.
+		Example: "/debug/grpcui".`))
 	services multiString
 	methods  multiString
+
+	extraJS     multiString
+	extraCSS    multiString
+	otherAssets multiString
 )
 
 func init() {
+	flags.Var(&addlHeaders, "H", prettify(`
+		Additional headers in 'name: value' format. May specify more than one
+		via multiple flags. These headers will also be included in reflection
+		requests to a server. These headers are not shown in the gRPC UI form.
+		If the user enters conflicting metadata, the user-entered value will be
+		ignored and only the values present on the command-line will be used.`))
+	flags.Var(&rpcHeaders, "rpc-header", prettify(`
+		Additional RPC headers in 'name: value' format. May specify more than
+		one via multiple flags. These headers will *only* be used when invoking
+		the requested RPC method. They are excluded from reflection requests.
+		These headers are not shown in the gRPC UI form. If the user enters
+		conflicting metadata, the user-entered value will be ignored and only
+		the values present on the command-line will be used.`))
 	flags.Var(&reflHeaders, "reflect-header", prettify(`
 		Additional reflection headers in 'name: value' format. May specify more
 		than one via multiple flags. These headers will only be used during
 		reflection requests and will be excluded when invoking the requested RPC
 		method.`))
+	flags.Var(&prsvHeaders, "preserve-header", prettify(`
+		Header names (no values) for request headers that should be preserved
+		when making requests to the gRPC server. May specify more than one via
+		multiple flags. In addition to the headers given in -H and -rpc-header
+		flags and metadata defined in the gRPC UI form, the gRPC server will also
+		get any of the named headers that the gRPC UI web server receives as HTTP
+		request headers. This can be useful if gRPC UI is behind an
+		authenticating proxy, for example, that adds JWTs to HTTP requests.
+		Having gRPC UI preserve these headers means that the JWTs will also be
+		sent to backend gRPC servers. These headers are only sent when RPCs are
+		invoked and are not included for reflection requests.`))
 	flags.Var(&defHeaders, "default-header", prettify(`
 		Additional headers to add to metadata in the gRPCui web form. Each value
 		should be in 'name: value' format. May specify more than one via multiple
@@ -169,6 +241,30 @@ func init() {
 	flags.Var(&debug, "debug-client", prettify(`
 		When true, the client JS code in the gRPCui web form will log extra
 		debug info to the console.`))
+	flags.Var(&reflection, "use-reflection", prettify(`
+		When true, server reflection will be used to determine the RPC schema.
+		Defaults to true unless a -proto or -protoset option is provided. If
+		-use-reflection is used in combination with a -proto or -protoset flag,
+		the provided descriptor sources will be used in addition to server
+		reflection to resolve messages and extensions.`))
+	flags.Var(&extraJS, "extra-js", prettify(`
+		Indicates the name of a JavaScript file to load from the web form. This
+		allows injecting custom behavior into the page. Multiple files can be
+		added by specifying multiple -extra-js flags.`))
+	flags.Var(&extraCSS, "extra-css", prettify(`
+		Indicates the name of a CSS file to load from the web form. This allows
+		injecting custom styles into the page, to customize the look. Multiple
+		files can be added by specifying multiple -extra-css flags.`))
+	flags.Var(&otherAssets, "also-serve", prettify(`
+		Indicates the name of an additional file or folder that the gRPC UI web
+		server can serve. This can be useful for serving other assets, like
+		images, when a custom CSS is used via -extra-css flags. Multiple assets
+		can be added to the server by specifying multiple -also-serve flags. The
+		named file will be available at a URI of "/<base-name>", where
+		<base-name> is the name of the file, excluding its path. If the given
+		name is a folder, the folder's contents are available at URIs that are
+		under "/<base-name>/". It is an error to specify multiple files or
+		folders that have the same base name.`))
 }
 
 type multiString []string
@@ -205,6 +301,49 @@ func (f *optionalBoolFlag) Set(s string) error {
 
 func (f *optionalBoolFlag) IsBoolFlag() bool {
 	return true
+}
+
+// Uses a file source as a fallback for resolving symbols and extensions, but
+// only uses the reflection source for listing services
+type compositeSource struct {
+	reflection grpcurl.DescriptorSource
+	file       grpcurl.DescriptorSource
+}
+
+func (cs compositeSource) ListServices() ([]string, error) {
+	return cs.reflection.ListServices()
+}
+
+func (cs compositeSource) FindSymbol(fullyQualifiedName string) (desc.Descriptor, error) {
+	d, err := cs.reflection.FindSymbol(fullyQualifiedName)
+	if err == nil {
+		return d, nil
+	}
+	return cs.file.FindSymbol(fullyQualifiedName)
+}
+
+func (cs compositeSource) AllExtensionsForType(typeName string) ([]*desc.FieldDescriptor, error) {
+	exts, err := cs.reflection.AllExtensionsForType(typeName)
+	if err != nil {
+		// On error fall back to file source
+		return cs.file.AllExtensionsForType(typeName)
+	}
+	// Track the tag numbers from the reflection source
+	tags := make(map[int32]bool)
+	for _, ext := range exts {
+		tags[ext.GetNumber()] = true
+	}
+	fileExts, err := cs.file.AllExtensionsForType(typeName)
+	if err != nil {
+		return exts, nil
+	}
+	for _, ext := range fileExts {
+		// Prioritize extensions found via reflection
+		if !tags[ext.GetNumber()] {
+			exts = append(exts, ext)
+		}
+	}
+	return exts, nil
 }
 
 func main() {
@@ -261,31 +400,74 @@ func main() {
 	if len(importPaths) > 0 && len(protoFiles) == 0 {
 		warn("The -import-path argument is not used unless -proto files are used.")
 	}
+	if !reflection.val && len(protoset) == 0 && len(protoFiles) == 0 {
+		fail(nil, "No protoset files or proto files specified and -use-reflection set to false.")
+	}
+	if !strings.HasPrefix(*basePath, "/") {
+		fail(nil, `The -base-path must begin with a slash ("/")`)
+	}
+
+	assetNames := map[string]string{}
+	checkAssetNames(assetNames, extraJS, true)
+	checkAssetNames(assetNames, extraCSS, true)
+	checkAssetNames(assetNames, otherAssets, false)
+
+	// Protoset or protofiles provided and -use-reflection unset
+	if !reflection.set && (len(protoset) > 0 || len(protoFiles) > 0) {
+		reflection.val = false
+	}
 
 	configs, err := computeSvcConfigs()
 	if err != nil {
 		fail(err, "Invalid services/methods indicated")
 	}
 
-	if *veryVeryVerbose {
-		// very-very verbose implies very verbose
-		*veryVerbose = true
+	var verbosity int
+	switch {
+	case *veryVeryVerbose:
+		verbosity = 3
+	case *veryVerbose:
+		verbosity = 2
+	case *verbose:
+		verbosity = 1
 	}
 
-	if *verbose && !*veryVerbose {
+	if verbosity == 1 {
 		// verbose will let grpc package print warnings and errors
 		grpclog.SetLoggerV2(grpclog.NewLoggerV2(ioutil.Discard, os.Stdout, ioutil.Discard))
-	} else if *veryVerbose {
-		// very verbose implies verbose
-		*verbose = true
-
+	} else if verbosity > 1 {
 		// very verbose will let grpc package log info
 		// and very very verbose turns up the verbosity
-		v := 0
-		if *veryVeryVerbose {
-			v = 5
+		grpcVerbosity := 0
+		if verbosity > 2 {
+			grpcVerbosity = 5
 		}
-		grpclog.SetLoggerV2(grpclog.NewLoggerV2WithVerbosity(os.Stdout, ioutil.Discard, ioutil.Discard, v))
+		grpclog.SetLoggerV2(grpclog.NewLoggerV2WithVerbosity(os.Stdout, ioutil.Discard, ioutil.Discard, grpcVerbosity))
+	}
+
+	var examplesOpt standalone.HandlerOption
+	if *examplesFile != "" {
+		func() {
+			f, err := os.Open(*examplesFile)
+			if err != nil {
+				if os.IsNotExist(err) {
+					fail(nil, "File %q does not exist", *examplesFile)
+				} else {
+					fail(err, "Failed to open %q", *examplesFile)
+				}
+			}
+			defer func() {
+				_ = f.Close()
+			}()
+			data, err := ioutil.ReadAll(f)
+			if err != nil {
+				fail(err, "Failed to read contents of %q", *examplesFile)
+			}
+			examplesOpt, err = standalone.WithExampleData(data)
+			if err != nil {
+				fail(err, "Failed to process contents of %q", *examplesFile)
+			}
+		}()
 	}
 
 	ctx := context.Background()
@@ -293,7 +475,7 @@ func main() {
 	if *connectTimeout > 0 {
 		dialTime = time.Duration(*connectTimeout * float64(time.Second))
 	}
-	ctx, cancel := context.WithTimeout(ctx, dialTime)
+	dialCtx, cancel := context.WithTimeout(ctx, dialTime)
 	defer cancel()
 	var opts []grpc.DialOption
 	if *keepaliveTime > 0 {
@@ -306,21 +488,53 @@ func main() {
 	if *maxMsgSz > 0 {
 		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(*maxMsgSz)))
 	}
-	if *authority != "" {
-		opts = append(opts, grpc.WithAuthority(*authority))
+
+	if *expandHeaders {
+		var err error
+		addlHeaders, err = grpcurl.ExpandHeaders(addlHeaders)
+		if err != nil {
+			fail(err, "Failed to expand additional headers")
+		}
+		rpcHeaders, err = grpcurl.ExpandHeaders(rpcHeaders)
+		if err != nil {
+			fail(err, "Failed to expand rpc headers")
+		}
+		reflHeaders, err = grpcurl.ExpandHeaders(reflHeaders)
+		if err != nil {
+			fail(err, "Failed to expand reflection headers")
+		}
+		defHeaders, err = grpcurl.ExpandHeaders(defHeaders)
+		if err != nil {
+			fail(err, "Failed to expand default headers")
+		}
 	}
+
 	var creds credentials.TransportCredentials
 	if !*plaintext {
-		var err error
-		creds, err = grpcurl.ClientTransportCredentials(*insecure, *cacert, *cert, *key)
+		tlsConf, err := grpcurl.ClientTLSConfig(*insecure, *cacert, *cert, *key)
 		if err != nil {
-			fail(err, "Failed to configure transport credentials")
+			fail(err, "Failed to create TLS config")
 		}
-		if *serverName != "" {
-			if err := creds.OverrideServerName(*serverName); err != nil {
-				fail(err, "Failed to override server name as %q", *serverName)
+		creds = credentials.NewTLS(tlsConf)
+
+		// can use either -servername or -authority; but not both
+		if *serverName != "" && *authority != "" {
+			if *serverName == *authority {
+				warn("Both -servername and -authority are present; prefer only -authority.")
+			} else {
+				fail(nil, "Cannot specify different values for -servername and -authority.")
 			}
 		}
+		overrideName := *serverName
+		if overrideName == "" {
+			overrideName = *authority
+		}
+
+		if overrideName != "" {
+			opts = append(opts, grpc.WithAuthority(overrideName))
+		}
+	} else if *authority != "" {
+		opts = append(opts, grpc.WithAuthority(*authority))
 	}
 	network := "tcp"
 	if isUnixSocket != nil && isUnixSocket() {
@@ -342,15 +556,16 @@ func main() {
 	}
 	var descSource grpcurl.DescriptorSource
 	var refClient *grpcreflect.Client
+	var fileSource grpcurl.DescriptorSource
 	if len(protoset) > 0 {
 		var err error
-		descSource, err = grpcurl.DescriptorSourceFromProtoSets(protoset...)
+		fileSource, err = grpcurl.DescriptorSourceFromProtoSets(protoset...)
 		if err != nil {
 			fail(err, "Failed to process proto descriptor sets.")
 		}
 	} else if len(protoFiles) > 0 {
 		var err error
-		descSource, err = grpcurl.DescriptorSourceFromProtoFiles(importPaths, protoFiles...)
+		fileSource, err = grpcurl.DescriptorSourceFromProtoFiles(importPaths, protoFiles...)
 		if err != nil {
 			fail(err, "Failed to process proto source files.")
 		}
@@ -398,10 +613,27 @@ func main() {
 	if len(defHeaders) > 0 {
 		handlerOpts = append(handlerOpts, standalone.WithDefaultMetadata(defHeaders))
 	}
-	if debug.set {
-		handlerOpts = append(handlerOpts, standalone.WithDebug(debug.val))
+	if len(addlHeaders) > 0 || len(rpcHeaders) > 0 {
+		handlerOpts = append(handlerOpts, standalone.WithMetadata(append(addlHeaders, rpcHeaders...)))
 	}
+
+	if len(prsvHeaders) > 0 {
+		handlerOpts = append(handlerOpts, standalone.PreserveHeaders(prsvHeaders))
+	}
+	if verbosity > 0 {
+		handlerOpts = append(handlerOpts, standalone.WithInvokeVerbosity(verbosity))
+	}
+	if debug.set {
+		handlerOpts = append(handlerOpts, standalone.WithClientDebug(debug.val))
+	}
+	if examplesOpt != nil {
+		handlerOpts = append(handlerOpts, examplesOpt)
+	}
+	handlerOpts = append(handlerOpts, configureJSandCSS(extraJS, standalone.AddJSFile)...)
+	handlerOpts = append(handlerOpts, configureJSandCSS(extraCSS, standalone.AddCSSFile)...)
+	handlerOpts = append(handlerOpts, configureAssets(otherAssets)...)
 	handler := standalone.Handler(chMap, sb.String(), methods, allFiles, handlerOpts...)
+
 	if *maxTime > 0 {
 		timeout := time.Duration(*maxTime * float64(time.Second))
 		// enforce the timeout by wrapping the handler and inserting a
@@ -417,20 +649,23 @@ func main() {
 		})
 	}
 
-	if *verbose {
+	if verbosity > 0 {
 		// wrap the handler with one that performs more logging of what's going on
 		orig := handler
 		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
-			if *veryVerbose {
-				if req, err := httputil.DumpRequest(r, *veryVeryVerbose); err != nil {
-					logErrorf("could not dump request: %v", err)
+			if verbosity > 1 {
+				// TODO: the web form never sends binary request body; but maybe a custom
+				//  JS addition could, so maybe this should be a custom printer of the request
+				//  like we have for the response below?
+				if req, err := httputil.DumpRequest(r, verbosity > 2); err != nil {
+					internal.LogErrorf("could not dump request: %v", err)
 				} else {
-					logInfof("received request:\n%s", string(req))
+					internal.LogInfof("received request:\n%s", string(req))
 				}
 				var recorder httptest.ResponseRecorder
-				if *veryVeryVerbose {
+				if verbosity > 2 {
 					recorder.Body = &bytes.Buffer{}
 				}
 				tee := teeWriter{w: []http.ResponseWriter{w, &recorder}}
@@ -439,10 +674,10 @@ func main() {
 					// in case handler never called Write or WriteHeader:
 					tee.mirrorHeaders()
 
-					if resp, err := httputil.DumpResponse(recorder.Result(), *veryVeryVerbose); err != nil {
-						logErrorf("could not dump response: %v", err)
+					if resp, err := dumpResponse(recorder.Result(), verbosity > 2); err != nil {
+						internal.LogErrorf("could not dump response: %v", err)
 					} else {
-						logInfof("sent response:\n%s", string(resp))
+						internal.LogInfof("sent response:\n%s", resp)
 					}
 				}()
 			}
@@ -451,8 +686,15 @@ func main() {
 			orig.ServeHTTP(&cs, r)
 
 			millis := time.Since(start).Nanoseconds() / (1000 * 1000)
-			logInfof("%s %s %s %d %dms %dbytes", r.RemoteAddr, r.Method, r.RequestURI, cs.code, millis, cs.size)
+			internal.LogInfof("%s %s %s %d %dms %dbytes", r.RemoteAddr, r.Method, r.RequestURI, cs.code, millis, cs.size)
 		})
+	}
+	if *basePath != "/" {
+		withoutSlash := strings.TrimSuffix(*basePath, "/")
+		mux := http.NewServeMux()
+		// the mux will correctly redirect the bare path (without trailing slash)
+		mux.Handle(withoutSlash+"/", http.StripPrefix(withoutSlash, handler))
+		handler = mux
 	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *bind, *port))
@@ -460,7 +702,11 @@ func main() {
 		fail(err, "Failed to listen on port %d", *port)
 	}
 
-	url := fmt.Sprintf("http://%s:%d/", *bind, listener.Addr().(*net.TCPAddr).Port)
+	path := *basePath
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
+	}
+	url := fmt.Sprintf("http://%s:%d%s", *bind, listener.Addr().(*net.TCPAddr).Port, path)
 	fmt.Printf("gRPC Web UI available at %s\n", url)
 
 	if *openBrowser {
@@ -531,6 +777,71 @@ func fail(err error, msg string, args ...interface{}) {
 		fmt.Fprintf(os.Stderr, "Try '%s -help' for more details.\n", os.Args[0])
 		exit(2)
 	}
+}
+
+func checkAssetNames(soFar map[string]string, names []string, requireFile bool) {
+	for _, n := range names {
+		st, err := os.Stat(n)
+		if err != nil {
+			if os.IsNotExist(err) {
+				fail(nil, "File %q does not exist", n)
+			} else {
+				fail(err, "Failed to check existence of file %q", n)
+			}
+		}
+		if requireFile && st.IsDir() {
+			fail(nil, "Path %q is a folder, not a file", n)
+		}
+
+		base := filepath.Base(n)
+		if existing, ok := soFar[base]; ok {
+			fail(nil, "Multiple assets with the same base name specified: %s and %s", existing, n)
+		}
+		soFar[base] = n
+	}
+}
+
+func configureJSandCSS(names []string, fn func(string, func() (io.ReadCloser, error)) standalone.HandlerOption) []standalone.HandlerOption {
+	opts := make([]standalone.HandlerOption, len(names))
+	for i := range names {
+		name := names[i] // no loop variable so that we don't close over loop var in lambda below
+		open := func() (io.ReadCloser, error) {
+			return os.Open(name)
+		}
+		opts[i] = fn(filepath.Base(name), open)
+	}
+	return opts
+}
+
+func configureAssets(names []string) []standalone.HandlerOption {
+	opts := make([]standalone.HandlerOption, len(names))
+	for i := range names {
+		name := names[i] // no loop variable so that we don't close over loop var in lambdas below
+		st, err := os.Stat(name)
+		if err != nil {
+			fail(err, "failed to inspect file %q", name)
+		}
+		if st.IsDir() {
+			open := func(p string) (io.ReadCloser, error) {
+				path := filepath.Join(name, p)
+				st, err := os.Stat(path)
+				if err == nil && st.IsDir() {
+					// Strangely, os.Open does not return an error if given a directory
+					// and instead returns an empty reader :(
+					// So check that first and return a 404 if user indicates directory name
+					return nil, os.ErrNotExist
+				}
+				return os.Open(path)
+			}
+			opts[i] = standalone.ServeAssetDirectory(filepath.Base(name), open)
+		} else {
+			open := func() (io.ReadCloser, error) {
+				return os.Open(name)
+			}
+			opts[i] = standalone.ServeAssetFile(filepath.Base(name), open)
+		}
+	}
+	return opts
 }
 
 type svcConfig struct {
@@ -719,12 +1030,148 @@ func (cs *codeSniffer) WriteHeader(statusCode int) {
 	cs.w.WriteHeader(statusCode)
 }
 
-func logErrorf(format string, args ...interface{}) {
-	prefix := "ERROR: " + time.Now().Format("2006/01/02 15:04:05") + " "
-	log.Printf(prefix+format, args...)
+func dial(ctx context.Context, network, addr string, creds credentials.TransportCredentials, failFast bool, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	if failFast {
+		return grpcurl.BlockingDial(ctx, network, addr, creds, opts...)
+	}
+	// BlockingDial will return the first error returned. It is meant for interactive use.
+	// If we don't want to fail fast, then we need to do a more customized dial.
+
+	// TODO: perhaps this logic should be added to the grpcurl package, like in a new
+	// BlockingDialNoFailFast function?
+
+	dialer := &errTrackingDialer{
+		dialer:  &net.Dialer{},
+		network: network,
+	}
+	var errCreds errTrackingCreds
+	if creds == nil {
+		opts = append(opts, grpc.WithTransportCredentials(insecurecreds.NewCredentials()))
+	} else {
+		errCreds = errTrackingCreds{
+			TransportCredentials: creds,
+		}
+		opts = append(opts, grpc.WithTransportCredentials(&errCreds))
+	}
+
+	cc, err := grpc.DialContext(ctx, addr, append(opts, grpc.WithBlock(), grpc.WithContextDialer(dialer.dial))...)
+	if err == nil {
+		return cc, nil
+	}
+
+	// prefer last observed TLS handshake error if there is one
+	if err := errCreds.err(); err != nil {
+		return nil, err
+	}
+	// otherwise, use the error the dialer last observed
+	if err := dialer.err(); err != nil {
+		return nil, err
+	}
+	// if we have no better source of error message, use what grpc.DialContext returned
+	return nil, err
 }
 
-func logInfof(format string, args ...interface{}) {
-	prefix := "INFO: " + time.Now().Format("2006/01/02 15:04:05") + " "
-	log.Printf(prefix+format, args...)
+type errTrackingCreds struct {
+	credentials.TransportCredentials
+
+	mu      sync.Mutex
+	lastErr error
+}
+
+func (c *errTrackingCreds) ClientHandshake(ctx context.Context, addr string, rawConn net.Conn) (net.Conn, credentials.AuthInfo, error) {
+	conn, auth, err := c.TransportCredentials.ClientHandshake(ctx, addr, rawConn)
+	if err != nil {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		c.lastErr = err
+	}
+	return conn, auth, err
+}
+
+func (c *errTrackingCreds) err() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.lastErr
+}
+
+type errTrackingDialer struct {
+	dialer  *net.Dialer
+	network string
+
+	mu      sync.Mutex
+	lastErr error
+}
+
+func (c *errTrackingDialer) dial(ctx context.Context, addr string) (net.Conn, error) {
+	conn, err := c.dialer.DialContext(ctx, c.network, addr)
+	if err != nil {
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		c.lastErr = err
+	}
+	return conn, err
+}
+
+func (c *errTrackingDialer) err() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.lastErr
+}
+
+func dumpResponse(r *http.Response, includeBody bool) (string, error) {
+	// NB: not using httputil.DumpResponse because it writes binary data in the body which is
+	//  not useful in the log (and can cause unexpected behavior when writing to a terminal,
+	//  which may interpret some byte sequences as control codes).
+	var buf bytes.Buffer
+	buf.WriteString(r.Status)
+	buf.WriteRune('\n')
+	if err := r.Header.Write(&buf); err != nil {
+		return "", err
+	}
+	if includeBody {
+		buf.WriteRune('\n')
+		ct := strings.ToLower(r.Header.Get("content-type"))
+		mt, _, err := mime.ParseMediaType(ct)
+		if err != nil {
+			mt = ct
+		}
+		isText := strings.HasPrefix(mt, "text/") ||
+			mt == "application/json" ||
+			mt == "application/javascript" ||
+			mt == "application/x-www-form-urlencoded" ||
+			mt == "multipart/form-data" ||
+			mt == "application/xml"
+		if isText {
+			if _, err := io.Copy(&buf, r.Body); err != nil {
+				return "", err
+			}
+		} else {
+			first := true
+			var block [32]byte
+			for {
+				n, err := r.Body.Read(block[:])
+				if n > 0 {
+					if first {
+						buf.WriteString("(binary body; encoded in hex)\n")
+						first = false
+					}
+					for i := 0; i < n; i += 8 {
+						end := i + 8
+						if end > n {
+							end = n
+						}
+						buf.WriteString(hex.EncodeToString(block[i:end]))
+						buf.WriteRune(' ')
+					}
+					buf.WriteRune('\n')
+				}
+				if err == io.EOF {
+					break
+				} else if err != nil {
+					return "", err
+				}
+			}
+		}
+	}
+	return buf.String(), nil
 }

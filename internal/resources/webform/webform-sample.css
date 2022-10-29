@@ -4,25 +4,96 @@
 }
 
 .grpc-desc {
-    margin-bottom: 8px;
-    margin-left: 16px;
+    margin-bottom: 0;
 }
 
-.grpc-desc span.grpc-form-label {
-    font-size: 125%;
-    width: 130px;
-    float: left;
-    line-height: 30px;
+.grpc-desc td {
+    vertical-align: top;
+}
+
+#grpc-desc-selects td {
+    padding-top: 8px;
 }
 
 .grpc-desc select {
     height: 30px;
+    font-size: 14px;
+}
+
+.grpc-desc pre {
+    margin: 0 0 0 36px;
+    padding-left: 20px;
+    border-left: 1px solid #d8d8d8;
+    color: #777;
+}
+
+.grpc-desc button#grpc-descriptions-toggle {
+    position: absolute;
+    z-index: 3;
+    padding: 0;
+    margin-top: 6px;
+    margin-left: 10px;
+    border: none;
+    background: white;
+    font-size: 150%;
+}
+
+.grpc-desc div.grpc-form-label {
+    font-size: 110%;
+    width: 124px;
+    line-height: 30px;
+    text-align: right;
+    margin-right: 12px;
+}
+
+#grpc-descriptions {
+    width: 100%;
+    overflow: scroll;
+}
+
+#grpc-service-description {
+    padding-top: 6px;
+}
+
+#grpc-method-description {
+    font-weight: bold;
+    color: #333;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+#grpc-service-description-end {
+    padding-bottom: 10px;
+}
+
+#grpc-container {
+    display: flex;
+}
+
+#grpc-request-examples-container {
+    flex: 1;
+    max-width: 200px;
+    margin-right: 10px;
+    margin-top: 25px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+#grpc-request-examples-container h3 {
+    margin: 0;
+    padding-top: 1px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #d8d8d8;
+    text-align: center;
+    font-size: 18px;
 }
 
 #grpc-request-response {
     margin-top: 24px;
     border: none;
     padding: 0;
+    flex: 1;
 }
 
 #grpc-request-response ul.ui-tabs-nav {
@@ -34,8 +105,7 @@
 
 #grpc-request-response li.ui-tabs-tab {
     border: 1px solid #ccc;
-    margin: 0;
-    margin-right: -1px;
+    margin: 0 -1px 0 0;
     padding: 4px 8px;
     border-top-right-radius: 6px;
     border-top-left-radius: 6px;
@@ -80,6 +150,29 @@
     font-size: 18px;
 }
 
+#grpc-request-examples {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+ol#grpc-request-examples {
+    margin-top: 16px;
+}
+
+#grpc-request-examples li {
+    padding: 10px;
+}
+
+#grpc-request-examples li:hover {
+    background-color: #f4f4f4;
+}
+
+#grpc-request-examples .ui-selected {
+    background: #f0f0f0;
+    font-weight: 500;
+}
+
 #grpc-form button {
     border-radius: 3px;
     background: #f0f0f0;
@@ -118,8 +211,7 @@ textarea#grpc-request-raw-text {
 }
 
 table#grpc-request-metadata-form {
-    margin: 0;
-    margin-left: 4px;
+    margin: 0 0 0 4px;
     border-collapse: collapse;
 }
 
@@ -174,7 +266,7 @@ table#grpc-request-metadata-form {
 
 #grpc-request-form td {
     padding: 16px 0 0 16px;
-    font-size: 13.2px;
+    font-size: 13px;
 }
 
 #grpc-request-form td:first-of-type {
@@ -252,6 +344,34 @@ table#grpc-request-metadata-form {
 
 #grpc-request-form td.name strong {
     font-size: 120%;
+}
+
+#grpc-request-form .grpc-bytes-container {
+    display: flex;
+    align-items: center;
+}
+
+#grpc-request-form .grpc-bytes-container label.grpc-file-button {
+    border-radius: 2px;
+    background: #f0f0f0;
+    border-top: 1px solid #ccc;
+    border-right: 1px solid #bbb;
+    border-bottom: 1px solid #aaa;
+    border-left: 1px solid #ccc;
+    padding: 4px 8px;
+    font-size: 90%;
+}
+
+#grpc-request-form .grpc-bytes-container label.grpc-file-button.disabled {
+    border: 1px solid #ddd;
+    color: #ccc;
+    background: #f8f8f8;
+}
+
+.ui-tooltip.grpc-field-description {
+    white-space: pre;
+    font-family: "Courier New", Courier, monospace;
+    max-width: none;
 }
 
 #grpc-request-form td.toggle_presence {
@@ -416,6 +536,15 @@ textarea.grpc-response-textarea {
     height: 200px;
 }
 
+#grpc-response-error-details textarea.grpc-response-textarea {
+    height: 100px;
+}
+
+#grpc-response-error-details-container h4 {
+    margin: 12px 0 6px 0;
+    font-size: 90%;
+}
+
 #grpc-response-req-stats {
     font-size: 110%;
     padding-bottom: 8px;
@@ -433,7 +562,7 @@ textarea.grpc-response-textarea {
 
 #grpc-response-data td {
     padding: 12px 0 0 12px;
-    font-size: 13.2px;
+    font-size: 13px;
     font-family: "courier new", courier, monospace;
 }
 
@@ -497,8 +626,10 @@ textarea.grpc-response-textarea {
     color: #c00;
 }
 
-#grpc-history-clear {
-    margin-bottom: 20px;
+button#grpc-history-clear, button#grpc-history-save {
+    margin-bottom: 16px;
+    font-size: 96%;
+    padding: 8px 15px;
 }
 
 #grpc-history-list button.delete {

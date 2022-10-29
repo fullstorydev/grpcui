@@ -22,8 +22,8 @@ install:
 
 .PHONY: release
 release:
-	@GO111MODULE=on go install github.com/goreleaser/goreleaser
-	goreleaser --rm-dist
+	@go install github.com/goreleaser/goreleaser@v1.5.0
+	goreleaser release --rm-dist
 
 .PHONY: docker
 docker:
@@ -33,8 +33,10 @@ docker:
 
 .PHONY: generate
 generate:
-	@go install github.com/go-bindata/go-bindata/go-bindata
-	@go install github.com/golang/protobuf/protoc-gen-go
+	@go install github.com/go-bindata/go-bindata/go-bindata@8639be0519b3
+	@go install google.golang.org/protobuf/cmd/protoc-gen-go@a709e31e5d12
+	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
+	@go install github.com/jhump/protoreflect/desc/sourceinfo/cmd/protoc-gen-gosrcinfo
 	go generate ./...
 
 .PHONY: checkgofmt
@@ -50,29 +52,31 @@ vet:
 
 .PHONY: staticcheck
 staticcheck:
-	@GO111MODULE=on go install honnef.co/go/tools/cmd/staticcheck
+	@go install honnef.co/go/tools/cmd/staticcheck@v0.0.1-2020.1.4
 	staticcheck ./...
 
 .PHONY: ineffassign
 ineffassign:
-	@GO111MODULE=on go install github.com/gordonklaus/ineffassign
+	@go install github.com/gordonklaus/ineffassign@7953dde2c7bf
 	ineffassign .
 
 .PHONY: predeclared
 predeclared:
-	@GO111MODULE=on go install github.com/nishanths/predeclared
+	@go install github.com/nishanths/predeclared@86fad755b4d3
 	predeclared .
 
 # Intentionally omitted from CI, but target here for ad-hoc reports.
 .PHONY: golint
 golint:
-	@GO111MODULE=on go install golang.org/x/lint/golint
+	# TODO: pin version
+	@go install golang.org/x/lint/golint@latest
 	golint -min_confidence 0.9 -set_exit_status ./...
 
 # Intentionally omitted from CI, but target here for ad-hoc reports.
 .PHONY: errcheck
 errcheck:
-	@GO111MODULE=on go install github.com/kisielk/errcheck
+	# TODO: pin version
+	@go install github.com/kisielk/errcheck@latest
 	errcheck ./...
 
 .PHONY: test
