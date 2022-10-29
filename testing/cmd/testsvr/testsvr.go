@@ -11,9 +11,7 @@ import (
 	"os"
 	"strings"
 
-	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/jhump/protoreflect/desc/sourceinfo"
-	"golang.org/x/net/context"
 	spb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

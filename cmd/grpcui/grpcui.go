@@ -36,7 +36,6 @@ import (
 	insecurecreds "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
-	"google.golang.org/grpc/metadata"
 
 	// Register gzip compressor so compressed responses will work
 	_ "google.golang.org/grpc/encoding/gzip"
@@ -546,7 +545,7 @@ func main() {
 	for _, target := range targets {
 		srvName := strings.Split(target, "=")[0]
 		turl := strings.Split(target, "=")[1]
-		cc, err := grpcurl.BlockingDial(ctx, network, turl, creds, opts...)
+		cc, err := grpcurl.BlockingDial(dialCtx, network, turl, creds, opts...)
 		if err != nil {
 			fail(err, "Failed to dial target host %q", target)
 		}
@@ -556,26 +555,6 @@ func main() {
 	}
 	var descSource grpcurl.DescriptorSource
 	var refClient *grpcreflect.Client
-	var fileSource grpcurl.DescriptorSource
-	if len(protoset) > 0 {
-		var err error
-		fileSource, err = grpcurl.DescriptorSourceFromProtoSets(protoset...)
-		if err != nil {
-			fail(err, "Failed to process proto descriptor sets.")
-		}
-	} else if len(protoFiles) > 0 {
-		var err error
-		fileSource, err = grpcurl.DescriptorSourceFromProtoFiles(importPaths, protoFiles...)
-		if err != nil {
-			fail(err, "Failed to process proto source files.")
-		}
-	} else {
-		md := grpcurl.MetadataFromHeaders(reflHeaders)
-		metadata.NewOutgoingContext(ctx, md)
-		//	refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
-		//	descSource = grpcurl.DescriptorSourceFromServer(ctx, refClient)
-	}
-
 	// arrange for the RPCs to be cleanly shutdown
 	reset := func() {
 		if refClient != nil {
