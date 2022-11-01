@@ -19,7 +19,7 @@ import (
 // reflection.)
 func AllFilesViaReflection(ctx context.Context, cc grpc.ClientConnInterface) ([]*desc.FileDescriptor, error) {
 	stub := rpb.NewServerReflectionClient(cc)
-	cli := grpcreflect.NewClient(ctx, stub)
+	cli := grpcreflect.NewClientV1Alpha(ctx, stub)
 	source := grpcurl.DescriptorSourceFromServer(ctx, cli)
 	return grpcurl.GetAllFiles(source)
 }

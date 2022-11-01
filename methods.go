@@ -48,7 +48,7 @@ func AllMethodsForServer(svr *grpc.Server) ([]*desc.MethodDescriptor, error) {
 // a desired inclusion.
 func AllMethodsViaReflection(ctx context.Context, cc grpc.ClientConnInterface) ([]*desc.MethodDescriptor, error) {
 	stub := rpb.NewServerReflectionClient(cc)
-	cli := grpcreflect.NewClient(ctx, stub)
+	cli := grpcreflect.NewClientV1Alpha(ctx, stub)
 	svcNames, err := cli.ListServices()
 	if err != nil {
 		return nil, err

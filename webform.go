@@ -36,19 +36,19 @@ var (
 // respectively. Handlers for these endpoints are provided via the
 // RPCInvokeHandler and RPCMetadataHandler functions:
 //
-//   // This example uses "/rpcs" as the base URI.
-//   pageHandler := func(w http.ResponseWriter, r *http.Request) {
-//     webForm := grpcui.WebFormContents("/rpcs/invoke/", "/rpcs/metadata", descs)
-//     webFormJs := grpcui.WebFormScript()
-//     generateHTMLPage(w, r, webForm, webFormJs)
-//   }
+//	// This example uses "/rpcs" as the base URI.
+//	pageHandler := func(w http.ResponseWriter, r *http.Request) {
+//	  webForm := grpcui.WebFormContents("/rpcs/invoke/", "/rpcs/metadata", descs)
+//	  webFormJs := grpcui.WebFormScript()
+//	  generateHTMLPage(w, r, webForm, webFormJs)
+//	}
 //
-//   // Make sure the RPC handlers are registered at the same URI paths
-//   // that were used in the call to WebFormContents:
-//   rpcInvokeHandler := http.StripPrefix("/rpcs/invoke", grpcui.RPCInvokeHandler(conn, descs))
-//   mux.Handle("/rpcs/invoke/", rpcInvokeHandler)
-//   mux.Handle("/rpcs/metadata", grpcui.RPCMetadataHandler(descs))
-//   mux.HandleFunc("/rpcs/index.html", pageHandler)
+//	// Make sure the RPC handlers are registered at the same URI paths
+//	// that were used in the call to WebFormContents:
+//	rpcInvokeHandler := http.StripPrefix("/rpcs/invoke", grpcui.RPCInvokeHandler(conn, descs))
+//	mux.Handle("/rpcs/invoke/", rpcInvokeHandler)
+//	mux.Handle("/rpcs/metadata", grpcui.RPCMetadataHandler(descs))
+//	mux.HandleFunc("/rpcs/index.html", pageHandler)
 //
 // The given descs is a slice of methods which are exposed through the web form.
 // You can use AllMethodsForServices, AllMethodsForServer, and
