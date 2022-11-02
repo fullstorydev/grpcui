@@ -1,4 +1,4 @@
-package test_assets
+package assets_test
 
 import (
 	"github.com/fullstorydev/grpcui/internal/resources/standalone"

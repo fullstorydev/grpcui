@@ -171,9 +171,9 @@ func RPCMetadataHandler(methods []*desc.MethodDescriptor, files []*desc.FileDesc
 }
 
 // TODO(jaime, jhump): schema is playing double duty here. It's both a vehicle for all
-//  message and enum metadata. As well as RPC method scoped metadata for a single method.
-//  What if we wanted to load metadata for all methods? We should consider splitting this
-//  into 2 separate types for metadata to respond with accordingly.
+// message and enum metadata. As well as RPC method scoped metadata for a single method.
+// What if we wanted to load metadata for all methods? We should consider splitting this
+// into 2 separate types for metadata to respond with accordingly.
 type schema struct {
 	RequestType   string                  `json:"requestType"`
 	RequestStream bool                    `json:"requestStream"`

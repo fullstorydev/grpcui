@@ -563,7 +563,7 @@ func main() {
 	if reflection.val {
 		md := grpcurl.MetadataFromHeaders(append(addlHeaders, reflHeaders...))
 		refCtx := metadata.NewOutgoingContext(ctx, md)
-		refClient = grpcreflect.NewClient(refCtx, reflectpb.NewServerReflectionClient(cc))
+		refClient = grpcreflect.NewClientV1Alpha(refCtx, reflectpb.NewServerReflectionClient(cc))
 		reflSource := grpcurl.DescriptorSourceFromServer(ctx, refClient)
 		if fileSource != nil {
 			descSource = compositeSource{reflSource, fileSource}
