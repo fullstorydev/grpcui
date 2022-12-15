@@ -3,13 +3,14 @@ package grpcui
 import (
 	"bytes"
 	"fmt"
-	"github.com/jhump/protoreflect/desc/builder"
-	"github.com/jhump/protoreflect/desc/protoprint"
 	"html/template"
 	"os"
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/jhump/protoreflect/desc/builder"
+	"github.com/jhump/protoreflect/desc/protoprint"
 
 	"github.com/jhump/protoreflect/desc"
 
@@ -134,10 +135,13 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.Met
 			// indent and remove trailing newline
 			desc = strings.TrimSuffix(desc, "\n")
 			parts := strings.Split(desc, "\n")
-			for i := range parts {
-				parts[i] = "   " + parts[i]
+			parts = parts[:len(parts)-1]
+			for i, p := range parts {
+				p = strings.TrimPrefix(p, "//")
+				p = strings.TrimSpace(p)
+				parts[i] = p
 			}
-			desc = strings.Join(parts, "\n")
+			desc = strings.Join(parts, " ")
 		}
 		params.MtdDescs[md.GetFullyQualifiedName()] = desc
 	}
@@ -156,7 +160,7 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.Met
 			}
 		}
 		if err != nil {
-			desc = fmt.Sprintf("service %s {", sd.GetName())
+			desc = fmt.Sprintf("service %s ", sd.GetName())
 		} else {
 			// strip last line, trailing close brace
 			tr := "\n}"
@@ -164,6 +168,14 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.Met
 				tr += "\n"
 			}
 			desc = strings.TrimSuffix(desc, tr)
+			parts := strings.Split(desc, "\n")
+			parts = parts[:len(parts)-1]
+			for i, p := range parts {
+				p = strings.TrimPrefix(p, "//")
+				p = strings.TrimSpace(p)
+				parts[i] = p
+			}
+			desc = strings.Join(parts, " ")
 		}
 		params.SvcDescs[sd.GetFullyQualifiedName()] = desc
 	}

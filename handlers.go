@@ -179,6 +179,7 @@ type schema struct {
 	RequestStream bool                    `json:"requestStream"`
 	MessageTypes  map[string][]fieldDef   `json:"messageTypes"`
 	EnumTypes     map[string][]enumValDef `json:"enumTypes"`
+	Comment       string                  `json:"comment"`
 }
 
 type fieldDef struct {
@@ -193,6 +194,7 @@ type fieldDef struct {
 	IsRequired  bool        `json:"isRequired"`
 	DefaultVal  interface{} `json:"defaultVal"`
 	Description string      `json:"description"`
+	Comment     string      `json:"comment"`
 }
 
 type enumValDef struct {
@@ -259,11 +261,18 @@ func gatherAllMessages(msgs []*desc.MessageDescriptor, result *schema) {
 
 func gatherMetadataForMethod(md *desc.MethodDescriptor) (*schema, error) {
 	msg := md.GetInputType()
+	sourceInfo := msg.GetSourceInfo()
+	commentPtr := sourceInfo.LeadingComments
+	var comment string
+	if commentPtr != nil {
+		comment = *commentPtr
+	}
 	result := &schema{
 		RequestType:   msg.GetFullyQualifiedName(),
 		RequestStream: md.IsClientStreaming(),
 		MessageTypes:  map[string][]fieldDef{},
 		EnumTypes:     map[string][]enumValDef{},
+		Comment:       comment,
 	}
 
 	result.visitMessage(msg)
@@ -299,6 +308,14 @@ func (s *schema) visitMessage(md *desc.MessageDescriptor) {
 }
 
 func (s *schema) processField(fd *desc.FieldDescriptor) fieldDef {
+	sourceInfo := fd.GetSourceInfo()
+	var comment string
+	if sourceInfo != nil {
+		commentPtr := sourceInfo.LeadingComments
+		if commentPtr != nil {
+			comment = *commentPtr
+		}
+	}
 	def := fieldDef{
 		Name:       fd.GetJSONName(),
 		ProtoName:  fd.GetName(),
@@ -308,6 +325,7 @@ func (s *schema) processField(fd *desc.FieldDescriptor) fieldDef {
 		IsMap:      fd.IsMap(),
 		IsRequired: fd.IsRequired(),
 		DefaultVal: fd.GetDefaultValue(),
+		Comment:    comment,
 	}
 
 	if def.IsMap {

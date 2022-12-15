@@ -7,12 +7,12 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         var svcName = $("#grpc-service").val();
         var svcDesc = svcDescs[svcName];
         var methods = services[svcName];
-        var svcDescEnd = "";
+        /* var svcDescEnd = "";
         if (svcDesc) {
             svcDescEnd = '   // ... ' + (methods.length - 1) + ' more methods ...\n}';
-        }
+        } */
         $("#grpc-service-description").text(svcDesc);
-        $("#grpc-service-description-end").text(svcDescEnd);
+        //$("#grpc-service-description-end").text(svcDescEnd);
 
         var methodList = $("#grpc-method");
         methodList.empty();
@@ -238,7 +238,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         div.addClass("input_container one-of-2 one-of-3 one-of-4 one-of-5");
         div.attr('id', 'root');
         requestForm.append(div);
-
+       
         var table = $('<table>');
         div.append(table);
 
@@ -246,11 +246,19 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         var row = $('<tr>');
         table.append(row);
         var cell = $('<th>');
-        cell.attr('colspan', '3');
+        cell.attr('colspan', '4');
         cell.text(requestType);
         if (schema.requestStream) {
             cell.prepend('<em>stream</em> ');
         }
+        row.append(cell);
+
+        var comment = schema.comment;
+        var row = $('<tr>');
+        table.append(row);
+        var cell = $('<th>');
+        cell.attr('colspan', '4');
+        cell.text(comment);
         row.append(cell);
 
         requestForm.data("root", addElementToForm(schema, table, newRootInput(), 0, newRequest, allowMissing, fldDef));
@@ -770,6 +778,9 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                     })(currField, cell);
                 }
             }
+
+            var cell = makeFieldCommentCell(currField, schema);
+            row.append(cell);
         }
 
         if (fields.length === 0) {
@@ -777,7 +788,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             table.append(row);
             cell = $('<td>');
             cell.addClass('empty_message');
-            cell.attr('colspan', 3);
+            cell.attr('colspan', 4);
             row.append(cell);
             cell.text('No fields');
         } else {
@@ -1031,6 +1042,17 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             return cell;
         }
         return container;
+    }
+
+    function makeFieldCommentCell(fld, schema) {
+        var cell = $('<td>');
+        cell.addClass('comment');
+
+        var comment = $('<strong>');
+        comment.text(fld.protoName);
+        cell.prepend(comment);
+
+        return cell;
     }
 
     function makeFieldLabelCell(fld, schema) {
@@ -2813,6 +2835,8 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
     });
 
+    $("#grpc-descriptions pre").show();
+    /*
     if (localStorage.getItem(expandDescStorageKey) === "true") {
         descriptionsShown = true;
         $("#grpc-descriptions-toggle").text("«")
@@ -2829,7 +2853,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         descriptionsShown = !descriptionsShown;
         localStorage.setItem(expandDescStorageKey, descriptionsShown+"");
-    });
+    });*/
 
     $('#grpc-history-clear').click(() => clearHistory());
     $('#grpc-history-save').click(() => saveHistory());

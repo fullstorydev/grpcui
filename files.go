@@ -1,9 +1,9 @@
 package grpcui
 
 import (
+	"context"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/grpcreflect"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/protobuf/reflect/protoreflect"
