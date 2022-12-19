@@ -1,5 +1,4 @@
 FROM golang:1.18-alpine as builder
-MAINTAINER FullStory Engineering
 
 # create non-privileged group and user
 RUN addgroup -S grpcui && adduser -S grpcui -G grpcui
@@ -27,4 +26,4 @@ COPY --from=builder /grpcui /bin/grpcui
 USER grpcui
 EXPOSE 8080
 
-ENTRYPOINT ["/bin/grpcui", "-bind=0.0.0.0", "-port=8080"]
+ENTRYPOINT ["/bin/grpcui", "-bind=0.0.0.0", "-port=10088"]

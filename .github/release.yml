@@ -1,0 +1,80 @@
+name: grpcui docker image release
+
+on:
+  pull_request:
+    paths:
+      - "*"
+    branches:
+      - knox-develop
+    types: [closed]
+
+  workflow_dispatch: null
+
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: self-hosted
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Notify slack started
+        id: slack
+        uses: voxmedia/github-action-slack-notify-build@v1
+        with:
+          channel_id: C0484JLAX9N
+          status: STARTED
+          color: good
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      - uses: actions/checkout@v2
+        if: always()
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::094516363582:role/knox-github-actions-sandbox
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        run: aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 094516363582.dkr.ecr.us-east-2.amazonaws.com
+
+      - id: commit
+        uses: pr-mpt/actions-commit-hash@v1
+
+      - name: Build, tag, and push grpcui image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: 094516363582.dkr.ecr.us-east-2.amazonaws.com
+          IMAGE_TAG: ${{ steps.commit.outputs.short }}
+        run: |-
+          # Build a docker image and push it to ECR
+
+          echo "Releasing grpcui image to ECR..."
+          echo $IMAGE_TAG > VERSION
+          docker build -t $ECR_REGISTRY/grpcui:latest -t $ECR_REGISTRY/grpcui:$IMAGE_TAG .
+          rm VERSION
+          docker push $ECR_REGISTRY/grpcui:$IMAGE_TAG
+          docker push $ECR_REGISTRY/grpcui:latest
+          echo "::set-output name=image::$ECR_REGISTRY/grpcui:$IMAGE_TAG"
+
+      - name: Notify slack success
+        if: success()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        uses: voxmedia/github-action-slack-notify-build@v1
+        with:
+          channel_id: C0484JLAX9N
+          status: SUCCESS
+          color: good
+          message_id: ${{ steps.slack.outputs.message_id }}
+
+      - name: Notify slack failure
+        if: failure()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        uses: voxmedia/github-action-slack-notify-build@v1
+        with:
+          channel_id: C0484JLAX9N
+          status: FAILED
+          color: danger
+          message_id: ${{ steps.slack.outputs.message_id }}
