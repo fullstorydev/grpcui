@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
@@ -179,7 +178,7 @@ func newResource(uriPath string, data []byte, contentType string, public bool) *
 	return &resource{
 		Path: uriPath,
 		Open: func(_ string) (io.ReadCloser, error) {
-			return ioutil.NopCloser(bytes.NewReader(data)), nil
+			return io.NopCloser(bytes.NewReader(data)), nil
 		},
 		Len:         len(data),
 		ContentType: contentType,
