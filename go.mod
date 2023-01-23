@@ -8,8 +8,8 @@ require (
 	github.com/jhump/protoreflect v1.14.0
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.4.0
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/net v0.5.0
+	golang.org/x/sys v0.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
 	google.golang.org/grpc v1.52.0
 	google.golang.org/protobuf v1.28.1
@@ -25,6 +25,6 @@ require (
 	github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.1.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
-	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 )
