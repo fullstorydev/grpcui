@@ -423,6 +423,12 @@ func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterfa
 		return nil, errBadInput{err: err}
 	}
 
+	if input.Target != "" {
+		if ch, err = dialFunc(input.Target); err != nil {
+			return nil, errBadInput{err: err}
+		}
+	}
+
 	reqStats := rpcRequestStats{
 		Total: len(input.Data),
 	}
@@ -516,6 +522,7 @@ type rpcMetadata struct {
 }
 
 type rpcInput struct {
+	Target         string            `json:"target"`
 	TimeoutSeconds float32           `json:"timeout_seconds"`
 	Metadata       []rpcMetadata     `json:"metadata"`
 	Data           []json.RawMessage `json:"data"`
@@ -616,4 +623,12 @@ func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message) rpcR
 		}
 		return rpcResponseElement{Data: b, IsError: true}
 	}
+}
+
+type DialFunc func(string string) (*grpc.ClientConn, error)
+
+var dialFunc DialFunc
+
+func SetDialFunc(f DialFunc) {
+	dialFunc = f
 }

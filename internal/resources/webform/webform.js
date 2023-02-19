@@ -2152,6 +2152,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     function invoke() {
         var service = $("#grpc-service").val();
         var method = $("#grpc-method").val();
+        var target = $("#target-address").val();
 
         var timeoutStr = $("#grpc-request-timeout input").val();
         var timeout = Number(timeoutStr);
@@ -2202,7 +2203,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                 type: "POST",
                 url: invokeURI + "/" + service + "." + method,
                 contentType: "application/json",
-                data: JSON.stringify({timeout_seconds: timeout, metadata: metadata, data: data}),
+                data: JSON.stringify({timeout_seconds: timeout, metadata: metadata, data: data, target: target}),
             })
             .done(function(responseData) {
                 var durationMs = window.performance.now() - startTime;

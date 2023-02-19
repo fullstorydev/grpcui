@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fullstorydev/grpcui"
 	"github.com/fullstorydev/grpcurl"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/grpcreflect"
@@ -40,10 +41,9 @@ import (
 	// Register gzip compressor so compressed responses will work
 	_ "google.golang.org/grpc/encoding/gzip"
 	// Register xds so xds and xds-experimental resolver schemes work
-	_ "google.golang.org/grpc/xds"
-
 	"github.com/fullstorydev/grpcui/internal"
 	"github.com/fullstorydev/grpcui/standalone"
+	_ "google.golang.org/grpc/xds"
 )
 
 var version = "dev build <no version set>"
@@ -384,10 +384,10 @@ func main() {
 		fail(nil, "The -cert and -key arguments must be used together and both be present.")
 	}
 
-	if flags.NArg() != 1 {
-		fail(nil, "This program requires exactly one arg: the host:port of gRPC server.")
+	var target string
+	if flags.NArg() == 1 {
+		target = flags.Arg(0)
 	}
-	target := flags.Arg(0)
 
 	if len(protoset) > 0 && len(reflHeaders) > 0 {
 		warn("The -reflect-header argument is not used when -protoset files are used.")
@@ -538,9 +538,18 @@ func main() {
 	if isUnixSocket != nil && isUnixSocket() {
 		network = "unix"
 	}
-	cc, err := dial(dialCtx, network, target, creds, *connectFailFast, opts...)
-	if err != nil {
-		fail(err, "Failed to dial target host %q", target)
+	grpcui.SetDialFunc(func(address string) (*grpc.ClientConn, error) {
+		dialFuncCtx, cancel := context.WithTimeout(ctx, dialTime)
+		defer cancel()
+		return dial(dialFuncCtx, network, address, creds, *connectFailFast, opts...)
+	})
+
+	var cc *grpc.ClientConn
+	if target != "" {
+		cc, err = dial(dialCtx, network, target, creds, *connectFailFast, opts...)
+		if err != nil {
+			fail(err, "Failed to dial target host %q", target)
+		}
 	}
 
 	var descSource grpcurl.DescriptorSource
