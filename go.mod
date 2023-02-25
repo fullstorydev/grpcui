@@ -7,7 +7,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/jhump/protoreflect v1.14.1
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/crypto v0.1.0
 	golang.org/x/net v0.6.0
 	golang.org/x/sys v0.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f
@@ -25,6 +25,7 @@ require (
 	github.com/envoyproxy/go-control-plane v0.10.3 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.9.1 // indirect
 	golang.org/x/oauth2 v0.4.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 )
