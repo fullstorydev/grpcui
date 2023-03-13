@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/fullstorydev/grpcurl v1.8.7
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	github.com/jhump/protoreflect v1.14.1
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	golang.org/x/net v0.6.0
