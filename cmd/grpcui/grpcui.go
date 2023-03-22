@@ -706,9 +706,11 @@ func main() {
 	fmt.Printf("gRPC Web UI available at %s\n", url)
 
 	if *openBrowser {
-		if err := browser.OpenURL(url); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to open browser: %v\n", err)
-		}
+		go func() {
+			if err := browser.OpenURL(url); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to open browser: %v\n", err)
+			}
+		}()
 	}
 	if err := http.Serve(listener, handler); err != nil {
 		fail(err, "Failed to serve web UI")
