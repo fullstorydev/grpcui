@@ -745,3 +745,10 @@ button#grpc-history-clear, button#grpc-history-save {
 #grpc-history-list .history-item-panel .history-detail-metadata td {
     padding-left: 12px;
 }
+
+.grpc-curl-panel {
+    background-color: #fcfcfc;
+    border: 1px solid #dddddd;
+    padding: 1em;
+    margin-bottom: 1em;
+}

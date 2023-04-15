@@ -56,8 +56,8 @@ var (
 //
 // The returned HTML form requires that the contents of WebFormScript() have
 // already been loaded as a script in the page.
-func WebFormContents(invokeURI, metadataURI string, descs []*desc.MethodDescriptor) []byte {
-	return WebFormContentsWithOptions(invokeURI, metadataURI, descs, WebFormOptions{})
+func WebFormContents(invokeURI, metadataURI string, target string, descs []*desc.MethodDescriptor) []byte {
+	return WebFormContentsWithOptions(invokeURI, metadataURI, target, descs, WebFormOptions{})
 }
 
 // WebFormOptions contains optional arguments when creating a gRPCui web form.
@@ -76,7 +76,7 @@ type WebFormOptions struct {
 // accepts an additional argument, options. This can be used to toggle the JS
 // code into debug logging and can also be used to define the set of metadata to
 // show in the web form by default (empty if unspecified).
-func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.MethodDescriptor, opts WebFormOptions) []byte {
+func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, descs []*desc.MethodDescriptor, opts WebFormOptions) []byte {
 	type metadataEntry struct {
 		Name, Value string
 	}
@@ -89,6 +89,7 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.Met
 		MtdDescs        map[string]string
 		DefaultMetadata []metadataEntry
 		Debug           bool
+		Target          string
 	}{
 		InvokeURI:   invokeURI,
 		MetadataURI: metadataURI,
@@ -96,6 +97,7 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, descs []*desc.Met
 		Methods:     map[string][]string{},
 		MtdDescs:    map[string]string{},
 		Debug:       os.Getenv("GRPC_WEBFORM_DEBUG") != "",
+		Target:      target,
 	}
 
 	if opts.Debug != nil {

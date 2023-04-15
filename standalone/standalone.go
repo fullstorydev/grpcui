@@ -78,7 +78,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 		DefaultMetadata: uiOpts.defaultMetadata,
 		Debug:           uiOpts.debug,
 	}
-	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", methods, formOpts)
+	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", target, methods, formOpts)
 	indexContents := getIndexContents(uiOpts.indexTmpl, target, webFormHTML, uiOpts.tmplResources)
 	indexResource := newResource("/", indexContents, "text/html; charset=utf-8", false)
 	indexResource.MustRevalidate = true
