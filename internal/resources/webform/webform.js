@@ -2752,8 +2752,12 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                 validateJSON();
                 // remove all rows
                 $("tr").remove('.metadataRow');
-                for (let metadata of item.request.metadata) {
-                    addMetadataRow(metadata.name, metadata.value);
+                // item.request.metadata will be undefined when using -examples 
+                // and without setting in json file, here it needs to be verified
+                if (item.request.metadata) {
+                    for (let metadata of item.request.metadata) {
+                        addMetadataRow(metadata.name, metadata.value);
+                    }
                 }
             });
         });
