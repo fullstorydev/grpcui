@@ -8,7 +8,6 @@ if [[ -z "$PROTOC_VERSION" ]]; then
   echo "Set PROTOC_VERSION env var to indicate the version to download" >&2
   exit 1
 fi
-PROTOC_VERSION="22.0"
 PROTOC_OS="$(uname -s)"
 PROTOC_ARCH="$(uname -m)"
 case "${PROTOC_OS}" in
