@@ -46,16 +46,11 @@
     <div id="grpc-request-response">
       <ul>
           <li id="#grpc-request-tab-button"><a href="#grpc-request-tab">Request Form</a></li>
-          <li id="#grpc-request-raw-tab-button"><a href="#grpc-request-raw-tab">Raw Request (JSON)</a></li>
+          <li id="#grpc-request-raw-tab-button"><a href="#grpc-request-raw-tab">Raw Request</a></li>
           <li id="#grpc-response-tab-button"><a href="#grpc-response-tab">Response</a></li>
           <li id="#grpc-history-tab-button"><a href="#grpc-history-tab">History</a></li>
       </ul>
       <div class="grpc-tabcontent" id="grpc-request-tab">
-        <h3>gRPC curl</h3>
-        <div id="grpc-curl" class="grpc-curl-panel">
-          <span><pre id="grpc-curl-text"></pre></span>
-        </div>
-
         <h3>Request Metadata</h3>
         <div id="grpc-request-metadata">
           <table class="grpc-request-table" id="grpc-request-metadata-form">
@@ -75,7 +70,12 @@
         <button class="grpc-invoke" disabled>Invoke</button>
       </div>
       <div class="grpc-tabcontent" id="grpc-request-raw-tab">
+        <h3>Request payload</h3>
         <textarea id="grpc-request-raw-text"></textarea><br/>
+        <h3>gRPC curl</h3>
+        <div id="grpc-curl" class="grpc-curl-panel">
+          <span><pre id="grpc-curl-text"></pre></span>
+        </div>
         <button class="grpc-invoke" disabled>Invoke</button>
       </div>
       <div class="grpc-tabcontent" id="grpc-response-tab">
