@@ -76,6 +76,12 @@ run `make install`.
 If you encounter compile errors, you could have out-dated versions of `grpcui`'s
 dependencies. You can update the dependencies by running `make updatedeps`.
 
+### Running without install 
+
+```
+go run ./cmd/grpcui/grpcui.go -plaintext localhost:9019
+```
+
 ## Usage
 The usage doc for the tool explains the numerous options:
 ```shell
@@ -250,4 +256,3 @@ protoc --proto_path=. \
 The `--descriptor_set_out` argument is what tells `protoc` to produce a protoset,
 and the `--include_imports` argument is necessary for the protoset to contain
 everything that `grpcui` needs to process and understand the schema.
-
