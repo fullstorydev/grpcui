@@ -746,6 +746,11 @@ button#grpc-history-clear, button#grpc-history-save {
     padding-left: 12px;
 }
 
+.grpc-request-raw-container {
+    margin-bottom: 1em;
+}
+
+
 .grpc-curl-panel {
     background-color: #fcfcfc;
     border: 1px solid #dddddd;

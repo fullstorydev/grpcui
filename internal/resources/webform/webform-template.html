@@ -70,13 +70,17 @@
         <button class="grpc-invoke" disabled>Invoke</button>
       </div>
       <div class="grpc-tabcontent" id="grpc-request-raw-tab">
-        <h3>Request payload</h3>
-        <textarea id="grpc-request-raw-text"></textarea><br/>
-        <h3>gRPC curl</h3>
-        <div id="grpc-curl" class="grpc-curl-panel">
-          <span><pre id="grpc-curl-text"></pre></span>
+        <div class="grpc-request-raw-container">
+          <h3>Request payload</h3>
+          <textarea id="grpc-request-raw-text"></textarea><br/>
+          <button class="grpc-invoke" disabled>Invoke</button>
         </div>
-        <button class="grpc-invoke" disabled>Invoke</button>
+        <div class="grpc-request-raw-container">
+          <h3>gRPC curl</h3>
+          <div id="grpc-curl" class="grpc-curl-panel">
+            <span><pre id="grpc-curl-text"></pre></span>
+          </div>
+        </div>
       </div>
       <div class="grpc-tabcontent" id="grpc-response-tab">
         <h3>Response Headers</h3>
