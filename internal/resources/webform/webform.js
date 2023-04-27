@@ -2059,7 +2059,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             updateRequestObject(path, req, value);
         }
         updateJSONRequest(req);
-        updateCurlCommand(req);
     }
 
     function onInputDelete(path) {
@@ -2091,21 +2090,24 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
     }
 
-    let grpcCurlTextArea = $("#grpc-curl-text");
-    function updateCurlCommand(req) {
+    let gRPCurlTextArea = $("#grpc-curl-text");
+    function updateCurlCommand(requestDataJson) {
         let service = $("#grpc-service").val();
         let method = $("#grpc-method").val();
-        let requestDataJson = JSON.stringify(req, null, 2);
-        grpcCurlTextArea.html(`<div>grpcurl -plaintext -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
+        gRPCurlTextArea.html(`<div>grpcurl -plaintext -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");
     function updateJSONRequest(req) {
-        jsonRawTextArea.val(JSON.stringify(req, null, 2));
+        let requestDataJson = JSON.stringify(req, null, 2);
+        jsonRawTextArea.val(requestDataJson);
+        updateCurlCommand(requestDataJson);
     }
 
     function validateJSON() {
-        var reqObj = JSON.parse($("#grpc-request-raw-text").val());
+        let requestDataJson = jsonRawTextArea.val();
+        updateCurlCommand(requestDataJson);
+        var reqObj = JSON.parse(requestDataJson);
         rebuildRequestForm(reqObj, false);
     }
 
@@ -2759,7 +2761,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         formServiceSelected(() => {
             $("#grpc-method").val(item.method);
             formMethodSelected(() => {
-                jsonRawTextArea.val(JSON.stringify(item.request.data, null, 2));
+                updateJSONRequest(item.request.data)
                 validateJSON();
                 // remove all rows
                 $("tr").remove('.metadataRow');

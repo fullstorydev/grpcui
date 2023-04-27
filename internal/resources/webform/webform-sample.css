@@ -747,6 +747,7 @@ button#grpc-history-clear, button#grpc-history-save {
 }
 
 .grpc-request-raw-container {
+    margin-top: 1em;
     margin-bottom: 1em;
 }
 
