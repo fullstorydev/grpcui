@@ -154,6 +154,9 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         // set raw request text
         updateJSONRequest(requestObj);
 
+        // init grpcCurl text
+        updateCurlCommand(requestObj);
+
         // enable the invoke button
         resetInvoke(true);
 
@@ -2087,14 +2090,24 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
     }
 
-    var jsonRawTextArea = $("#grpc-request-raw-text");
+    let gRPCurlTextArea = $("#grpc-curl-text");
+    function updateCurlCommand(requestDataJson) {
+        let service = $("#grpc-service").val();
+        let method = $("#grpc-method").val();
+        gRPCurlTextArea.html(`<div>grpcurl -plaintext -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
+    }
 
+    var jsonRawTextArea = $("#grpc-request-raw-text");
     function updateJSONRequest(req) {
-        jsonRawTextArea.val(JSON.stringify(req, null, 2));
+        let requestDataJson = JSON.stringify(req, null, 2);
+        jsonRawTextArea.val(requestDataJson);
+        updateCurlCommand(requestDataJson);
     }
 
     function validateJSON() {
-        var reqObj = JSON.parse($("#grpc-request-raw-text").val());
+        let requestDataJson = jsonRawTextArea.val();
+        updateCurlCommand(requestDataJson);
+        var reqObj = JSON.parse(requestDataJson);
         rebuildRequestForm(reqObj, false);
     }
 
@@ -2748,7 +2761,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         formServiceSelected(() => {
             $("#grpc-method").val(item.method);
             formMethodSelected(() => {
-                jsonRawTextArea.val(JSON.stringify(item.request.data, null, 2));
+                updateJSONRequest(item.request.data)
                 validateJSON();
                 // remove all rows
                 $("tr").remove('.metadataRow');
