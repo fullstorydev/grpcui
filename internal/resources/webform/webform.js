@@ -2105,7 +2105,22 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     function updateCurlCommand(requestDataJson) {
         let service = $("#grpc-service").val();
         let method = $("#grpc-method").val();
-        gRPCurlTextArea.html(`<div>grpcurl -plaintext -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
+
+        var metadataStr = "";
+        var rows = $("#grpc-request-metadata-form tr");
+        for (var i = 0; i < rows.length; i++) {
+            var cells = $("input", rows[i]);
+            if (cells.length === 0) {
+                continue;
+            }
+            var name = $(cells[0]).val();
+            var val = $(cells[1]).val();
+            if (name !== "") {
+                metadataStr += ` -H "${name}: ${val}"`;
+            }
+        }
+
+        gRPCurlTextArea.html(`<div>grpcurl -plaintext${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");
@@ -2776,7 +2791,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                 validateJSON();
                 // remove all rows
                 $("tr").remove('.metadataRow');
-                // item.request.metadata will be undefined when using -examples 
+                // item.request.metadata will be undefined when using -examples
                 // and without setting in json file, here it needs to be verified
                 if (item.request.metadata) {
                     for (let metadata of item.request.metadata) {
