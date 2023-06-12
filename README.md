@@ -59,6 +59,12 @@ the form of an HTML table.
 
 ## Installation
 
+### Homebrew (MacOS or Linux)
+Install with `homebrew`:
+```shell
+brew install grpcui
+```
+
 ### From Source
 You can use the `go` tool to install `grpcui`:
 ```shell
