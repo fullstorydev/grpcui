@@ -45,6 +45,7 @@ generate: .tmp/protoc/bin/protoc
 checkgenerate: generate
 	git status --porcelain
 	@if [ -n "$$(git status --porcelain)" ]; then \
+		git diff \
 		exit 1; \
 	fi
 
@@ -52,6 +53,7 @@ checkgenerate: generate
 checkgofmt:
 	gofmt -s -l .
 	@if [ -n "$$(gofmt -s -l .)" ]; then \
+		git diff \
 		exit 1; \
 	fi
 
