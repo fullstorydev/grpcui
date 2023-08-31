@@ -1,6 +1,6 @@
 module github.com/fullstorydev/grpcui
 
-go 1.17
+go 1.18
 
 require (
 	github.com/fullstorydev/grpcurl v1.8.7
@@ -11,11 +11,10 @@ require (
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/term v0.11.0
 	google.golang.org/genproto v0.0.0-20230526161137-0005af68ea54 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 )
-
-require google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19
 
 require (
 	cloud.google.com/go/compute v1.19.1 // indirect
