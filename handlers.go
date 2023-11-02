@@ -27,6 +27,8 @@ import (
 	"github.com/fullstorydev/grpcurl"
 )
 
+var emitDefaults = true
+
 // RPCInvokeHandler returns an HTTP handler that can be used to invoke RPCs. The
 // request includes request data, header metadata, and an optional timeout.
 //
@@ -58,6 +60,8 @@ type InvokeOptions struct {
 	// includes conflicting metadata, the values in the HTTP request headers
 	// will override, and the values in the request will not be sent.
 	PreserveHeaders []string
+	// Whether or not default values should be emitted in the JSON response
+	EmitDefaults bool
 	// If verbosity is greater than zero, the handler may log events, such as
 	// cases where the request included metadata that conflicts with the
 	// ExtraMetadata and PreserveHeaders fields above. It is an int, instead
@@ -70,6 +74,9 @@ type InvokeOptions struct {
 // accepts an additional argument, options. This can be used to add extra
 // request metadata to all RPCs invoked.
 func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.MethodDescriptor, options InvokeOptions) http.Handler {
+	if !options.EmitDefaults {
+		emitDefaults = false
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.Header().Set("Allow", "POST")
@@ -603,7 +610,7 @@ func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status) *rpcEr
 
 func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message) rpcResponseElement {
 	anyResolver := grpcurl.AnyResolverFromDescriptorSourceWithFallback(descSource)
-	jsm := jsonpb.Marshaler{EmitDefaults: true, OrigName: true, Indent: "  ", AnyResolver: anyResolver}
+	jsm := jsonpb.Marshaler{EmitDefaults: emitDefaults, OrigName: true, Indent: "  ", AnyResolver: anyResolver}
 	var b bytes.Buffer
 	if err := jsm.Marshal(&b, msg); err == nil {
 		return rpcResponseElement{Data: json.RawMessage(b.Bytes())}
