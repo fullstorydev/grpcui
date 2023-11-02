@@ -116,6 +116,8 @@ var (
 	maxMsgSz = flags.Int("max-msg-sz", 0, prettify(`
 		The maximum encoded size of a message that grpcui will accept. If not
 		specified, defaults to 4mb.`))
+	emitDefaults = flags.Bool("emit-defaults", true, prettify(`
+		Emit default values for JSON-encoded responses.`))
 	debug   optionalBoolFlag
 	verbose = flags.Bool("v", false, prettify(`
 		Enable verbose output.`))
@@ -625,6 +627,7 @@ func main() {
 	if examplesOpt != nil {
 		handlerOpts = append(handlerOpts, examplesOpt)
 	}
+	handlerOpts = append(handlerOpts, standalone.EmitDefaults(*emitDefaults))
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraJS, standalone.AddJSFile)...)
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraCSS, standalone.AddCSSFile)...)
 	handlerOpts = append(handlerOpts, configureAssets(otherAssets)...)
