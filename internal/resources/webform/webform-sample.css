@@ -202,6 +202,10 @@ textarea#grpc-request-raw-text {
     height: 200px;
 }
 
+textarea#grpc-request-raw-header {
+    height: 200px;
+}
+
 #grpc-request-timeout {
     margin-bottom: 20px;
 }
@@ -273,7 +277,7 @@ table#grpc-request-metadata-form {
     padding-left: 0;
 }
 
-#grpc-request-form tr:first-of-type > td {
+#grpc-request-form tr:first-of-type>td {
     padding-top: 0;
 }
 
@@ -288,7 +292,7 @@ table#grpc-request-metadata-form {
     padding-left: 0;
 }
 
-#grpc-request-form tr:first-of-type > th {
+#grpc-request-form tr:first-of-type>th {
     padding-top: 0;
 }
 
@@ -471,7 +475,7 @@ table#grpc-request-metadata-form {
     display: inline-block;
 }
 
-#grpc-request-form div.grpc-timestamp > input {
+#grpc-request-form div.grpc-timestamp>input {
     margin: 4px;
 }
 
@@ -524,7 +528,8 @@ table#grpc-request-metadata-form {
     margin: 2px;
 }
 
-.grpc-metadata-table td, .grpc-metadata-table th {
+.grpc-metadata-table td,
+.grpc-metadata-table th {
     padding: 8px;
     border: 1px solid #eee;
     font-family: "courier new", courier, monospace;
@@ -577,7 +582,7 @@ textarea.grpc-response-textarea {
     font-weight: bold;
 }
 
-#grpc-response-data tr:first-of-type > td {
+#grpc-response-data tr:first-of-type>td {
     padding-top: 0;
 }
 
@@ -632,7 +637,8 @@ textarea.grpc-response-textarea {
     color: #c00;
 }
 
-button#grpc-history-clear, button#grpc-history-save {
+button#grpc-history-clear,
+button#grpc-history-save {
     margin-bottom: 16px;
     font-size: 96%;
     padding: 8px 15px;
@@ -669,7 +675,7 @@ button#grpc-history-clear, button#grpc-history-save {
     color: #000;
 }
 
-#grpc-history-list > .ui-accordion:first-child {
+#grpc-history-list>.ui-accordion:first-child {
     border-top: 1px solid #eee;
 }
 
