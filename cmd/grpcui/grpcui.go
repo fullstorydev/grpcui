@@ -756,7 +756,7 @@ func prettify(docString string) string {
 		j++
 	}
 
-	return strings.Join(parts[:j], "\n"+indent())
+	return strings.Join(parts[:j], "\n")
 }
 
 func warn(msg string, args ...interface{}) {
