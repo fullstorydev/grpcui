@@ -27,8 +27,6 @@ import (
 	"github.com/fullstorydev/grpcurl"
 )
 
-var emitDefaults = true
-
 // RPCInvokeHandler returns an HTTP handler that can be used to invoke RPCs. The
 // request includes request data, header metadata, and an optional timeout.
 //
@@ -74,9 +72,6 @@ type InvokeOptions struct {
 // accepts an additional argument, options. This can be used to add extra
 // request metadata to all RPCs invoked.
 func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.MethodDescriptor, options InvokeOptions) http.Handler {
-	if !options.EmitDefaults {
-		emitDefaults = false
-	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.Header().Set("Allow", "POST")
@@ -465,6 +460,7 @@ func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterfa
 
 	result := rpcResult{
 		descSource: descSource,
+		emitDefaults: options.EmitDefaults,
 		Requests:   &reqStats,
 	}
 	if err := grpcurl.InvokeRPC(ctx, descSource, ch, methodName, invokeHdrs, &result, requestFunc); err != nil {
@@ -546,12 +542,13 @@ type rpcError struct {
 }
 
 type rpcResult struct {
-	descSource grpcurl.DescriptorSource
-	Headers    []rpcMetadata        `json:"headers"`
-	Error      *rpcError            `json:"error"`
-	Responses  []rpcResponseElement `json:"responses"`
-	Requests   *rpcRequestStats     `json:"requests"`
-	Trailers   []rpcMetadata        `json:"trailers"`
+	descSource   grpcurl.DescriptorSource
+	Headers      []rpcMetadata        `json:"headers"`
+	Error        *rpcError            `json:"error"`
+	emitDefaults bool
+	Responses    []rpcResponseElement `json:"responses"`
+	Requests     *rpcRequestStats     `json:"requests"`
+	Trailers     []rpcMetadata        `json:"trailers"`
 }
 
 func (*rpcResult) OnResolveMethod(*desc.MethodDescriptor) {}
@@ -563,12 +560,12 @@ func (r *rpcResult) OnReceiveHeaders(md metadata.MD) {
 }
 
 func (r *rpcResult) OnReceiveResponse(m proto.Message) {
-	r.Responses = append(r.Responses, responseToJSON(r.descSource, m))
+	r.Responses = append(r.Responses, responseToJSON(r.descSource, m, r.emitDefaults))
 }
 
 func (r *rpcResult) OnReceiveTrailers(stat *status.Status, md metadata.MD) {
 	r.Trailers = responseMetadata(md)
-	r.Error = toRpcError(r.descSource, stat)
+	r.Error = toRpcError(r.descSource, stat, r.emitDefaults)
 }
 
 func responseMetadata(md metadata.MD) []rpcMetadata {
@@ -590,7 +587,7 @@ func responseMetadata(md metadata.MD) []rpcMetadata {
 	return ret
 }
 
-func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status) *rpcError {
+func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status, emitDefaults bool) *rpcError {
 	if stat.Code() == codes.OK {
 		return nil
 	}
@@ -598,7 +595,7 @@ func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status) *rpcEr
 	details := stat.Proto().Details
 	msgs := make([]rpcResponseElement, len(details))
 	for i, d := range details {
-		msgs[i] = responseToJSON(descSource, d)
+		msgs[i] = responseToJSON(descSource, d, emitDefaults)
 	}
 	return &rpcError{
 		Code:    uint32(stat.Code()),
@@ -608,7 +605,7 @@ func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status) *rpcEr
 	}
 }
 
-func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message) rpcResponseElement {
+func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message, emitDefaults bool) rpcResponseElement {
 	anyResolver := grpcurl.AnyResolverFromDescriptorSourceWithFallback(descSource)
 	jsm := jsonpb.Marshaler{EmitDefaults: emitDefaults, OrigName: true, Indent: "  ", AnyResolver: anyResolver}
 	var b bytes.Buffer
