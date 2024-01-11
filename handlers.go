@@ -459,9 +459,9 @@ func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterfa
 	}
 
 	result := rpcResult{
-		descSource: descSource,
+		descSource:   descSource,
 		emitDefaults: options.EmitDefaults,
-		Requests:   &reqStats,
+		Requests:     &reqStats,
 	}
 	if err := grpcurl.InvokeRPC(ctx, descSource, ch, methodName, invokeHdrs, &result, requestFunc); err != nil {
 		return nil, err
@@ -543,9 +543,9 @@ type rpcError struct {
 
 type rpcResult struct {
 	descSource   grpcurl.DescriptorSource
+	emitDefaults bool
 	Headers      []rpcMetadata        `json:"headers"`
 	Error        *rpcError            `json:"error"`
-	emitDefaults bool
 	Responses    []rpcResponseElement `json:"responses"`
 	Requests     *rpcRequestStats     `json:"requests"`
 	Trailers     []rpcMetadata        `json:"trailers"`
