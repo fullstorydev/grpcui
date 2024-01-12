@@ -2120,7 +2120,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             }
         }
 
-        gRPCurlTextArea.html(`<div>grpcurl -plaintext${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
+        gRPCurlTextArea.html(`<div>grpcurl ${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");
