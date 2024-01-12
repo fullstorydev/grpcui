@@ -58,6 +58,8 @@ type InvokeOptions struct {
 	// includes conflicting metadata, the values in the HTTP request headers
 	// will override, and the values in the request will not be sent.
 	PreserveHeaders []string
+	// Whether or not default values should be emitted in the JSON response
+	EmitDefaults bool
 	// If verbosity is greater than zero, the handler may log events, such as
 	// cases where the request included metadata that conflicts with the
 	// ExtraMetadata and PreserveHeaders fields above. It is an int, instead
@@ -457,8 +459,9 @@ func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterfa
 	}
 
 	result := rpcResult{
-		descSource: descSource,
-		Requests:   &reqStats,
+		descSource:   descSource,
+		emitDefaults: options.EmitDefaults,
+		Requests:     &reqStats,
 	}
 	if err := grpcurl.InvokeRPC(ctx, descSource, ch, methodName, invokeHdrs, &result, requestFunc); err != nil {
 		return nil, err
@@ -539,12 +542,13 @@ type rpcError struct {
 }
 
 type rpcResult struct {
-	descSource grpcurl.DescriptorSource
-	Headers    []rpcMetadata        `json:"headers"`
-	Error      *rpcError            `json:"error"`
-	Responses  []rpcResponseElement `json:"responses"`
-	Requests   *rpcRequestStats     `json:"requests"`
-	Trailers   []rpcMetadata        `json:"trailers"`
+	descSource   grpcurl.DescriptorSource
+	emitDefaults bool
+	Headers      []rpcMetadata        `json:"headers"`
+	Error        *rpcError            `json:"error"`
+	Responses    []rpcResponseElement `json:"responses"`
+	Requests     *rpcRequestStats     `json:"requests"`
+	Trailers     []rpcMetadata        `json:"trailers"`
 }
 
 func (*rpcResult) OnResolveMethod(*desc.MethodDescriptor) {}
@@ -556,12 +560,12 @@ func (r *rpcResult) OnReceiveHeaders(md metadata.MD) {
 }
 
 func (r *rpcResult) OnReceiveResponse(m proto.Message) {
-	r.Responses = append(r.Responses, responseToJSON(r.descSource, m))
+	r.Responses = append(r.Responses, responseToJSON(r.descSource, m, r.emitDefaults))
 }
 
 func (r *rpcResult) OnReceiveTrailers(stat *status.Status, md metadata.MD) {
 	r.Trailers = responseMetadata(md)
-	r.Error = toRpcError(r.descSource, stat)
+	r.Error = toRpcError(r.descSource, stat, r.emitDefaults)
 }
 
 func responseMetadata(md metadata.MD) []rpcMetadata {
@@ -583,7 +587,7 @@ func responseMetadata(md metadata.MD) []rpcMetadata {
 	return ret
 }
 
-func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status) *rpcError {
+func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status, emitDefaults bool) *rpcError {
 	if stat.Code() == codes.OK {
 		return nil
 	}
@@ -591,7 +595,7 @@ func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status) *rpcEr
 	details := stat.Proto().Details
 	msgs := make([]rpcResponseElement, len(details))
 	for i, d := range details {
-		msgs[i] = responseToJSON(descSource, d)
+		msgs[i] = responseToJSON(descSource, d, emitDefaults)
 	}
 	return &rpcError{
 		Code:    uint32(stat.Code()),
@@ -601,9 +605,9 @@ func toRpcError(descSource grpcurl.DescriptorSource, stat *status.Status) *rpcEr
 	}
 }
 
-func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message) rpcResponseElement {
+func responseToJSON(descSource grpcurl.DescriptorSource, msg proto.Message, emitDefaults bool) rpcResponseElement {
 	anyResolver := grpcurl.AnyResolverFromDescriptorSourceWithFallback(descSource)
-	jsm := jsonpb.Marshaler{EmitDefaults: true, OrigName: true, Indent: "  ", AnyResolver: anyResolver}
+	jsm := jsonpb.Marshaler{EmitDefaults: emitDefaults, OrigName: true, Indent: "  ", AnyResolver: anyResolver}
 	var b bytes.Buffer
 	if err := jsm.Marshal(&b, msg); err == nil {
 		return rpcResponseElement{Data: json.RawMessage(b.Bytes())}

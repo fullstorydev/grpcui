@@ -188,6 +188,13 @@ func PreserveHeaders(headerNames []string) HandlerOption {
 	})
 }
 
+// EmitDefaults tells gRPCurl whether or not default values should be emitted
+func EmitDefaults(emit bool) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.emitDefaults = emit
+	})
+}
+
 // WithInvokeVerbosity indicates the level of log output from the gRPC UI server
 // handler that performs RPC invocations.
 func WithInvokeVerbosity(verbosity int) HandlerOption {
@@ -229,6 +236,7 @@ type handlerOptions struct {
 	defaultMetadata     []string
 	extraMetadata       []string
 	preserveHeaders     []string
+	emitDefaults        bool
 	invokeVerbosity     int
 	debug               *bool
 }
