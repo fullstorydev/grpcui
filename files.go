@@ -5,7 +5,6 @@ import (
 	"github.com/jhump/protoreflect/grpcreflect"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
@@ -18,8 +17,7 @@ import (
 // reflection. (See "google.golang.org/grpc/reflection" for more on service
 // reflection.)
 func AllFilesViaReflection(ctx context.Context, cc grpc.ClientConnInterface) ([]*desc.FileDescriptor, error) {
-	stub := rpb.NewServerReflectionClient(cc)
-	cli := grpcreflect.NewClientV1Alpha(ctx, stub)
+	cli := grpcreflect.NewClientAuto(ctx, cc)
 	source := grpcurl.DescriptorSourceFromServer(ctx, cli)
 	return grpcurl.GetAllFiles(source)
 }

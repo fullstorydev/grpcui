@@ -6,7 +6,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 )
 
 // AllMethodsForServices returns a slice that contains the method descriptors
@@ -47,8 +46,7 @@ func AllMethodsForServer(svr *grpc.Server) ([]*desc.MethodDescriptor, error) {
 // This automatically skips the reflection service, since it is assumed this is not
 // a desired inclusion.
 func AllMethodsViaReflection(ctx context.Context, cc grpc.ClientConnInterface) ([]*desc.MethodDescriptor, error) {
-	stub := rpb.NewServerReflectionClient(cc)
-	cli := grpcreflect.NewClientV1Alpha(ctx, stub)
+	cli := grpcreflect.NewClientAuto(ctx, cc)
 	svcNames, err := cli.ListServices()
 	if err != nil {
 		return nil, err
@@ -59,7 +57,8 @@ func AllMethodsViaReflection(ctx context.Context, cc grpc.ClientConnInterface) (
 		if err != nil {
 			return nil, err
 		}
-		if sd.GetFullyQualifiedName() == "grpc.reflection.v1alpha.ServerReflection" {
+		fullyQualifiedName := sd.GetFullyQualifiedName()
+		if fullyQualifiedName == "grpc.reflection.v1alpha.ServerReflection" || fullyQualifiedName == "grpc.reflection.v1.ServerReflection" {
 			continue // skip reflection service
 		}
 		descs = append(descs, sd)
@@ -78,7 +77,8 @@ func AllMethodsViaInProcess(svr reflection.GRPCServer) ([]*desc.MethodDescriptor
 	}
 	var descs []*desc.ServiceDescriptor
 	for _, sd := range sds {
-		if sd.GetFullyQualifiedName() == "grpc.reflection.v1alpha.ServerReflection" {
+		fullyQualifiedName := sd.GetFullyQualifiedName()
+		if fullyQualifiedName == "grpc.reflection.v1alpha.ServerReflection" || fullyQualifiedName == "grpc.reflection.v1.ServerReflection" {
 			continue // skip reflection service
 		}
 		descs = append(descs, sd)
