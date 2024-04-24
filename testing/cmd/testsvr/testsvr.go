@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
-	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
+	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -49,7 +49,7 @@ func main() {
 
 	svr := grpc.NewServer()
 	RegisterKitchenSinkServer(svr, &testSvr{})
-	refSvc := reflection.NewServer(reflection.ServerOptions{
+	refSvc := reflection.NewServerV1(reflection.ServerOptions{
 		Services:           svr,
 		DescriptorResolver: sourceinfo.GlobalFiles,
 		ExtensionResolver:  sourceinfo.GlobalFiles,

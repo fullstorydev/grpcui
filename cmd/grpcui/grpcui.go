@@ -35,7 +35,6 @@ import (
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
-	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 
 	// Register gzip compressor so compressed responses will work
 	_ "google.golang.org/grpc/encoding/gzip"
@@ -564,7 +563,7 @@ func main() {
 	if reflection.val {
 		md := grpcurl.MetadataFromHeaders(append(addlHeaders, reflHeaders...))
 		refCtx := metadata.NewOutgoingContext(ctx, md)
-		refClient = grpcreflect.NewClientV1Alpha(refCtx, reflectpb.NewServerReflectionClient(cc))
+		refClient = grpcreflect.NewClientAuto(refCtx, cc)
 		refClient.AllowMissingFileDescriptors()
 		reflSource := grpcurl.DescriptorSourceFromServer(ctx, refClient)
 		if fileSource != nil {
@@ -859,7 +858,7 @@ func getMethods(source grpcurl.DescriptorSource, configs map[string]*svcConfig) 
 
 	var descs []*desc.MethodDescriptor
 	for _, svc := range allServices {
-		if svc == "grpc.reflection.v1alpha.ServerReflection" {
+		if svc == "grpc.reflection.v1alpha.ServerReflection" || svc == "grpc.reflection.v1.ServerReflection" {
 			continue
 		}
 		d, err := source.FindSymbol(svc)
