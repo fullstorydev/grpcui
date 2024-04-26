@@ -82,12 +82,12 @@ type RPCRequest struct {
 
 type RPCHandler func(
 	ctx context.Context,
-	req RPCRequest,
+	req *RPCRequest,
 ) (*RPCResult, error)
 
 type Middleware func(
 	ctx context.Context,
-	req RPCRequest,
+	req *RPCRequest,
 	next RPCHandler,
 ) (*RPCResult, error)
 
@@ -119,7 +119,7 @@ func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.Meth
 					http.Error(w, "Failed to create descriptor source: "+err.Error(), http.StatusInternalServerError)
 					return
 				}
-				req := RPCRequest{
+				req := &RPCRequest{
 					MethodName: method,
 					Conn:       ch,
 					DescSource: descSource,
@@ -127,13 +127,13 @@ func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.Meth
 					Body:       r.Body,
 					Options:    &options,
 				}
-				call := func(ctx context.Context, req RPCRequest) (*RPCResult, error) {
+				call := func(ctx context.Context, req *RPCRequest) (*RPCResult, error) {
 					return invokeRPC(ctx, method, ch, descSource, r.Header, r.Body, &options)
 				}
 				for i := len(options.Middlewares) - 1; i > 0; i-- {
 					mw := options.Middlewares[i]
 					c2 := call
-					call = func(ctx context.Context, req RPCRequest) (*RPCResult, error) {
+					call = func(ctx context.Context, req *RPCRequest) (*RPCResult, error) {
 						return mw(ctx, req, c2)
 					}
 				}
