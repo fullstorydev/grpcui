@@ -119,7 +119,6 @@ func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.Meth
 					http.Error(w, "Failed to create descriptor source: "+err.Error(), http.StatusInternalServerError)
 					return
 				}
-				ctx := r.Context()
 				req := RPCRequest{
 					MethodName: method,
 					Conn:       ch,
@@ -129,7 +128,7 @@ func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.Meth
 					Options:    &options,
 				}
 				call := func(ctx context.Context, req RPCRequest) (*RPCResult, error) {
-					return invokeRPC(r.Context(), method, ch, descSource, r.Header, r.Body, &options)
+					return invokeRPC(ctx, method, ch, descSource, r.Header, r.Body, &options)
 				}
 				for i := len(options.Middlewares) - 1; i > 0; i-- {
 					mw := options.Middlewares[i]
@@ -138,7 +137,7 @@ func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.Meth
 						return mw(ctx, req, c2)
 					}
 				}
-				results, err := call(ctx, req)
+				results, err := call(r.Context(), req)
 				if err != nil {
 					if _, ok := err.(errReadFail); ok {
 						http.Error(w, "Failed to read request", 499)
