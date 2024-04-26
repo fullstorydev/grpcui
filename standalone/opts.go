@@ -222,7 +222,7 @@ func WithClientDebug(debug bool) HandlerOption {
 }
 
 // WithMiddlewares adds middlewares to be called before/after each request.
-func WithMiddlewares(mws []grpcui.Middleware) HandlerOption {
+func WithMiddlewares(mws ...grpcui.Middleware) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
 		opts.middlewares = mws
 	})
