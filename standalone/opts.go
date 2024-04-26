@@ -6,6 +6,8 @@ import (
 	"html/template"
 	"io"
 	"path"
+
+	"github.com/fullstorydev/grpcui"
 )
 
 // WebFormContainerTemplateData is the param type for templates that embed the webform HTML.
@@ -219,6 +221,13 @@ func WithClientDebug(debug bool) HandlerOption {
 	})
 }
 
+// WithMiddlewares adds middlewares to be called before/after each request.
+func WithMiddlewares(mws []grpcui.Middleware) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.middlewares = mws
+	})
+}
+
 // optFunc implements HandlerOption
 type optFunc func(opts *handlerOptions)
 
@@ -239,6 +248,7 @@ type handlerOptions struct {
 	emitDefaults        bool
 	invokeVerbosity     int
 	debug               *bool
+	middlewares         []grpcui.Middleware
 }
 
 func (opts *handlerOptions) addlServedResources() []*resource {
