@@ -54,7 +54,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 
 	var mux http.ServeMux
 
-	// Add go-bindata resources bundled in standalone package TOC
+	// Add embedded resources bundled in standalone package TOC
 	for _, assetName := range standalone.AssetNames() {
 		// the index file will be handled separately
 		if assetName == standalone.IndexTemplateName {
