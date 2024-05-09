@@ -3,8 +3,6 @@ package grpcui
 import (
 	"bytes"
 	"fmt"
-	"github.com/jhump/protoreflect/desc/builder"
-	"github.com/jhump/protoreflect/desc/protoprint"
 	"html/template"
 	"os"
 	"sort"
@@ -12,8 +10,10 @@ import (
 	"unicode"
 
 	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/desc/builder"
+	"github.com/jhump/protoreflect/desc/protoprint"
 
-	"github.com/fullstorydev/grpcui/internal/resources/webform"
+	"github.com/zeroflucs-given/grpcui/internal/resources/webform"
 )
 
 var (

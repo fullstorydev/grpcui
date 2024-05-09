@@ -23,10 +23,10 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	"github.com/fullstorydev/grpcui"
-	"github.com/fullstorydev/grpcui/common"
-	"github.com/fullstorydev/grpcui/internal/resources/standalone"
 	"github.com/fullstorydev/grpcurl"
+	"github.com/zeroflucs-given/grpcui"
+	"github.com/zeroflucs-given/grpcui/common"
+	"github.com/zeroflucs-given/grpcui/internal/resources/standalone"
 )
 
 const csrfCookieName = "_grpcui_csrf_token"

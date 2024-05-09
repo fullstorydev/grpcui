@@ -2,13 +2,12 @@ package standalone
 
 import (
 	"encoding/json"
-	"google.golang.org/protobuf/encoding/protojson"
 	"reflect"
 	"testing"
 
-	"google.golang.org/protobuf/proto"
-
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 func TestRequest_MarshalUnmarshal(t *testing.T) {

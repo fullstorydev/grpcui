@@ -1,6 +1,6 @@
-module github.com/fullstorydev/grpcui
+module github.com/zeroflucs-given/grpcui
 
-go 1.19
+go 1.22.3
 
 require (
 	github.com/fullstorydev/grpcurl v1.9.1

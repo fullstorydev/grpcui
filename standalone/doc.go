@@ -9,7 +9,7 @@
 // It starts up a web server that includes only this stand-alone handler. If you
 // need more control over the page in which the UI form gets embedded or over
 // the CSS/styling of the page, instead use the various functions in the
-// "github.com/fullstorydev/grpcui" package to assemble your own web UI.
+// "github.com/zeroflucs-given/grpcui" package to assemble your own web UI.
 //
 // Note that this package bundles the JS dependencies of the web form. It
 // provides jQuery 3.3.1 and jQuery-UI 1.12.1.
