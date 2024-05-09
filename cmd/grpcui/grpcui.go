@@ -18,7 +18,6 @@ import (
 	"net/http/httputil"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -41,6 +40,7 @@ import (
 	// Register xds so xds and xds-experimental resolver schemes work
 	_ "google.golang.org/grpc/xds"
 
+	"github.com/fullstorydev/grpcui/common"
 	"github.com/fullstorydev/grpcui/internal"
 	"github.com/fullstorydev/grpcui/standalone"
 )
@@ -391,13 +391,13 @@ func main() {
 	target := flags.Arg(0)
 
 	if len(protoset) > 0 && len(reflHeaders) > 0 {
-		warn("The -reflect-header argument is not used when -protoset files are used.")
+		common.Warn("The -reflect-header argument is not used when -protoset files are used.")
 	}
 	if len(protoset) > 0 && len(protoFiles) > 0 {
 		fail(nil, "Use either -protoset files or -proto files, but not both.")
 	}
 	if len(importPaths) > 0 && len(protoFiles) == 0 {
-		warn("The -import-path argument is not used unless -proto files are used.")
+		common.Warn("The -import-path argument is not used unless -proto files are used.")
 	}
 	if !reflection.val && len(protoset) == 0 && len(protoFiles) == 0 {
 		fail(nil, "No protoset files or proto files specified and -use-reflection set to false.")
@@ -519,7 +519,7 @@ func main() {
 		// can use either -servername or -authority; but not both
 		if *serverName != "" && *authority != "" {
 			if *serverName == *authority {
-				warn("Both -servername and -authority are present; prefer only -authority.")
+				common.Warn("Both -servername and -authority are present; prefer only -authority.")
 			} else {
 				fail(nil, "Cannot specify different values for -servername and -authority.")
 			}
@@ -593,7 +593,7 @@ func main() {
 		os.Exit(code)
 	}
 
-	methods, err := getMethods(descSource, configs)
+	methods, err := common.GetMethods(descSource, configs)
 	if err != nil {
 		fail(err, "Failed to compute set of methods to expose")
 	}
@@ -759,11 +759,6 @@ func prettify(docString string) string {
 	return strings.Join(parts[:j], "\n")
 }
 
-func warn(msg string, args ...interface{}) {
-	msg = fmt.Sprintf("Warning: %s\n", msg)
-	fmt.Fprintf(os.Stderr, msg, args...)
-}
-
 func fail(err error, msg string, args ...interface{}) {
 	if err != nil {
 		msg += ": %v"
@@ -845,83 +840,15 @@ func configureAssets(names []string) []standalone.HandlerOption {
 	return opts
 }
 
-type svcConfig struct {
-	includeService bool
-	includeMethods map[string]struct{}
-}
-
-func getMethods(source grpcurl.DescriptorSource, configs map[string]*svcConfig) ([]*desc.MethodDescriptor, error) {
-	allServices, err := source.ListServices()
-	if err != nil {
-		return nil, err
-	}
-
-	var descs []*desc.MethodDescriptor
-	for _, svc := range allServices {
-		if svc == "grpc.reflection.v1alpha.ServerReflection" || svc == "grpc.reflection.v1.ServerReflection" {
-			continue
-		}
-		d, err := source.FindSymbol(svc)
-		if err != nil {
-			return nil, err
-		}
-		sd, ok := d.(*desc.ServiceDescriptor)
-		if !ok {
-			return nil, fmt.Errorf("%s should be a service descriptor but instead is a %T", d.GetFullyQualifiedName(), d)
-		}
-		cfg := configs[svc]
-		if cfg == nil && len(configs) != 0 {
-			// not configured to expose this service
-			continue
-		}
-		delete(configs, svc)
-		for _, md := range sd.GetMethods() {
-			if cfg == nil {
-				descs = append(descs, md)
-				continue
-			}
-			_, found := cfg.includeMethods[md.GetName()]
-			delete(cfg.includeMethods, md.GetName())
-			if found && cfg.includeService {
-				warn("Service %s already configured, so -method %s is unnecessary", svc, md.GetName())
-			}
-			if found || cfg.includeService {
-				descs = append(descs, md)
-			}
-		}
-		if cfg != nil && len(cfg.includeMethods) > 0 {
-			// configured methods not found
-			methodNames := make([]string, 0, len(cfg.includeMethods))
-			for m := range cfg.includeMethods {
-				methodNames = append(methodNames, fmt.Sprintf("%s/%s", svc, m))
-			}
-			sort.Strings(methodNames)
-			return nil, fmt.Errorf("configured methods not found: %s", strings.Join(methodNames, ", "))
-		}
-	}
-
-	if len(configs) > 0 {
-		// configured services not found
-		svcNames := make([]string, 0, len(configs))
-		for s := range configs {
-			svcNames = append(svcNames, s)
-		}
-		sort.Strings(svcNames)
-		return nil, fmt.Errorf("configured services not found: %s", strings.Join(svcNames, ", "))
-	}
-
-	return descs, nil
-}
-
-func computeSvcConfigs() (map[string]*svcConfig, error) {
+func computeSvcConfigs() (map[string]*common.SvcConfig, error) {
 	if len(services) == 0 && len(methods) == 0 {
 		return nil, nil
 	}
-	configs := map[string]*svcConfig{}
+	configs := map[string]*common.SvcConfig{}
 	for _, svc := range services {
-		configs[svc] = &svcConfig{
-			includeService: true,
-			includeMethods: map[string]struct{}{},
+		configs[svc] = &common.SvcConfig{
+			IncludeService: true,
+			IncludeMethods: map[string]struct{}{},
 		}
 	}
 	for _, fqMethod := range methods {
@@ -931,10 +858,10 @@ func computeSvcConfigs() (map[string]*svcConfig, error) {
 		}
 		cfg := configs[svc]
 		if cfg == nil {
-			cfg = &svcConfig{includeMethods: map[string]struct{}{}}
+			cfg = &common.SvcConfig{IncludeMethods: map[string]struct{}{}}
 			configs[svc] = cfg
 		}
-		cfg.includeMethods[method] = struct{}{}
+		cfg.IncludeMethods[method] = struct{}{}
 	}
 	return configs, nil
 }

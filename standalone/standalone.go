@@ -20,9 +20,13 @@ import (
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/fullstorydev/grpcui"
+	"github.com/fullstorydev/grpcui/common"
 	"github.com/fullstorydev/grpcui/internal/resources/standalone"
+	"github.com/fullstorydev/grpcurl"
 )
 
 const csrfCookieName = "_grpcui_csrf_token"
@@ -305,4 +309,33 @@ func HandlerViaReflection(ctx context.Context, cc grpc.ClientConnInterface, targ
 	}
 
 	return Handler(cc, target, m, f, opts...), nil
+}
+
+// HandlerViaFileDescriptorSet imports the file descriptor set (protoset), and constructs a handler to serve the UI.
+//
+// The handler has the same properties as the one returned by Handler.
+func HandlerViaFileDescripHandlerViaFileDescriptorSettorSet(cc grpc.ClientConnInterface, target string, fileDescriptorSet []byte, opts ...HandlerOption) (http.Handler, error) {
+
+	var files descriptorpb.FileDescriptorSet
+	err := proto.Unmarshal(fileDescriptorSet, &files)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse contents of protoset file: %v", err)
+	}
+
+	descSource, err := grpcurl.DescriptorSourceFromFileDescriptorSet(&files)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process proto source files.: %v", err)
+	}
+
+	methods, err := common.GetMethods(descSource, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute set of methods to expose: %v", err)
+	}
+
+	allFiles, err := grpcurl.GetAllFiles(descSource)
+	if err != nil {
+		return nil, fmt.Errorf("failed to enumerate all proto files: %v", err)
+	}
+
+	return Handler(cc, target, methods, allFiles, opts...), nil
 }

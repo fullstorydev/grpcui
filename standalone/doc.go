@@ -25,4 +25,19 @@
 //		return err
 //	}
 //	http.ListenAndServe(":8080", h)
+//
+// An example of using the package with a supplied file descriptor set (protoset):
+//
+//	 //go:embed:proto/contract.fds
+//	 var fileDescriptorSet []byte
+//
+//		cc, err := grpc.DialContext(ctx, "dns:///my-grpc-server:8080", grpc.WithBlock())
+//		if err != nil {
+//			return err
+//		}
+//		h, err := standalone.HandlerViaFileDescriptorSet(cc, "dns:///my-grpc-server:8080", &fileDescriptorSet)
+//		if err != nil {
+//			return err
+//		}
+//		http.ListenAndServe(":8080", h)
 package standalone
