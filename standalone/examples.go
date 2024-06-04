@@ -2,9 +2,10 @@ package standalone
 
 import (
 	"encoding/json"
+
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/golang/protobuf/proto" //lint:ignore SA1019 temporarily still supporting generated code from old plugin
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	protov2 "google.golang.org/protobuf/proto"
 )
 

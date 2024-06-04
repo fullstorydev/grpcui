@@ -348,7 +348,9 @@ func main() {
 	}
 
 	flags.Usage = usage
-	flags.Parse(os.Args[1:])
+	if err := flags.Parse(os.Args[1:]); err != nil {
+		fail(err, "Failed to parse the command line options")
+	}
 
 	if *help {
 		usage()
@@ -696,16 +698,12 @@ func main() {
 		handler = mux
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *bind, *port))
-	if err != nil {
-		fail(err, "Failed to listen on port %d", *port)
-	}
-
 	path := *basePath
 	if !strings.HasSuffix(path, "/") {
 		path += "/"
 	}
-	url := fmt.Sprintf("http://%s:%d%s", *bind, listener.Addr().(*net.TCPAddr).Port, path)
+
+	url := fmt.Sprintf("http://%s:%d%s", *bind, *port, path)
 	fmt.Printf("gRPC Web UI available at %s\n", url)
 
 	if *openBrowser {
@@ -715,7 +713,14 @@ func main() {
 			}
 		}()
 	}
-	if err := http.Serve(listener, handler); err != nil {
+
+	server := http.Server{
+		Addr:              fmt.Sprintf("%s:%d", *bind, *port),
+		Handler:           handler,
+		ReadHeaderTimeout: time.Second * 3,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
 		fail(err, "Failed to serve web UI")
 	}
 }
@@ -895,7 +900,7 @@ func (t *teeWriter) Write(b []byte) (int, error) {
 	// treat first writer as authoritative (regarding return value)
 	n, err := t.w[0].Write(b)
 	for _, w := range t.w[1:] {
-		w.Write(b)
+		w.Write(b) //nolint:errcheck
 	}
 	return n, err
 }

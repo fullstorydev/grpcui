@@ -119,9 +119,9 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 		w.Header().Add("Content-Type", "application/json")
 		w.WriteHeader(200)
 		if len(uiOpts.examples) > 0 {
-			w.Write(uiOpts.examples)
+			w.Write(uiOpts.examples) //nolint:errcheck
 		} else {
-			w.Write([]byte("[]"))
+			w.Write([]byte("[]")) //nolint:errcheck
 		}
 	})
 

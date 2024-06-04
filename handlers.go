@@ -14,8 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/jsonpb" //lint:ignore SA1019 we have to import this because it appears in grpcurl APIs used herein
-	"github.com/golang/protobuf/proto"  //lint:ignore SA1019 we have to import this because it appears in grpcurl APIs used herein
+	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck
+	"github.com/golang/protobuf/proto"  //nolint:staticcheck
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/jhump/protoreflect/desc"
 	"google.golang.org/grpc"
