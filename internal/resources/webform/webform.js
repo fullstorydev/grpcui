@@ -1476,6 +1476,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             var reader = new FileReader();
             reader.addEventListener("load", function () {
                 inp.text(btoa(this.result));
+                inp.focus();
             }, false);
             reader.readAsBinaryString(fileInput[0].files[0]);
         })
