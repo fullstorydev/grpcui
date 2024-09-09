@@ -31,5 +31,5 @@ if [[ "$(${PROTOC} --version 2>/dev/null)" != "libprotoc 3.${PROTOC_VERSION}" ]]
   mkdir -p .tmp/protoc
   curl -L "https://github.com/google/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-${PROTOC_OS}-${PROTOC_ARCH}.zip" > .tmp/protoc/protoc.zip
   pushd ./.tmp/protoc && unzip protoc.zip && popd
+  touch -c ./.tmp/protoc/bin/protoc
 fi
-
