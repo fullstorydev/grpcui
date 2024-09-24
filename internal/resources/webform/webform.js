@@ -1475,11 +1475,18 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         fileInput.on('change', function() {
             var reader = new FileReader();
             reader.addEventListener("load", function () {
-                inp.text(btoa(this.result));
-                inp.focus();
+                var base64Str = btoa(this.result);
+                inp.text(base64Str);
+
+                // when file is loaded, decode the base64 string and set the value
+                var str = base64Str;
+                if (!isBase64(str)) {
+                    throw new Error("value for type " + fld.type + " is not a valid base64-encoded string: " + JSON.stringify(value));
+                }
+                input.setValue(str);
             }, false);
             reader.readAsBinaryString(fileInput[0].files[0]);
-        })
+        });
 
         var input = new Input(parent, [], value);
         inp.focus(function() {
