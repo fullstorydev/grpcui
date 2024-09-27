@@ -1479,11 +1479,10 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                 var base64Str = btoa(this.result);
                 inp.text(base64Str);
 
-                var str = base64Str;
-                if (!isBase64(str)) {
+                if (!isBase64(base64Str)) {
                     throw new Error("value for type " + fld.type + " is not a valid base64-encoded string: " + JSON.stringify(value));
                 }
-                input.setValue(str);
+                input.setValue(base64Str);
             }, false);
             reader.readAsBinaryString(fileInput[0].files[0]);
         });
