@@ -154,9 +154,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         // set raw request text
         updateJSONRequest(requestObj);
 
-        // init grpcCurl text
-        updateCurlCommand(requestObj);
-
         // enable the invoke button
         resetInvoke(true);
 
