@@ -44,7 +44,6 @@ generate: .tmp/protoc/bin/protoc
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 	@go install github.com/jhump/protoreflect/desc/sourceinfo/cmd/protoc-gen-gosrcinfo@v1.14.1
 	go generate ./...
-	go mod tidy
 
 .PHONY: checkgenerate
 checkgenerate: generate
@@ -94,7 +93,7 @@ errcheck:
 	errcheck ./...
 
 .PHONY: test
-test:
+test: deps
 	# The race detector requires CGO: https://github.com/golang/go/issues/6508
 	CGO_ENABLED=1 go test -race ./...
 
