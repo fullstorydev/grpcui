@@ -74,7 +74,7 @@ func (s testSvr) Exchange(ctx context.Context, m *TestMessage) (*TestMessage, er
 		hdrs := metadata.MD{}
 		tlrs := metadata.MD{}
 		for k, v := range headers {
-			if strings.HasSuffix("-t", k) {
+			if strings.HasSuffix(k, "-t") {
 				tlrs[k] = v
 			} else {
 				hdrs[k] = v
@@ -91,7 +91,7 @@ func (s testSvr) UploadMany(stream KitchenSink_UploadManyServer) error {
 		hdrs := metadata.MD{}
 		tlrs := metadata.MD{}
 		for k, v := range headers {
-			if strings.HasSuffix("-t", k) {
+			if strings.HasSuffix(k, "-t") {
 				tlrs[k] = v
 			} else {
 				hdrs[k] = v
@@ -126,7 +126,7 @@ func (s testSvr) DownloadMany(m *TestMessage, stream KitchenSink_DownloadManySer
 		hdrs := metadata.MD{}
 		tlrs := metadata.MD{}
 		for k, v := range headers {
-			if strings.HasSuffix("-t", k) {
+			if strings.HasSuffix(k, "-t") {
 				tlrs[k] = v
 			} else {
 				hdrs[k] = v
@@ -151,7 +151,7 @@ func (s testSvr) DoManyThings(stream KitchenSink_DoManyThingsServer) error {
 		hdrs := metadata.MD{}
 		tlrs := metadata.MD{}
 		for k, v := range headers {
-			if strings.HasSuffix("-t", k) {
+			if strings.HasSuffix(k, "-t") {
 				tlrs[k] = v
 			} else {
 				hdrs[k] = v
