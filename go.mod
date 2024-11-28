@@ -1,9 +1,11 @@
 module github.com/fullstorydev/grpcui
 
-go 1.19
+go 1.21
+
+toolchain go1.21.3
 
 require (
-	github.com/fullstorydev/grpcurl v1.9.1
+	github.com/fullstorydev/grpcurl v1.9.2
 	github.com/golang/protobuf v1.5.4
 	github.com/jhump/protoreflect v1.16.0
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
