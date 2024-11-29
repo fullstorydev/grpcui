@@ -23,11 +23,9 @@ archives:
       - goos: windows
         format: zip
     name_template: >-
-      {{ .ProjectName }}_{{ .Version }}_
-      {{- if eq .Os "darwin" }}osx
-      {{- else }}{{ .Os }}{{ end }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}x86_32
-      {{- else }}{{ .Arch }}{{ end }}
+      {{ .Binary }}_{{ .Version }}_
+      {{- if eq .Os "darwin" }}osx{{ else }}{{ .Os }}{{ end }}_
+      {{- if eq .Arch "amd64" }}x86_64{{ else if eq .Arch "386" }}x86_32{{ else }}{{ .Arch }}{{ end }}
+      {{- with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     files:
       - LICENSE
