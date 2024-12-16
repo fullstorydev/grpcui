@@ -66,6 +66,8 @@ type InvokeOptions struct {
 	// of a bool "verbose" flag, so that additional logs may be added in the
 	// future and the caller control how detailed those logs will be.
 	Verbosity int
+
+	AdditionalDescriptorSource grpcurl.DescriptorSource
 }
 
 // RPCInvokeHandlerWithOptions is the same as RPCInvokeHandler except that it
@@ -91,11 +93,18 @@ func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.Meth
 
 		for _, md := range descs {
 			if md.GetFullyQualifiedName() == method {
-				descSource, err := grpcurl.DescriptorSourceFromFileDescriptors(md.GetFile())
-				if err != nil {
-					http.Error(w, "Failed to create descriptor source: "+err.Error(), http.StatusInternalServerError)
-					return
+				var descSource grpcurl.DescriptorSource
+				if options.AdditionalDescriptorSource == nil {
+					currDescSource, err := grpcurl.DescriptorSourceFromFileDescriptors(md.GetFile())
+					if err != nil {
+						http.Error(w, "Failed to create descriptor source: "+err.Error(), http.StatusInternalServerError)
+						return
+					}
+					descSource = currDescSource
+				} else {
+					descSource = options.AdditionalDescriptorSource
 				}
+
 				results, err := invokeRPC(r.Context(), method, ch, descSource, r.Header, r.Body, &options)
 				if err != nil {
 					if _, ok := err.(errReadFail); ok {
@@ -138,6 +147,7 @@ func RPCMetadataHandler(methods []*desc.MethodDescriptor, files []*desc.FileDesc
 
 		method := r.URL.Query().Get("method")
 		var results *schema
+
 		if method == "*" {
 			// This means gather *all* message types. This is used to
 			// provide a drop-down for Any messages.
@@ -145,7 +155,7 @@ func RPCMetadataHandler(methods []*desc.MethodDescriptor, files []*desc.FileDesc
 		} else {
 			for _, md := range methods {
 				if md.GetFullyQualifiedName() == method {
-					r, err := gatherMetadataForMethod(md)
+					r, err := gatherMetadataForMethod(md, files)
 					if err != nil {
 						http.Error(w, "Failed to gather metadata for RPC Method", http.StatusUnprocessableEntity)
 						return
@@ -258,7 +268,8 @@ func gatherAllMessages(msgs []*desc.MessageDescriptor, result *schema) {
 	}
 }
 
-func gatherMetadataForMethod(md *desc.MethodDescriptor) (*schema, error) {
+func gatherMetadataForMethod(md *desc.MethodDescriptor,
+	files []*desc.FileDescriptor) (*schema, error) {
 	msg := md.GetInputType()
 	result := &schema{
 		RequestType:   msg.GetFullyQualifiedName(),
@@ -268,6 +279,9 @@ func gatherMetadataForMethod(md *desc.MethodDescriptor) (*schema, error) {
 	}
 
 	result.visitMessage(msg)
+	for _, fd := range files {
+		gatherAllMessages(fd.GetMessageTypes(), result)
+	}
 
 	return result, nil
 }
@@ -435,7 +449,15 @@ func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterfa
 		reqStats.Sent++
 		req := input.Data[0]
 		input.Data = input.Data[1:]
-		if err := jsonpb.Unmarshal(bytes.NewReader(req), m); err != nil {
+		var jsonUnmarshaler jsonpb.Unmarshaler
+		if descSource != nil {
+			anyResolver := grpcurl.AnyResolverFromDescriptorSource(descSource)
+			jsonUnmarshaler = jsonpb.Unmarshaler{AnyResolver: anyResolver}
+		} else {
+			jsonUnmarshaler = jsonpb.Unmarshaler{}
+		}
+
+		if err := jsonUnmarshaler.Unmarshal(bytes.NewReader(req), m); err != nil {
 			return status.Errorf(codes.InvalidArgument, err.Error())
 		}
 		return nil

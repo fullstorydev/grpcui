@@ -306,6 +306,29 @@ type compositeSource struct {
 	file       grpcurl.DescriptorSource
 }
 
+func Union(slice1, slice2 []*desc.FileDescriptor) []*desc.FileDescriptor {
+	// Create a map to track unique elements
+	elementMap := make(map[string]*desc.FileDescriptor)
+
+	// Add elements from the first slice to the map
+	for _, elem := range slice1 {
+		elementMap[elem.GetName()] = elem
+	}
+
+	// Add elements from the second slice to the map
+	for _, elem := range slice2 {
+		elementMap[elem.GetName()] = elem
+	}
+
+	// Create a slice to store the union
+	var union []*desc.FileDescriptor
+	for elem := range elementMap {
+		union = append(union, elementMap[elem])
+	}
+
+	return union
+}
+
 func (cs compositeSource) ListServices() ([]string, error) {
 	return cs.reflection.ListServices()
 }
@@ -598,6 +621,16 @@ func main() {
 		fail(err, "Failed to compute set of methods to expose")
 	}
 	allFiles, err := grpcurl.GetAllFiles(descSource)
+	// grpcurl doesn't handle the case of composite source, so we need to handle it.
+	if fileSource != nil {
+		fileOnlyFiles, err := grpcurl.GetAllFiles(fileSource)
+		if err != nil {
+			fail(err, "Failed to enumerate all proto files from fileSource")
+		}
+		allFiles = Union(allFiles, fileOnlyFiles)
+	}
+	// Get additional Files
+
 	if err != nil {
 		fail(err, "Failed to enumerate all proto files")
 	}
@@ -632,7 +665,7 @@ func main() {
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraCSS, standalone.AddCSSFile)...)
 	handlerOpts = append(handlerOpts, configureAssets(otherAssets)...)
 
-	handler := standalone.Handler(cc, target, methods, allFiles, handlerOpts...)
+	handler := standalone.HandlerWithDescriptorSource(cc, target, methods, allFiles, descSource, handlerOpts...)
 	if *maxTime > 0 {
 		timeout := time.Duration(*maxTime * float64(time.Second))
 		// enforce the timeout by wrapping the handler and inserting a
