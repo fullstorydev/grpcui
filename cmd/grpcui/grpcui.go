@@ -629,7 +629,6 @@ func main() {
 		}
 		allFiles = Union(allFiles, fileOnlyFiles)
 	}
-	// Get additional Files
 
 	if err != nil {
 		fail(err, "Failed to enumerate all proto files")

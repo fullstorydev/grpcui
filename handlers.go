@@ -147,7 +147,6 @@ func RPCMetadataHandler(methods []*desc.MethodDescriptor, files []*desc.FileDesc
 
 		method := r.URL.Query().Get("method")
 		var results *schema
-
 		if method == "*" {
 			// This means gather *all* message types. This is used to
 			// provide a drop-down for Any messages.
