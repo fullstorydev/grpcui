@@ -1469,16 +1469,28 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         box.append(lbl);
         container.append(box);
 
+        var input = new Input(parent, [], value);
         fileInput.on('change', function() {
             var reader = new FileReader();
             reader.addEventListener("load", function () {
-                inp.text(btoa(this.result));
-                inp.focus();
+                var base64Str = '';
+                if (typeof this.result == 'string') {
+                    base64Str = btoa(this.result)
+                } else if (this.result instanceof ArrayBuffer) {
+                    var bytes = new Uint8Array(this.result);
+                    var len = bytes.byteLength;
+                    var binary = '';
+                    for (var i = 0; i < len; i++) {
+                        binary += String.fromCharCode( bytes[ i ] );
+                    }
+                    base64Str = btoa(binary);
+                }
+                inp.text(base64Str);
+                input.setValue(base64Str);
             }, false);
             reader.readAsBinaryString(fileInput[0].files[0]);
-        })
+        });
 
-        var input = new Input(parent, [], value);
         inp.focus(function() {
             var inp = this;
             setValidation(inp, function() {

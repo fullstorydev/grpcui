@@ -15,7 +15,7 @@ ci: deps checkgofmt checkgenerate vet staticcheck ineffassign predeclared test
 
 .PHONY: deps
 deps:
-	go get -d -v -t ./...
+	go get -v -t ./...
 	go mod tidy
 
 .PHONY: updatedeps
@@ -68,7 +68,7 @@ vet:
 
 .PHONY: staticcheck
 staticcheck:
-	@go install honnef.co/go/tools/cmd/staticcheck@v0.4.3
+	@go install honnef.co/go/tools/cmd/staticcheck@v0.5.1
 	staticcheck ./...
 
 .PHONY: ineffassign
@@ -78,7 +78,7 @@ ineffassign:
 
 .PHONY: predeclared
 predeclared:
-	@go install github.com/nishanths/predeclared@5f2f810c9ae6
+	@go install github.com/nishanths/predeclared@245576f9a85c96ea16c750df3887f1d827f01e9c
 	predeclared ./...
 
 # Intentionally omitted from CI, but target here for ad-hoc reports.
