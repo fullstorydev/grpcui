@@ -46,7 +46,7 @@ func WithCSS(css []byte) HandlerOption {
 }
 
 // AddJS adds a JS file to Handler, serving the supplied contents at the URI
-// "/s/<filename>" with a Content-Type of "text/javascript; charset=UTF-8". It
+// "/s/<filename>" with a ContentType-Type of "text/javascript; charset=UTF-8". It
 // will also be added to the AddlResources field of the WebFormContainerTemplateData
 // so that it is rendered into the HEAD of the HTML page.
 //
@@ -69,7 +69,7 @@ func AddJSFile(filename string, open func() (io.ReadCloser, error)) HandlerOptio
 }
 
 // AddCSS adds a CSS file to Handler, serving the supplied contents at the URI
-// "/s/<filename>" with a Content-Type of "text/css; charset=UTF-8". It
+// "/s/<filename>" with a ContentType-Type of "text/css; charset=UTF-8". It
 // will also be added to the AddlResources field of the WebFormContainerTemplateData
 // so that it is rendered into the HEAD of the HTML page.
 //
@@ -92,7 +92,7 @@ func AddCSSFile(filename string, open func() (io.ReadCloser, error)) HandlerOpti
 }
 
 // ServeAsset will add an additional file to Handler, serving the supplied contents
-// at the URI "/s/<filename>" with a Content-Type that is computed based on the given
+// at the URI "/s/<filename>" with a ContentType-Type that is computed based on the given
 // filename's extension.
 //
 // These assets could be images or other files referenced by a custom index template.
