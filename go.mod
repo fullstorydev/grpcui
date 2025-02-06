@@ -34,3 +34,8 @@ require (
 	google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
 )
+
+retract (
+	v1.5.1 // Contains retractions only.
+	v1.5.0 // Published accidentally.
+)
