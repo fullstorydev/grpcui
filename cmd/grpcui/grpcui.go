@@ -11,6 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"mime"
 	"net"
 	"net/http"
@@ -472,13 +473,13 @@ func main() {
 	ctx := context.Background()
 	dialTime := 10 * time.Second
 	if *connectTimeout > 0 {
-		dialTime = time.Duration(*connectTimeout * float64(time.Second))
+		dialTime = floatSecondsToDuration(*connectTimeout)
 	}
 	dialCtx, cancel := context.WithTimeout(ctx, dialTime)
 	defer cancel()
 	var opts []grpc.DialOption
 	if *keepaliveTime > 0 {
-		timeout := time.Duration(*keepaliveTime * float64(time.Second))
+		timeout := floatSecondsToDuration(*keepaliveTime)
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:    timeout,
 			Timeout: timeout,
@@ -634,7 +635,7 @@ func main() {
 
 	handler := standalone.Handler(cc, target, methods, allFiles, handlerOpts...)
 	if *maxTime > 0 {
-		timeout := time.Duration(*maxTime * float64(time.Second))
+		timeout := floatSecondsToDuration(*maxTime)
 		// enforce the timeout by wrapping the handler and inserting a
 		// context timeout for invocation calls
 		orig := handler
@@ -1175,4 +1176,13 @@ func dumpResponse(r *http.Response, includeBody bool) (string, error) {
 		}
 	}
 	return buf.String(), nil
+}
+
+func floatSecondsToDuration(seconds float64) time.Duration {
+	durationFloat := seconds * float64(time.Second)
+	if durationFloat > math.MaxInt64 {
+		// Avoid overflow
+		return math.MaxInt64
+	}
+	return time.Duration(durationFloat)
 }
