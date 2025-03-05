@@ -2708,7 +2708,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         for (let i = 0; i < history.length; i++) {
             const item = history[i];
             const id = `grpc-history-item-${i}`;
-            const dataString = JSON.stringify(item.request.data, null, 4);
+            const dataString = JSON.stringify(item.request.data.textContent, null, 4);
             const valid = services[item.service] && services[item.service].includes(item.method);
             let result = '';
             let messages = '&nbsp;';
@@ -2756,7 +2756,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
                     <div class="history-detail-heading">Metadata</div>
                     <table>
                         ${item.request.metadata.map((item) => `
-                        <tr><th>${item.name}</th><td>${item.value}</td></tr>
+                        <tr><th>${item.name.textContent}</th><td>${item.value.textContent}</td></tr>
                         `).join('\n')}
                     </table>
                 </div>`}
