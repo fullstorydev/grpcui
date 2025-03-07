@@ -2749,18 +2749,19 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             accordion.append(`<div class="history-item-panel">
                 <div class="history-detail-request">
                     <div class="history-detail-heading">Request</div>
-                    <span><pre class="request-json">${dataString.slice(0, 250)}${dataString.length > 250 ? '...' : ''}</pre></span>
+                    <span><pre class="request-json"></pre></span>
                 </div>
                 ${item.request.metadata.length === 0 ? '' : `
                 <div class="history-detail-metadata">
                     <div class="history-detail-heading">Metadata</div>
                     <table>
                         ${item.request.metadata.map((item) => `
-                        <tr><th>${item.name}</th><td>${item.value}</td></tr>
+                        <tr><th>${item.name.text}</th><td>${item.value.text}</td></tr>
                         `).join('\n')}
                     </table>
                 </div>`}
             </div>`);
+            document.querySelector(".request-json").textContent = dataString.slice(0, 250) + (dataString.length > 250 ? "..." : "");
             $(`#delete-${id}`).click((evt) => {
                 deleteHistoryItem(i);
                 evt.preventDefault();
