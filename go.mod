@@ -1,15 +1,14 @@
 module github.com/fullstorydev/grpcui
 
 go 1.21
-
-toolchain go1.21.3
+toolchain go1.23.7
 
 require (
 	github.com/fullstorydev/grpcurl v1.9.3
 	github.com/golang/protobuf v1.5.4
 	github.com/jhump/protoreflect v1.17.0
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
-	golang.org/x/net v0.35.0
+	golang.org/x/net v0.36.0
 	golang.org/x/term v0.29.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17
 	google.golang.org/grpc v1.61.0
