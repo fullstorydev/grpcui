@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/fullstorydev/grpcurl"
 	"html/template"
 	"io"
 	"mime"
@@ -42,7 +43,8 @@ const csrfHeaderName = "x-grpcui-csrf-token"
 //
 // The returned handler expects to serve resources from "/". If it will instead
 // be handling a sub-path (e.g. handling "/rpc-ui/") then use http.StripPrefix.
-func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescriptor, files []*desc.FileDescriptor, opts ...HandlerOption) http.Handler {
+func HandlerWithDescriptorSource(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescriptor, files []*desc.FileDescriptor,
+	descSource grpcurl.DescriptorSource, opts ...HandlerOption) http.Handler {
 	uiOpts := &handlerOptions{
 		indexTmpl: defaultIndexTemplate,
 		css:       grpcui.WebFormSampleCSS(),
@@ -91,10 +93,11 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	})
 
 	invokeOpts := grpcui.InvokeOptions{
-		ExtraMetadata:   uiOpts.extraMetadata,
-		PreserveHeaders: uiOpts.preserveHeaders,
-		EmitDefaults:    uiOpts.emitDefaults,
-		Verbosity:       uiOpts.invokeVerbosity,
+		ExtraMetadata:              uiOpts.extraMetadata,
+		PreserveHeaders:            uiOpts.preserveHeaders,
+		EmitDefaults:               uiOpts.emitDefaults,
+		Verbosity:                  uiOpts.invokeVerbosity,
+		AdditionalDescriptorSource: descSource,
 	}
 	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandlerWithOptions(ch, methods, invokeOpts))
 	mux.HandleFunc("/invoke/", func(w http.ResponseWriter, r *http.Request) {
@@ -138,6 +141,10 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 
 		mux.ServeHTTP(w, r)
 	})
+}
+
+func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescriptor, files []*desc.FileDescriptor, opts ...HandlerOption) http.Handler {
+	return HandlerWithDescriptorSource(ch, target, methods, files, nil, opts...)
 }
 
 var defaultIndexTemplate = template.Must(template.New("index.html").Parse(string(standalone.IndexTemplate())))
