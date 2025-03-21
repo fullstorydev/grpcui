@@ -852,6 +852,7 @@ type svcConfig struct {
 }
 
 func getMethods(source grpcurl.DescriptorSource, configs map[string]*svcConfig) ([]*desc.MethodDescriptor, error) {
+	servicesConfigured := len(configs) > 0
 	allServices, err := source.ListServices()
 	if err != nil {
 		return nil, err
@@ -871,7 +872,7 @@ func getMethods(source grpcurl.DescriptorSource, configs map[string]*svcConfig) 
 			return nil, fmt.Errorf("%s should be a service descriptor but instead is a %T", d.GetFullyQualifiedName(), d)
 		}
 		cfg := configs[svc]
-		if cfg == nil && len(configs) != 0 {
+		if cfg == nil && servicesConfigured {
 			// not configured to expose this service
 			continue
 		}
