@@ -95,6 +95,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 		PreserveHeaders: uiOpts.preserveHeaders,
 		EmitDefaults:    uiOpts.emitDefaults,
 		Verbosity:       uiOpts.invokeVerbosity,
+		Middlewares:     uiOpts.middlewares,
 	}
 	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandlerWithOptions(ch, methods, invokeOpts))
 	mux.HandleFunc("/invoke/", func(w http.ResponseWriter, r *http.Request) {
