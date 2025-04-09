@@ -70,7 +70,7 @@ vet:
 
 .PHONY: staticcheck
 staticcheck:
-	@go install honnef.co/go/tools/cmd/staticcheck@v0.5.1
+	@go install honnef.co/go/tools/cmd/staticcheck@2025.1.1
 	staticcheck -checks "inherit,-SA1019" ./...
 
 .PHONY: ineffassign
@@ -80,7 +80,7 @@ ineffassign:
 
 .PHONY: predeclared
 predeclared:
-	@go install github.com/nishanths/predeclared@245576f9a85c96ea16c750df3887f1d827f01e9c
+	@go install github.com/nishanths/predeclared@51e8c974458a0f93dc03fe356f91ae1a6d791e6f
 	predeclared ./...
 
 # Intentionally omitted from CI, but target here for ad-hoc reports.
