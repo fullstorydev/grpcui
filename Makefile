@@ -50,9 +50,9 @@ generate: .tmp/protoc/bin/protoc
 
 .PHONY: checkgenerate
 checkgenerate: generate
-	git status --porcelain
-	@if [ -n "$$(git status --porcelain)" ]; then \
-		git diff; \
+	git status --porcelain -- '**/*.go'
+	@if [ -n "$$(git status --porcelain -- '**/*.go')" ]; then \
+		git diff -- '**/*.go'; \
 		exit 1; \
 	fi
 
@@ -96,8 +96,7 @@ errcheck:
 	errcheck ./...
 
 .PHONY: test
-test:
-	# The race detector requires CGO: https://github.com/golang/go/issues/6508
+test: deps
 	CGO_ENABLED=1 go test -race ./...
 
 .tmp/protoc/bin/protoc: ./Makefile ./download_protoc.sh
