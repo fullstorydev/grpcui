@@ -154,9 +154,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         // set raw request text
         updateJSONRequest(requestObj);
 
-        // init grpcCurl text
-        updateCurlCommand(requestObj);
-
         // enable the invoke button
         resetInvoke(true);
 
@@ -2115,7 +2112,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     }
 
     let gRPCurlTextArea = $("#grpc-curl-text");
-    function updateCurlCommand(requestDataJson) {
+    function updateCurlCommand(reqObj) {
         let service = $("#grpc-service").val();
         let method = $("#grpc-method").val();
 
@@ -2133,20 +2130,21 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             }
         }
 
+        let requestDataJson = JSON.stringify(reqObj);
         gRPCurlTextArea.html(`<div>grpcurl -plaintext${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");
-    function updateJSONRequest(req) {
-        let requestDataJson = JSON.stringify(req, null, 2);
+    function updateJSONRequest(reqObj) {
+        let requestDataJson = JSON.stringify(reqObj, null, 2);
         jsonRawTextArea.val(requestDataJson);
-        updateCurlCommand(requestDataJson);
+        updateCurlCommand(reqObj);
     }
 
     function validateJSON() {
         let requestDataJson = jsonRawTextArea.val();
-        updateCurlCommand(requestDataJson);
         var reqObj = JSON.parse(requestDataJson);
+        updateCurlCommand(reqObj);
         rebuildRequestForm(reqObj, false);
     }
 
