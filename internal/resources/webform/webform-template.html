@@ -51,20 +51,30 @@
           <li id="#grpc-history-tab-button"><a href="#grpc-history-tab">History</a></li>
       </ul>
       <div class="grpc-tabcontent" id="grpc-request-tab">
-        <h3>Request Metadata</h3>
-        <div id="grpc-request-metadata">
-          <table class="grpc-request-table" id="grpc-request-metadata-form">
-              <tr><th></th><th class="name">Name</th><th class="value">Value</th></tr>
-              <tr><td><button id="grpc-request-metadata-add-row" class="add">+</button></td><td colspan="2"><span class="add-row-label">Add item</span></td></tr>
-          </table>
+        <div class="markdown-collapsible">
+          <input type="checkbox" id="toggle" />
+          <label for="toggle" class="toggle-label"><span class="arrow">&#9658;</span><h3>Request Metadata</h3></label>
+          <div id="grpc-request-metadata" class="toggle-content">
+            <table class="grpc-request-table" id="grpc-request-metadata-form">
+                <tr><th></th><th class="name">Name</th><th class="value">Value</th></tr>
+                <tr><td><button id="grpc-request-metadata-add-row" class="add">+</button></td><td colspan="2"><span class="add-row-label">Add item</span></td></tr>
+            </table>
+          </div>
         </div>
 
-        <h3>Request Data</h3>
-        <div id="grpc-request-form"></div>
+        <div class="markdown-collapsible">
+          <input type="checkbox" id="toggle-request-form" checked />
+          <label for="toggle-request-form" class="toggle-label"><span class="arrow">&#9658;</span><h3>Request Data</h3></label>
+          <div id="grpc-request-form" class="toggle-content">
+          </div>
+        </div>
 
-        <h3>Request Timeout</h3>
-        <div id="grpc-request-timeout">
-          <input/> seconds
+        <div class="markdown-collapsible">
+          <input type="checkbox" id="toggle-request-timeout" />
+          <label for="toggle-request-timeout" class="toggle-label"><span class="arrow">&#9658;</span><h3>Request Timeout</h3></label>
+          <div id="grpc-request-timeout" class="toggle-content">
+            <input/> seconds
+          </div>
         </div>
 
         <button class="grpc-invoke" disabled>Invoke</button>
