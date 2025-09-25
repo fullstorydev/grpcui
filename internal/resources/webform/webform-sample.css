@@ -3,6 +3,77 @@
     font-size: 1.0em;
 }
 
+#grpc-form .grpc-theme-switch {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+#grpc-form .grpc-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 90%;
+    cursor: pointer;
+    user-select: none;
+}
+
+#grpc-form .grpc-theme-toggle input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+}
+
+#grpc-form .grpc-theme-toggle-track {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    border-radius: 999px;
+    background-color: #d0d0d0;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+#grpc-form .grpc-theme-toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease;
+}
+
+#grpc-form .grpc-theme-toggle input:focus + .grpc-theme-toggle-track {
+    outline: 2px solid #4d90fe;
+    outline-offset: 2px;
+}
+
+#grpc-form .grpc-theme-toggle input:checked + .grpc-theme-toggle-track {
+    background-color: #4d90fe;
+}
+
+#grpc-form .grpc-theme-toggle input:checked + .grpc-theme-toggle-track .grpc-theme-toggle-thumb {
+    transform: translateX(20px);
+}
+
+#grpc-form .grpc-theme-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#grpc-form .grpc-theme-toggle-state {
+    font-weight: bold;
+}
+
 .grpc-desc {
     margin-bottom: 0;
 }
@@ -762,4 +833,355 @@ button#grpc-history-clear, button#grpc-history-save {
     border: 1px solid #dddddd;
     padding: 1em;
     margin-bottom: 1em;
+}
+
+#grpc-form.grpc-theme-dark {
+    background-color: #1a1a1a;
+    color: #e1e4e8;
+    color-scheme: dark;
+}
+
+body.grpc-dark-mode {
+    background-color: #1a1a1a;
+    color: #e1e4e8;
+}
+
+#grpc-form.grpc-theme-dark a {
+    color: #63a4ff;
+}
+
+#grpc-form.grpc-theme-dark .grpc-form-label,
+#grpc-form.grpc-theme-dark h3,
+#grpc-form.grpc-theme-dark h4 {
+    color: #f0f6fc;
+}
+
+#grpc-form.grpc-theme-dark .grpc-desc pre {
+    border-left: 1px solid #333;
+    color: #cccccc;
+}
+
+#grpc-form.grpc-theme-dark .grpc-theme-toggle-track {
+    background-color: #4a4a4a;
+}
+
+#grpc-form.grpc-theme-dark .grpc-theme-toggle-thumb {
+    background-color: #f2f2f2;
+}
+
+#grpc-form.grpc-theme-dark .grpc-theme-toggle-state {
+    color: #f2f2f2;
+}
+
+#grpc-form.grpc-theme-dark select,
+#grpc-form.grpc-theme-dark input,
+#grpc-form.grpc-theme-dark textarea {
+    background-color: #21262d;
+    color: #e1e4e8;
+    border: 1px solid #444c56;
+}
+
+#grpc-form.grpc-theme-dark textarea:disabled,
+#grpc-form.grpc-theme-dark input[type=text]:disabled,
+#grpc-form.grpc-theme-dark select:disabled {
+    background-color: #2a2a2a;
+    color: #777;
+    border-color: #2f2f2f;
+}
+
+#grpc-form.grpc-theme-dark button {
+    background: #21262d;
+    border: 1px solid #444c56;
+    color: #e1e4e8;
+}
+
+#grpc-form.grpc-theme-dark button:hover {
+    background: #30363d;
+    border-color: #606166;
+}
+
+#grpc-form.grpc-theme-dark button:disabled {
+    background: #2a2a2a;
+    border: 1px solid #2f2f2f;
+    color: #555;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-response ul.ui-tabs-nav {
+    background: #161b22;
+    border: none;
+    padding: 0;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-response ul.ui-tabs-nav .ui-tabs-anchor {
+    color: inherit;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-response li.ui-tabs-tab {
+    border-color: #444c56;
+    background: #21262d;
+    color: #8b949e;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-response li.ui-tabs-tab.ui-tabs-disabled {
+    background: #161b22;
+    color: #484f58;
+    border-color: #30363d;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-response li.ui-tabs-tab.ui-tabs-disabled a {
+    color: #484f58 !important;
+    cursor: not-allowed;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-response li.ui-tabs-active {
+    border-color: #444c56;
+    border-bottom-color: #1a1a1a;
+    color: #f0f6fc;
+    background: #1a1a1a;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-response li.ui-tabs-active a {
+    color: #ffffff;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-response .grpc-tabcontent.ui-tabs-panel {
+    border-color: #444c56;
+    background-color: #1a1a1a !important;
+    color: #e1e4e8;
+}
+
+#grpc-form.grpc-theme-dark .ui-tabs-panel {
+    background-color: #1a1a1a !important;
+    color: #e1e4e8;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-examples-container {
+    border-color: #333;
+    background-color: #1a1a1a;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-examples-container h3 {
+    border-bottom-color: #333;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-examples li:hover {
+    background-color: #242424;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-examples .ui-selected {
+    background: #2d2d2d;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-metadata-form th {
+    background-color: #1f1f1f;
+    border-bottom-color: #333;
+    color: #f2f2f2;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-metadata-form td {
+    color: #f2f2f2;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form div.input_container {
+    background-color: #1a1a1a;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form div.oneof {
+    border-left-color: #444;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form div.one-of-3 {
+    border-color: #444;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form div.two-of-3 {
+    border-color: #444;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form div.three-of-3 {
+    border-color: #555;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form .grpc-bytes-container label.grpc-file-button {
+    background: #2a2a2a;
+    border-color: #3c3c3c;
+    color: #f2f2f2;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form .grpc-bytes-container label.grpc-file-button.disabled {
+    background: #242424;
+    border-color: #333;
+    color: #666;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form .invalid-input {
+    border-color: #d56a8a;
+    background-color: #4a1d2b;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form td.name strong {
+    color: #f2f2f2;
+}
+
+#grpc-form.grpc-theme-dark .grpc-metadata-table th {
+    background-color: #1f1f1f;
+    border-bottom-color: #333;
+    color: #f2f2f2;
+}
+
+#grpc-form.grpc-theme-dark .grpc-metadata-table td,
+#grpc-form.grpc-theme-dark .grpc-metadata-table th {
+    border-color: #333;
+}
+
+#grpc-form.grpc-theme-dark #grpc-response-data div.output_container {
+    background-color: #1a1a1a;
+    color: #e1e4e8;
+}
+
+#grpc-form.grpc-theme-dark #grpc-response-data,
+#grpc-form.grpc-theme-dark #grpc-response-data pre,
+#grpc-form.grpc-theme-dark #grpc-response-data code {
+    color: #e1e4e8;
+    background-color: #1a1a1a;
+}
+
+#grpc-form.grpc-theme-dark #grpc-response-data .null {
+    color: #999999;
+}
+
+#grpc-form.grpc-theme-dark #grpc-response-data div.one-of-3 {
+    border-color: #444;
+}
+
+#grpc-form.grpc-theme-dark #grpc-response-data div.two-of-3 {
+    border-color: #444;
+}
+
+#grpc-form.grpc-theme-dark #grpc-response-data div.three-of-3 {
+    border-color: #555;
+}
+
+#grpc-form.grpc-theme-dark #grpc-response-error {
+    color: #ff6b6b;
+}
+
+#grpc-form.grpc-theme-dark #grpc-response-error #grpc-response-error-num,
+#grpc-form.grpc-theme-dark #grpc-response-error #grpc-response-error-msg {
+    color: #ff8787;
+}
+
+#grpc-form.grpc-theme-dark #grpc-history-list .history-item-header {
+    border-bottom-color: #333;
+    color: #f2f2f2;
+}
+
+#grpc-form.grpc-theme-dark #grpc-history-list > .ui-accordion:first-child {
+    border-top-color: #333;
+}
+
+#grpc-form.grpc-theme-dark #grpc-history-list .history-item-header .history-item-result.error {
+    color: #ff8787;
+}
+
+#grpc-form.grpc-theme-dark #grpc-history-list .history-item-header .history-item-messages {
+    color: #bbbbbb;
+}
+
+#grpc-form.grpc-theme-dark #grpc-history-list .history-item-panel {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+}
+
+#grpc-form.grpc-theme-dark .grpc-curl-panel {
+    background-color: #1a1a1a;
+    border-color: #333;
+}
+
+#grpc-form.grpc-theme-dark #grpc-request-form .duration-unit,
+#grpc-form.grpc-theme-dark #grpc-request-form label.disabled,
+#grpc-form.grpc-theme-dark #grpc-request-form td.empty_message {
+    color: #bbbbbb;
+}
+
+/* Dark mode styles for jQuery UI datepicker */
+body.grpc-dark-mode .ui-datepicker {
+    background: #21262d !important;
+    border: 1px solid #444c56 !important;
+    color: #e1e4e8 !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-header {
+    background: #30363d !important;
+    border: 1px solid #444c56 !important;
+    color: #f0f6fc !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-title {
+    color: #f0f6fc !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-prev,
+body.grpc-dark-mode .ui-datepicker-next {
+    background: #30363d !important;
+    border: 1px solid #444c56 !important;
+    color: #e1e4e8 !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-prev:hover,
+body.grpc-dark-mode .ui-datepicker-next:hover {
+    background: #484f58 !important;
+    border-color: #606166 !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-calendar {
+    background: #21262d !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-calendar th {
+    background: #30363d !important;
+    color: #f0f6fc !important;
+    border: 1px solid #444c56 !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-calendar td {
+    background: #21262d !important;
+    border: 1px solid #444c56 !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-calendar td a {
+    color: #e1e4e8 !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-calendar td a:hover {
+    background: #30363d !important;
+    color: #f0f6fc !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-calendar .ui-datepicker-today a {
+    background: #1f6feb !important;
+    color: #ffffff !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-calendar .ui-state-active a {
+    background: #238636 !important;
+    color: #ffffff !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-buttonpane {
+    background: #30363d !important;
+    border: 1px solid #444c56 !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-buttonpane button {
+    background: #21262d !important;
+    border: 1px solid #444c56 !important;
+    color: #e1e4e8 !important;
+}
+
+body.grpc-dark-mode .ui-datepicker-buttonpane button:hover {
+    background: #30363d !important;
+    border-color: #606166 !important;
 }

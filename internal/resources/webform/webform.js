@@ -2,6 +2,9 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     var descriptionsShown = false;
     var requestForm = $("#grpc-request-form");
+    var formRoot = $("#grpc-form");
+
+    initThemeToggle();
 
     function formServiceSelected(callback) {
         var svcName = $("#grpc-service").val();
@@ -61,6 +64,83 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         t.tabs("disable", 2);
         $(".grpc-invoke").prop("disabled", !enabled);
+    }
+
+    // initialize dark mode toggle with localStorage persistence
+    // and system preference detection
+    function initThemeToggle() {
+        var themeSwitch = $("#grpc-theme-switch");
+        if (!themeSwitch.length) {
+            return;
+        }
+
+        var themeState = $("#grpc-theme-toggle-state");
+        var storageKey = "grpcui-theme";
+        var darkClass = "grpc-theme-dark";
+        var localStorageAvailable = false;
+
+        try {
+            localStorageAvailable = typeof window.localStorage !== "undefined" && window.localStorage !== null;
+        } catch (err) {
+            localStorageAvailable = false;
+        }
+
+        var storedTheme = null;
+        if (localStorageAvailable) {
+            try {
+                storedTheme = window.localStorage.getItem(storageKey);
+            } catch (err) {
+                storedTheme = null;
+            }
+        }
+
+        var hasStoredPreference = storedTheme === "dark" || storedTheme === "light";
+        var mediaQuery = null;
+        if (window.matchMedia) {
+            mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        }
+
+        var initialIsDark = formRoot.hasClass(darkClass);
+        if (hasStoredPreference) {
+            initialIsDark = storedTheme === "dark";
+        } else if (!initialIsDark && mediaQuery) {
+            initialIsDark = mediaQuery.matches;
+        }
+
+        applyTheme(initialIsDark, false);
+
+        themeSwitch.on("change", function() {
+            applyTheme(themeSwitch.prop("checked"), true);
+        });
+
+        if (mediaQuery && !hasStoredPreference) {
+            var onPreferenceChange = function(event) {
+                applyTheme(event.matches, false);
+            };
+            if (typeof mediaQuery.addEventListener === "function") {
+                mediaQuery.addEventListener("change", onPreferenceChange);
+            } else if (typeof mediaQuery.addListener === "function") {
+                mediaQuery.addListener(onPreferenceChange);
+            }
+        }
+
+        function applyTheme(isDark, persist) {
+            formRoot.toggleClass(darkClass, isDark);
+            $("body").toggleClass("grpc-dark-mode", isDark);
+            themeSwitch.prop("checked", isDark);
+            themeSwitch.attr("aria-checked", isDark ? "true" : "false");
+            if (themeState.length) {
+                themeState.text(isDark ? "On" : "Off");
+            }
+            if (localStorageAvailable && persist) {
+                try {
+                    window.localStorage.setItem(storageKey, isDark ? "dark" : "light");
+                    hasStoredPreference = true;
+                } catch (err) {
+                    // Ignore storage errors (e.g. private browsing).
+                }
+            }
+        }
     }
 
     /*
