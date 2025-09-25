@@ -858,7 +858,11 @@ body.grpc-dark-mode {
 
 #grpc-form.grpc-theme-dark .grpc-desc pre {
     border-left: 1px solid #333;
-    color: #cccccc;
+    color: #6e7681;
+}
+
+#grpc-form.grpc-theme-dark #grpc-method-description {
+    color: #f0f6fc;
 }
 
 #grpc-form.grpc-theme-dark .grpc-theme-toggle-track {
