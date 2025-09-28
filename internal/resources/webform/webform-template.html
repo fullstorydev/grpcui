@@ -77,7 +77,21 @@
         </div>
         <hr>
         <div class="grpc-request-raw-container">
-          <h3>gRPCurl</h3>
+          <h3>gRPCurl
+              &nbsp;
+            <span class="clipboard-container" onclick="copyClipboardText()">
+              <svg id="clipboard-copy-buttons" aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy">
+                <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+              </svg>
+              <span id="clipboard-copy-message"  style="display: none;">
+                <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check color-fg-success" style="color:rgb(26, 127, 55)">
+                <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+                </svg>
+                <span style="color:rgb(81, 186, 111)">Copied!</span>
+              </span>
+            </span>
+          </h3>
+
           <div id="grpc-curl" class="grpc-curl-panel">
             <span><pre id="grpc-curl-text"></pre></span>
           </div>
@@ -146,4 +160,32 @@
 
     initGRPCForm(services, svcDescs, mtdDescs, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers);
 })();
+</script>
+
+<script type="application/javascript">
+  function copyClipboardText() {
+    // Copy the text to clipboard
+    const textToCopy = document.getElementById('grpc-curl-text').innerText;
+
+    // Copy text to clipboard using the Clipboard API
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      const copyIcon = "clipboard-copy-buttons"
+      const successMessage = "clipboard-copy-message"
+
+      // Hide Element A (Copy Icon)
+      // Show Element B (Success Icon)
+      document.getElementById(copyIcon).style.display = 'none';
+      document.getElementById(successMessage).style.display = 'inline';
+
+      // After 5 seconds, revert the visibility of Element A and B
+      setTimeout(() => {
+        // Show Element A (Copy Icon)
+        // Hide Element B (Success Icon)
+        document.getElementById(copyIcon).style.display = 'inline';
+        document.getElementById(successMessage).style.display = 'none';
+      }, 3500); // 3 seconds delay
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+    })
+  };
 </script>
