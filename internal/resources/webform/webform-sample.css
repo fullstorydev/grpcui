@@ -3,75 +3,47 @@
     font-size: 1.0em;
 }
 
-#grpc-form .grpc-theme-switch {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 12px;
-}
-
-#grpc-form .grpc-theme-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 90%;
-    cursor: pointer;
-    user-select: none;
-}
-
-#grpc-form .grpc-theme-toggle input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    border: 0;
-    clip: rect(0 0 0 0);
-    overflow: hidden;
-}
-
-#grpc-form .grpc-theme-toggle-track {
+.grpc-descriptions-header {
     position: relative;
-    width: 44px;
-    height: 24px;
-    border-radius: 999px;
-    background-color: #d0d0d0;
-    transition: background-color 0.2s ease;
-    flex-shrink: 0;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
 }
 
-#grpc-form .grpc-theme-toggle-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background-color: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease;
-}
-
-#grpc-form .grpc-theme-toggle input:focus + .grpc-theme-toggle-track {
-    outline: 2px solid #4d90fe;
-    outline-offset: 2px;
-}
-
-#grpc-form .grpc-theme-toggle input:checked + .grpc-theme-toggle-track {
-    background-color: #4d90fe;
-}
-
-#grpc-form .grpc-theme-toggle input:checked + .grpc-theme-toggle-track .grpc-theme-toggle-thumb {
-    transform: translateX(20px);
-}
-
-#grpc-form .grpc-theme-toggle-label {
-    display: inline-flex;
+.grpc-theme-container {
+    position: fixed;
+    top: 160px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
-#grpc-form .grpc-theme-toggle-state {
-    font-weight: bold;
+.grpc-theme-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: normal;
+}
+
+.grpc-theme-btn {
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    margin: 0;
+}
+
+.grpc-theme-btn:hover {
+    background-color: #e1e4e8;
+    border-color: #c0c7ce;
+}
+
+.grpc-theme-icon {
+    display: block;
+    line-height: 1;
 }
 
 .grpc-desc {
@@ -118,12 +90,14 @@
 }
 
 #grpc-descriptions {
+    position: relative;
     width: 100%;
     overflow: scroll;
 }
 
 #grpc-service-description {
     padding-top: 6px;
+    padding-right: 120px;
 }
 
 #grpc-method-description {
@@ -131,10 +105,12 @@
     color: #333;
     padding-top: 12px;
     padding-bottom: 12px;
+    padding-right: 120px;
 }
 
 #grpc-service-description-end {
     padding-bottom: 10px;
+    padding-right: 120px;
 }
 
 #grpc-container {
@@ -865,16 +841,23 @@ body.grpc-dark-mode {
     color: #f0f6fc;
 }
 
-#grpc-form.grpc-theme-dark .grpc-theme-toggle-track {
-    background-color: #4a4a4a;
+#grpc-form.grpc-theme-dark .grpc-descriptions-header {
+    border-bottom-color: #444c56;
 }
 
-#grpc-form.grpc-theme-dark .grpc-theme-toggle-thumb {
-    background-color: #f2f2f2;
+#grpc-form.grpc-theme-dark .grpc-theme-label {
+    color: #8b949e;
 }
 
-#grpc-form.grpc-theme-dark .grpc-theme-toggle-state {
-    color: #f2f2f2;
+#grpc-form.grpc-theme-dark .grpc-theme-btn {
+    background: #21262d;
+    border-color: #444c56;
+    color: #e1e4e8;
+}
+
+#grpc-form.grpc-theme-dark .grpc-theme-btn:hover {
+    background: #30363d;
+    border-color: #606166;
 }
 
 #grpc-form.grpc-theme-dark select,

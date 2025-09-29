@@ -4,7 +4,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     var requestForm = $("#grpc-request-form");
     var formRoot = $("#grpc-form");
 
-    initThemeToggle();
+    initTheme();
 
     function formServiceSelected(callback) {
         var svcName = $("#grpc-service").val();
@@ -66,80 +66,39 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         $(".grpc-invoke").prop("disabled", !enabled);
     }
 
-    // initialize dark mode toggle with localStorage persistence
-    // and system preference detection
-    function initThemeToggle() {
-        var themeSwitch = $("#grpc-theme-switch");
-        if (!themeSwitch.length) {
-            return;
-        }
-
-        var themeState = $("#grpc-theme-toggle-state");
-        var storageKey = "grpcui-theme";
+    function initTheme() {
+        var themeBtn = $("#grpc-theme-toggle");
+        var themeIcon = $(".grpc-theme-icon");
         var darkClass = "grpc-theme-dark";
-        var localStorageAvailable = false;
+        var storageKey = "grpc-theme";
 
+        // Check for saved preference, fallback to system preference
+        var savedTheme = null;
         try {
-            localStorageAvailable = typeof window.localStorage !== "undefined" && window.localStorage !== null;
-        } catch (err) {
-            localStorageAvailable = false;
+            savedTheme = localStorage.getItem(storageKey);
+        } catch (err) {}
+
+        var isDark = false;
+        if (savedTheme) {
+            isDark = savedTheme === "dark";
+        } else if (window.matchMedia) {
+            isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         }
 
-        var storedTheme = null;
-        if (localStorageAvailable) {
+        applyTheme(isDark);
+
+        themeBtn.on("click", function() {
+            isDark = !isDark;
+            applyTheme(isDark);
             try {
-                storedTheme = window.localStorage.getItem(storageKey);
-            } catch (err) {
-                storedTheme = null;
-            }
-        }
-
-        var hasStoredPreference = storedTheme === "dark" || storedTheme === "light";
-        var mediaQuery = null;
-        if (window.matchMedia) {
-            mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-        }
-
-        var initialIsDark = formRoot.hasClass(darkClass);
-        if (hasStoredPreference) {
-            initialIsDark = storedTheme === "dark";
-        } else if (!initialIsDark && mediaQuery) {
-            initialIsDark = mediaQuery.matches;
-        }
-
-        applyTheme(initialIsDark, false);
-
-        themeSwitch.on("change", function() {
-            applyTheme(themeSwitch.prop("checked"), true);
+                localStorage.setItem(storageKey, isDark ? "dark" : "light");
+            } catch (err) {}
         });
 
-        if (mediaQuery && !hasStoredPreference) {
-            var onPreferenceChange = function(event) {
-                applyTheme(event.matches, false);
-            };
-            if (typeof mediaQuery.addEventListener === "function") {
-                mediaQuery.addEventListener("change", onPreferenceChange);
-            } else if (typeof mediaQuery.addListener === "function") {
-                mediaQuery.addListener(onPreferenceChange);
-            }
-        }
-
-        function applyTheme(isDark, persist) {
-            formRoot.toggleClass(darkClass, isDark);
-            $("body").toggleClass("grpc-dark-mode", isDark);
-            themeSwitch.prop("checked", isDark);
-            themeSwitch.attr("aria-checked", isDark ? "true" : "false");
-            if (themeState.length) {
-                themeState.text(isDark ? "On" : "Off");
-            }
-            if (localStorageAvailable && persist) {
-                try {
-                    window.localStorage.setItem(storageKey, isDark ? "dark" : "light");
-                    hasStoredPreference = true;
-                } catch (err) {
-                    // Ignore storage errors (e.g. private browsing).
-                }
-            }
+        function applyTheme(dark) {
+            formRoot.toggleClass(darkClass, dark);
+            $("body").toggleClass("grpc-dark-mode", dark);
+            themeIcon.text(dark ? "🌙" : "☀️");
         }
     }
 

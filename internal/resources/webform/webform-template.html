@@ -1,15 +1,9 @@
 <div id="grpc-form">
-  <div class="grpc-theme-switch">
-    <label class="grpc-theme-toggle" for="grpc-theme-switch">
-      <input type="checkbox" id="grpc-theme-switch" role="switch" aria-checked="false">
-      <span class="grpc-theme-toggle-track">
-        <span class="grpc-theme-toggle-thumb"></span>
-      </span>
-      <span class="grpc-theme-toggle-label">
-        Dark mode
-        <span class="grpc-theme-toggle-state" id="grpc-theme-toggle-state">Off</span>
-      </span>
-    </label>
+  <div class="grpc-theme-container">
+    <span class="grpc-theme-label">Theme:</span>
+    <button id="grpc-theme-toggle" class="grpc-theme-btn" title="Toggle theme">
+      <span class="grpc-theme-icon">☀️</span>
+    </button>
   </div>
   <table class="grpc-desc">
     <tr>
@@ -42,7 +36,9 @@
         </table>
       </td>
       <td id="grpc-descriptions">
-        <button id="grpc-descriptions-toggle">»</button>
+        <div class="grpc-descriptions-header">
+          <button id="grpc-descriptions-toggle">»</button>
+        </div>
         <pre id="grpc-service-description"></pre>
         <pre id="grpc-method-description"></pre>
         <pre id="grpc-service-description-end"></pre>
