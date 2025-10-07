@@ -2,9 +2,8 @@ package grpcui
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/jhump/protoreflect/desc/builder"
-	"github.com/jhump/protoreflect/desc/protoprint"
 	"html/template"
 	"os"
 	"sort"
@@ -12,12 +11,23 @@ import (
 	"unicode"
 
 	"github.com/jhump/protoreflect/desc"
+	"github.com/jhump/protoreflect/desc/builder"
+	"github.com/jhump/protoreflect/desc/protoprint"
 
 	"github.com/fullstorydev/grpcui/internal/resources/webform"
 )
 
+// tojson converts a Go value to a JSON string and returns it as template.JS.
+func toJSON(v any) (template.JS, error) {
+	a, err := json.Marshal(v)
+	if err != nil {
+		return "", fmt.Errorf("Error marshaling to JSON: %w", err)
+	}
+	return template.JS(a), nil
+}
+
 var (
-	webFormTemplate = template.Must(template.New("grpc web form").Parse(string(webform.Template())))
+	webFormTemplate = template.Must(template.New("grpc web form").Funcs(template.FuncMap{"toJSON": toJSON}).Parse(string(webform.Template())))
 
 	protoPrinter = protoprint.Printer{
 		Compact: true,
@@ -56,8 +66,8 @@ var (
 //
 // The returned HTML form requires that the contents of WebFormScript() have
 // already been loaded as a script in the page.
-func WebFormContents(invokeURI, metadataURI string, target string, descs []*desc.MethodDescriptor) []byte {
-	return WebFormContentsWithOptions(invokeURI, metadataURI, target, descs, WebFormOptions{})
+func WebFormContents(invokeURI, metadataURI string, target string, gRPCOptions []string, descs []*desc.MethodDescriptor) []byte {
+	return WebFormContentsWithOptions(invokeURI, metadataURI, target, gRPCOptions, descs, WebFormOptions{})
 }
 
 // WebFormOptions contains optional arguments when creating a gRPCui web form.
@@ -76,7 +86,7 @@ type WebFormOptions struct {
 // accepts an additional argument, options. This can be used to toggle the JS
 // code into debug logging and can also be used to define the set of metadata to
 // show in the web form by default (empty if unspecified).
-func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, descs []*desc.MethodDescriptor, opts WebFormOptions) []byte {
+func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, grpcOptions []string, descs []*desc.MethodDescriptor, opts WebFormOptions) []byte {
 	type metadataEntry struct {
 		Name, Value string
 	}
@@ -90,14 +100,16 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, de
 		DefaultMetadata []metadataEntry
 		Debug           bool
 		Target          string
+		GRPCurlOptions  []string
 	}{
-		InvokeURI:   invokeURI,
-		MetadataURI: metadataURI,
-		SvcDescs:    map[string]string{},
-		Methods:     map[string][]string{},
-		MtdDescs:    map[string]string{},
-		Debug:       os.Getenv("GRPC_WEBFORM_DEBUG") != "",
-		Target:      target,
+		InvokeURI:      invokeURI,
+		MetadataURI:    metadataURI,
+		SvcDescs:       map[string]string{},
+		Methods:        map[string][]string{},
+		MtdDescs:       map[string]string{},
+		Debug:          os.Getenv("GRPC_WEBFORM_DEBUG") != "",
+		Target:         target,
+		GRPCurlOptions: grpcOptions,
 	}
 
 	if opts.Debug != nil {

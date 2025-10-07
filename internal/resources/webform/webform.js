@@ -2116,8 +2116,9 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         let service = $("#grpc-service").val();
         let method = $("#grpc-method").val();
 
-        var metadataStr = "";
-        var rows = $("#grpc-request-metadata-form tr");
+        const metadataStr = "";
+        const opts = window.gRPCurlOptions || ["-plaintext"];
+        const rows = $("#grpc-request-metadata-form tr");
         for (var i = 0; i < rows.length; i++) {
             var cells = $("input", rows[i]);
             if (cells.length === 0) {
@@ -2130,7 +2131,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             }
         }
 
-        gRPCurlTextArea.html(`<div>grpcurl -plaintext${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
+        gRPCurlTextArea.html(`<div>grpcurl ${opts.join(" ")} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");

@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -26,6 +27,7 @@ import (
 )
 
 const csrfCookieName = "_grpcui_csrf_token"
+
 const csrfHeaderName = "x-grpcui-csrf-token"
 
 // Handler returns an HTTP handler that provides a fully-functional gRPC web
@@ -42,7 +44,7 @@ const csrfHeaderName = "x-grpcui-csrf-token"
 //
 // The returned handler expects to serve resources from "/". If it will instead
 // be handling a sub-path (e.g. handling "/rpc-ui/") then use http.StripPrefix.
-func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescriptor, files []*desc.FileDescriptor, opts ...HandlerOption) http.Handler {
+func Handler(ch grpcdynamic.Channel, target string, gRPCOptions []string, methods []*desc.MethodDescriptor, files []*desc.FileDescriptor, opts ...HandlerOption) http.Handler {
 	uiOpts := &handlerOptions{
 		indexTmpl: defaultIndexTemplate,
 		css:       grpcui.WebFormSampleCSS(),
@@ -78,8 +80,8 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 		DefaultMetadata: uiOpts.defaultMetadata,
 		Debug:           uiOpts.debug,
 	}
-	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", target, methods, formOpts)
-	indexContents := getIndexContents(uiOpts.indexTmpl, target, webFormHTML, uiOpts.tmplResources)
+	webFormHTML := grpcui.WebFormContentsWithOptions("invoke", "metadata", target, gRPCOptions, methods, formOpts)
+	indexContents := getIndexContents(uiOpts.indexTmpl, target, gRPCOptions, webFormHTML, uiOpts.tmplResources)
 	indexResource := newResource("/", indexContents, "text/html; charset=utf-8", false)
 	indexResource.MustRevalidate = true
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -140,9 +142,18 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	})
 }
 
-var defaultIndexTemplate = template.Must(template.New("index.html").Parse(string(standalone.IndexTemplate())))
+// tojson converts a Go value to a JSON string and returns it as template.JS.
+func toJSON(v any) (template.JS, error) {
+	a, err := json.Marshal(v)
+	if err != nil {
+		return "", fmt.Errorf("Error marshaling to JSON: %w", err)
+	}
+	return template.JS(a), nil
+}
 
-func getIndexContents(tmpl *template.Template, target string, webFormHTML []byte, addlResources []*resource) []byte {
+var defaultIndexTemplate = template.Must(template.New("index.html").Funcs(template.FuncMap{"toJSON": toJSON}).Parse(string(standalone.IndexTemplate())))
+
+func getIndexContents(tmpl *template.Template, target string, gRPCOptions []string, webFormHTML []byte, addlResources []*resource) []byte {
 	addlHTML := make([]template.HTML, 0, len(addlResources))
 	for _, res := range addlResources {
 		tag := res.AsHTMLTag()
@@ -152,6 +163,7 @@ func getIndexContents(tmpl *template.Template, target string, webFormHTML []byte
 	}
 	data := WebFormContainerTemplateData{
 		Target:          target,
+		GRPCurlOptions:  gRPCOptions,
 		WebFormContents: template.HTML(webFormHTML),
 		AddlResources:   addlHTML,
 	}
@@ -293,7 +305,7 @@ func computeETag(contents []byte) string {
 // and methods supported by the server, and constructs a handler to serve the UI.
 //
 // The handler has the same properties as the one returned by Handler.
-func HandlerViaReflection(ctx context.Context, cc grpc.ClientConnInterface, target string, opts ...HandlerOption) (http.Handler, error) {
+func HandlerViaReflection(ctx context.Context, cc grpc.ClientConnInterface, target string, gRPCOptions []string, opts ...HandlerOption) (http.Handler, error) {
 	m, err := grpcui.AllMethodsViaReflection(ctx, cc)
 	if err != nil {
 		return nil, err
@@ -304,5 +316,5 @@ func HandlerViaReflection(ctx context.Context, cc grpc.ClientConnInterface, targ
 		return nil, err
 	}
 
-	return Handler(cc, target, m, f, opts...), nil
+	return Handler(cc, target, gRPCOptions, m, f, opts...), nil
 }

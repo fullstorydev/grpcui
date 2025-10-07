@@ -142,7 +142,9 @@
         {"name": "{{.Name}}", "value": "{{.Value}}"},
     {{- end}}
     ];
+
     window.target = {{ .Target }};
+    window.gRPCurlOptions = {{ .GRPCurlOptions | toJSON }};
 
     initGRPCForm(services, svcDescs, mtdDescs, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers);
 })();

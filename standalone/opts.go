@@ -15,6 +15,9 @@ type WebFormContainerTemplateData struct {
 	// Target is the name of the machine we are making requests to (for display purposes).
 	Target string
 
+	// GRPCurlOptions is the list of options needed to be passed through to grpcurl, such as -key, or -plaintext
+	GRPCurlOptions []string
+
 	// WebFormContents is the generated form HTML from your ServiceDescriptors.
 	WebFormContents template.HTML
 
