@@ -142,16 +142,7 @@ func Handler(ch grpcdynamic.Channel, target string, gRPCOptions []string, method
 	})
 }
 
-// tojson converts a Go value to a JSON string and returns it as template.JS.
-func toJSON(v any) (template.JS, error) {
-	a, err := json.Marshal(v)
-	if err != nil {
-		return "", fmt.Errorf("Error marshaling to JSON: %w", err)
-	}
-	return template.JS(a), nil
-}
-
-var defaultIndexTemplate = template.Must(template.New("index.html").Funcs(template.FuncMap{"toJSON": toJSON}).Parse(string(standalone.IndexTemplate())))
+var defaultIndexTemplate = template.Must(template.New("index.html").Parse(string(standalone.IndexTemplate())))
 
 func getIndexContents(tmpl *template.Template, target string, gRPCOptions []string, webFormHTML []byte, addlResources []*resource) []byte {
 	addlHTML := make([]template.HTML, 0, len(addlResources))
@@ -163,10 +154,15 @@ func getIndexContents(tmpl *template.Template, target string, gRPCOptions []stri
 	}
 	data := WebFormContainerTemplateData{
 		Target:          target,
-		GRPCurlOptions:  gRPCOptions,
 		WebFormContents: template.HTML(webFormHTML),
 		AddlResources:   addlHTML,
 	}
+	gRPCOptionsJSONStr, err := json.Marshal(gRPCOptions)
+	if err != nil {
+		panic(fmt.Errorf("Error marshaling to JSON: %w", err))
+	}
+	data.GRPCurlOptionsJSON = template.JS(gRPCOptionsJSONStr)
+
 	var indexBuf bytes.Buffer
 	if err := tmpl.Execute(&indexBuf, data); err != nil {
 		panic(err)

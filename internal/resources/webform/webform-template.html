@@ -144,7 +144,7 @@
     ];
 
     window.target = {{ .Target }};
-    window.gRPCurlOptions = {{ .GRPCurlOptions | toJSON }};
+    window.gRPCurlOptions = {{ .GRPCurlOptionsJSON }};
 
     initGRPCForm(services, svcDescs, mtdDescs, '{{ .InvokeURI }}', '{{ .MetadataURI }}', {{ .Debug }}, headers);
 })();

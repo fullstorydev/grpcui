@@ -2127,7 +2127,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             var name = $(cells[0]).val();
             var val = $(cells[1]).val();
             if (name !== "") {
-                metadataStr += ` -H "${name}: ${val}"`;
+                opts.push(`-H "${name}: ${val}"`);
             }
         }
 

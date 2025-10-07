@@ -17,17 +17,8 @@ import (
 	"github.com/fullstorydev/grpcui/internal/resources/webform"
 )
 
-// tojson converts a Go value to a JSON string and returns it as template.JS.
-func toJSON(v any) (template.JS, error) {
-	a, err := json.Marshal(v)
-	if err != nil {
-		return "", fmt.Errorf("Error marshaling to JSON: %w", err)
-	}
-	return template.JS(a), nil
-}
-
 var (
-	webFormTemplate = template.Must(template.New("grpc web form").Funcs(template.FuncMap{"toJSON": toJSON}).Parse(string(webform.Template())))
+	webFormTemplate = template.Must(template.New("grpc web form").Parse(string(webform.Template())))
 
 	protoPrinter = protoprint.Printer{
 		Compact: true,
@@ -91,27 +82,31 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, gr
 		Name, Value string
 	}
 	params := struct {
-		InvokeURI       string
-		MetadataURI     string
-		Services        []string
-		SvcDescs        map[string]string
-		Methods         map[string][]string
-		MtdDescs        map[string]string
-		DefaultMetadata []metadataEntry
-		Debug           bool
-		Target          string
-		GRPCurlOptions  []string
+		InvokeURI          string
+		MetadataURI        string
+		Services           []string
+		SvcDescs           map[string]string
+		Methods            map[string][]string
+		MtdDescs           map[string]string
+		DefaultMetadata    []metadataEntry
+		Debug              bool
+		Target             string
+		GRPCurlOptionsJSON template.JS
 	}{
-		InvokeURI:      invokeURI,
-		MetadataURI:    metadataURI,
-		SvcDescs:       map[string]string{},
-		Methods:        map[string][]string{},
-		MtdDescs:       map[string]string{},
-		Debug:          os.Getenv("GRPC_WEBFORM_DEBUG") != "",
-		Target:         target,
-		GRPCurlOptions: grpcOptions,
+		InvokeURI:   invokeURI,
+		MetadataURI: metadataURI,
+		SvcDescs:    map[string]string{},
+		Methods:     map[string][]string{},
+		MtdDescs:    map[string]string{},
+		Debug:       os.Getenv("GRPC_WEBFORM_DEBUG") != "",
+		Target:      target,
 	}
 
+	gRPCOptionsJSONStr, err := json.Marshal(grpcOptions)
+	if err != nil {
+		panic(fmt.Errorf("Error marshaling to JSON: %w", err))
+	}
+	params.GRPCurlOptionsJSON = template.JS(gRPCOptionsJSONStr)
 	if opts.Debug != nil {
 		params.Debug = *opts.Debug
 	}
