@@ -365,7 +365,11 @@ func main() {
 	for _, flagName := range grpcCurlFlags {
 		f := flags.Lookup(flagName)
 		if f.Value.String() != f.DefValue {
-			gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s=%s", f.Name, strconv.Quote(f.Value.String())))
+			if f.Value.String() == "true" {
+				gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s", f.Name))
+			} else {
+				gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s=%s", f.Name, strconv.Quote(f.Value.String())))
+			}
 		}
 	}
 
