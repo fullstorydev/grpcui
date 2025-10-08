@@ -48,7 +48,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 		indexTmpl:      defaultIndexTemplate,
 		css:            grpcui.WebFormSampleCSS(),
 		cssPublic:      true,
-		gRPCurlOptions: []string{"-plaintext"},
+		gRPCurlOptions: nil,
 	}
 	for _, o := range opts {
 		o.apply(uiOpts)
