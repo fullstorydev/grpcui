@@ -361,7 +361,7 @@ func main() {
 	flags.Usage = usage
 	flags.Parse(os.Args[1:])
 
-	gRPCOptions := []string{}
+	var gRPCOptions []string
 	for _, flagName := range grpcCurlFlags {
 		f := flags.Lookup(flagName)
 		if f.Value.String() != f.DefValue {

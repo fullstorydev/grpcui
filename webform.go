@@ -58,7 +58,7 @@ var (
 // The returned HTML form requires that the contents of WebFormScript() have
 // already been loaded as a script in the page.
 func WebFormContents(invokeURI, metadataURI string, target string, descs []*desc.MethodDescriptor) []byte {
-	return WebFormContentsWithOptions(invokeURI, metadataURI, target, descs, WebFormOptions{GRPCurlOptions: []string{"-plaintext"}})
+	return WebFormContentsWithOptions(invokeURI, metadataURI, target, descs, WebFormOptions{})
 }
 
 // WebFormOptions contains optional arguments when creating a gRPCui web form.
