@@ -2113,25 +2113,25 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     let gRPCurlTextArea = $("#grpc-curl-text");
     function updateCurlCommand(requestDataJson) {
-        let service = $("#grpc-service").val();
-        let method = $("#grpc-method").val();
+        let metadataStr = "";
 
-        const metadataStr = "";
-        const opts = window.gRPCurlOptions || ["-plaintext"];
+        const service = $("#grpc-service").val();
+        const method = $("#grpc-method").val();
         const rows = $("#grpc-request-metadata-form tr");
+
         for (var i = 0; i < rows.length; i++) {
-            var cells = $("input", rows[i]);
+            const cells = $("input", rows[i]);
             if (cells.length === 0) {
                 continue;
             }
-            var name = $(cells[0]).val();
-            var val = $(cells[1]).val();
+            const name = $(cells[0]).val();
+            const val = $(cells[1]).val();
             if (name !== "") {
-                opts.push(`-H "${name}: ${val}"`);
+                metadataStr += ` -H "${name}: ${val}"`;
             }
         }
 
-        gRPCurlTextArea.html(`<div>grpcurl ${opts.join(" ")} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
+        gRPCurlTextArea.html(`<div>grpcurl ${window.gRPCurlOptions}${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`);
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");

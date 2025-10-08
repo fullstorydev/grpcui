@@ -57,8 +57,8 @@ var (
 //
 // The returned HTML form requires that the contents of WebFormScript() have
 // already been loaded as a script in the page.
-func WebFormContents(invokeURI, metadataURI string, target string, gRPCOptions []string, descs []*desc.MethodDescriptor) []byte {
-	return WebFormContentsWithOptions(invokeURI, metadataURI, target, gRPCOptions, descs, WebFormOptions{})
+func WebFormContents(invokeURI, metadataURI string, target string, descs []*desc.MethodDescriptor) []byte {
+	return WebFormContentsWithOptions(invokeURI, metadataURI, target, descs, WebFormOptions{GRPCurlOptions: []string{"-plaintext"}})
 }
 
 // WebFormOptions contains optional arguments when creating a gRPCui web form.
@@ -71,27 +71,29 @@ type WebFormOptions struct {
 	// an environment variable: GRPC_WEBFORM_DEBUG (if it's not blank, then
 	// debug is enabled).
 	Debug *bool
+	// Any options that will be rendered before grpcurl in the grpccurl/raw request box
+	GRPCurlOptions []string
 }
 
 // WebFormContentsWithOptions is the same as WebFormContents except that it
 // accepts an additional argument, options. This can be used to toggle the JS
 // code into debug logging and can also be used to define the set of metadata to
 // show in the web form by default (empty if unspecified).
-func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, grpcOptions []string, descs []*desc.MethodDescriptor, opts WebFormOptions) []byte {
+func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, descs []*desc.MethodDescriptor, opts WebFormOptions) []byte {
 	type metadataEntry struct {
 		Name, Value string
 	}
 	params := struct {
-		InvokeURI          string
-		MetadataURI        string
-		Services           []string
-		SvcDescs           map[string]string
-		Methods            map[string][]string
-		MtdDescs           map[string]string
-		DefaultMetadata    []metadataEntry
-		Debug              bool
-		Target             string
-		GRPCurlOptionsJSON template.JS
+		InvokeURI       string
+		MetadataURI     string
+		Services        []string
+		SvcDescs        map[string]string
+		Methods         map[string][]string
+		MtdDescs        map[string]string
+		DefaultMetadata []metadataEntry
+		Debug           bool
+		Target          string
+		GRPCurlOptions  template.JS
 	}{
 		InvokeURI:   invokeURI,
 		MetadataURI: metadataURI,
@@ -102,11 +104,11 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, gr
 		Target:      target,
 	}
 
-	gRPCOptionsJSONStr, err := json.Marshal(grpcOptions)
+	gRPCOptionsJSONStr, err := json.Marshal(strings.Join(opts.GRPCurlOptions, " "))
 	if err != nil {
 		panic(fmt.Errorf("Error marshaling to JSON: %w", err))
 	}
-	params.GRPCurlOptionsJSON = template.JS(gRPCOptionsJSONStr)
+	params.GRPCurlOptions = template.JS(gRPCOptionsJSONStr)
 	if opts.Debug != nil {
 		params.Debug = *opts.Debug
 	}

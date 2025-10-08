@@ -365,7 +365,7 @@ func main() {
 	for _, flagName := range grpcCurlFlags {
 		f := flags.Lookup(flagName)
 		if f.Value.String() != f.DefValue {
-			if f.Value.String() == "true" {
+			if getter, ok := f.Value.(flag.Getter); ok && getter.Get() == true {
 				gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s", f.Name))
 			} else {
 				gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s=%s", f.Name, strconv.Quote(f.Value.String())))
@@ -654,8 +654,9 @@ func main() {
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraJS, standalone.AddJSFile)...)
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraCSS, standalone.AddCSSFile)...)
 	handlerOpts = append(handlerOpts, configureAssets(otherAssets)...)
+	handlerOpts = append(handlerOpts, standalone.WithGRPCOptions(gRPCOptions))
 
-	handler := standalone.Handler(cc, target, gRPCOptions, methods, allFiles, handlerOpts...)
+	handler := standalone.Handler(cc, target, methods, allFiles, handlerOpts...)
 	if *maxTime > 0 {
 		timeout := floatSecondsToDuration(*maxTime)
 		// enforce the timeout by wrapping the handler and inserting a

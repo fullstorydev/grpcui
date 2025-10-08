@@ -15,9 +15,6 @@ type WebFormContainerTemplateData struct {
 	// Target is the name of the machine we are making requests to (for display purposes).
 	Target string
 
-	// GRPCurlOptions is the list of options needed to be passed through to grpcurl, such as -key, or -plaintext converted to raw json
-	GRPCurlOptionsJSON template.JS
-
 	// WebFormContents is the generated form HTML from your ServiceDescriptors.
 	WebFormContents template.HTML
 
@@ -222,6 +219,12 @@ func WithClientDebug(debug bool) HandlerOption {
 	})
 }
 
+func WithGRPCOptions(options []string) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.gRPCurlOptions = options
+	})
+}
+
 // optFunc implements HandlerOption
 type optFunc func(opts *handlerOptions)
 
@@ -242,6 +245,7 @@ type handlerOptions struct {
 	emitDefaults        bool
 	invokeVerbosity     int
 	debug               *bool
+	gRPCurlOptions      []string
 }
 
 func (opts *handlerOptions) addlServedResources() []*resource {
