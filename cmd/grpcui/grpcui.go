@@ -155,6 +155,9 @@ var (
 		suite as a sequence of RPCs. This is similar to the "collections" feature
 		in postman. The format of this file is the same as used when saving
 		history from the gRPC UI "History" tab.`))
+	overrideGRPCCurl = flags.String("override-grpccurl-cmd", "", prettify(`
+		Override the command outputted in the gRPCurl section of the request tab.
+	`))
 	reflection = optionalBoolFlag{val: true}
 
 	port = flags.Int("port", 0, prettify(`
@@ -361,14 +364,15 @@ func main() {
 	flags.Usage = usage
 	flags.Parse(os.Args[1:])
 
-	var gRPCOptions []string
+	var grpcCurlCmd []string
+	grpcCurlCmd = append(grpcCurlCmd, "grpcurl")
 	for _, flagName := range grpcCurlFlags {
 		f := flags.Lookup(flagName)
 		if f.Value.String() != f.DefValue {
 			if getter, ok := f.Value.(flag.Getter); ok && getter.Get() == true {
-				gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s", f.Name))
+				grpcCurlCmd = append(grpcCurlCmd, fmt.Sprintf("-%s", f.Name))
 			} else {
-				gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s=%s", f.Name, strconv.Quote(f.Value.String())))
+				grpcCurlCmd = append(grpcCurlCmd, fmt.Sprintf("-%s=%s", f.Name, strconv.Quote(f.Value.String())))
 			}
 		}
 	}
@@ -654,7 +658,11 @@ func main() {
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraJS, standalone.AddJSFile)...)
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraCSS, standalone.AddCSSFile)...)
 	handlerOpts = append(handlerOpts, configureAssets(otherAssets)...)
-	handlerOpts = append(handlerOpts, standalone.WithGRPCOptions(gRPCOptions))
+	if overrideGRPCCurl != nil {
+		handlerOpts = append(handlerOpts, standalone.WithGRPCCmd([]string{*overrideGRPCCurl}))
+	} else {
+		handlerOpts = append(handlerOpts, standalone.WithGRPCCmd(grpcCurlCmd))
+	}
 
 	handler := standalone.Handler(cc, target, methods, allFiles, handlerOpts...)
 	if *maxTime > 0 {
