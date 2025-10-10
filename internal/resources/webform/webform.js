@@ -1,12 +1,5 @@
-window.initGRPCForm = function (
-    services,
-    svcDescs,
-    mtdDescs,
-    invokeURI,
-    metadataURI,
-    debug,
-    headers
-) {
+window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadataURI, debug, headers) {
+
     var descriptionsShown = false;
     var requestForm = $("#grpc-request-form");
 
@@ -16,8 +9,7 @@ window.initGRPCForm = function (
         var methods = services[svcName];
         var svcDescEnd = "";
         if (svcDesc) {
-            svcDescEnd =
-                "   // ... " + (methods.length - 1) + " more methods ...\n}";
+            svcDescEnd = '   // ... ' + (methods.length - 1) + ' more methods ...\n}';
         }
         $("#grpc-service-description").text(svcDesc);
         $("#grpc-service-description-end").text(svcDescEnd);
@@ -26,7 +18,7 @@ window.initGRPCForm = function (
         methodList.empty();
         for (var i = 0; i < methods.length; i++) {
             m = methods[i];
-            methodList.append($("<option>", { value: m, text: m }));
+            methodList.append($("<option>", {value: m, text: m}));
         }
         $("#grpc-method option:first-of-type").select();
         // implicit selection of first element does not
@@ -47,11 +39,11 @@ window.initGRPCForm = function (
         resetInvoke(false);
 
         $.ajax(metadataURI + "?method=" + fullMethod)
-            .done(function (data) {
+            .done(function(data) {
                 buildRequestForm(data);
                 callback?.();
             })
-            .fail(function (data, status) {
+            .fail(function(data, status) {
                 alert("Unexpected error: " + status);
                 if (debug) {
                     console.trace(data);
@@ -210,8 +202,8 @@ window.initGRPCForm = function (
         var list = $("#grpc-message-types");
         list.empty();
         for (var i = 0; i < messageNames.length; i++) {
-            var opt = $("<option>");
-            opt.attr("value", messageNames[i]);
+            var opt = $('<option>');
+            opt.attr('value', messageNames[i]);
             opt.text(messageNames[i]);
             list.append(opt);
         }
@@ -244,41 +236,30 @@ window.initGRPCForm = function (
         // put it in table with label
         var div = $("<div>");
         div.addClass("input_container one-of-2 one-of-3 one-of-4 one-of-5");
-        div.attr("id", "root");
+        div.attr('id', 'root');
         requestForm.append(div);
 
-        var table = $("<table>");
+        var table = $('<table>');
         div.append(table);
 
         var requestType = schema.requestType;
-        var row = $("<tr>");
+        var row = $('<tr>');
         table.append(row);
-        var cell = $("<th>");
-        cell.attr("colspan", "3");
+        var cell = $('<th>');
+        cell.attr('colspan', '3');
         cell.text(requestType);
         if (schema.requestStream) {
-            cell.prepend("<em>stream</em> ");
+            cell.prepend('<em>stream</em> ');
         }
         row.append(cell);
 
-        requestForm.data(
-            "root",
-            addElementToForm(
-                schema,
-                table,
-                newRootInput(),
-                0,
-                newRequest,
-                allowMissing,
-                fldDef
-            )
-        );
+        requestForm.data("root", addElementToForm(schema, table, newRootInput(), 0, newRequest, allowMissing, fldDef));
     }
 
     var undefined = [][1];
 
     function isUnset(v) {
-        return v === null || typeof v === "undefined";
+        return v === null || typeof v === 'undefined';
     }
 
     /*
@@ -330,38 +311,13 @@ window.initGRPCForm = function (
     //
     // This function does not handle oneofs. Those are only valid as direct
     // children of a message, and thus addMessageToForm handles them.
-    function addElementToForm(
-        schema,
-        container,
-        parent,
-        pathLen,
-        value,
-        allowMissing,
-        fld
-    ) {
+    function addElementToForm(schema, container, parent, pathLen, value, allowMissing, fld) {
         if (fld.isMap) {
-            return addMapToForm(
-                schema,
-                container,
-                parent,
-                pathLen,
-                value,
-                allowMissing,
-                fld
-            );
+            return addMapToForm(schema, container, parent, pathLen, value, allowMissing, fld);
         }
 
         if (fld.isArray) {
-            return addArrayToForm(
-                schema,
-                container,
-                parent,
-                pathLen,
-                value,
-                allowMissing,
-                "repeated " + fld.type,
-                fld
-            );
+            return addArrayToForm(schema, container, parent, pathLen, value, allowMissing, "repeated " + fld.type, fld);
         }
 
         if (fld.type === "google.protobuf.ListValue") {
@@ -379,40 +335,15 @@ window.initGRPCForm = function (
                 defaultVal: null,
                 description: fld.description,
             };
-            return addArrayToForm(
-                schema,
-                container,
-                parent,
-                pathLen,
-                value,
-                allowMissing,
-                fld.type,
-                elemType
-            );
+            return addArrayToForm(schema, container, parent, pathLen, value, allowMissing, fld.type, elemType);
         }
 
         if (fld.isMessage && !isWellKnown(fld.type)) {
-            return addMessageToForm(
-                schema,
-                container,
-                parent,
-                pathLen,
-                value,
-                allowMissing,
-                fld
-            );
+            return addMessageToForm(schema, container, parent, pathLen, value, allowMissing, fld);
         }
 
-        if (fld.type === "google.protobuf.Any") {
-            return addAnyToForm(
-                schema,
-                container,
-                parent,
-                pathLen,
-                value,
-                allowMissing,
-                fld
-            );
+        if (fld.type === 'google.protobuf.Any') {
+            return addAnyToForm(schema, container, parent, pathLen, value, allowMissing, fld);
         }
 
         // Remaining cases are non-composite inputs. So we may need to create
@@ -424,76 +355,32 @@ window.initGRPCForm = function (
         }
 
         switch (fld.type) {
-            case "int32":
-            case "sint32":
-            case "sfixed32":
-            case "google.protobuf.Int32Value":
-                return addIntToForm(
-                    container,
-                    parent,
-                    value,
-                    fld,
-                    MIN_INT32,
-                    MAX_INT32
-                );
+            case "int32": case "sint32": case "sfixed32": case "google.protobuf.Int32Value":
+            return addIntToForm(container, parent, value, fld, MIN_INT32, MAX_INT32);
 
-            case "uint32":
-            case "fixed32":
-            case "google.protobuf.UInt32Value":
-                return addIntToForm(
-                    container,
-                    parent,
-                    value,
-                    fld,
-                    0,
-                    MAX_UINT32
-                );
+            case "uint32": case "fixed32": case "google.protobuf.UInt32Value":
+            return addIntToForm(container, parent, value, fld, 0, MAX_UINT32);
 
-            case "int64":
-            case "sint64":
-            case "sfixed64":
-            case "google.protobuf.Int64Value":
-                return addStringIntToForm(
-                    container,
-                    parent,
-                    value,
-                    fld,
-                    MIN_INT64,
-                    MAX_INT64
-                );
+            case "int64": case "sint64": case "sfixed64": case "google.protobuf.Int64Value":
+            return addStringIntToForm(container, parent, value, fld, MIN_INT64, MAX_INT64);
 
-            case "uint64":
-            case "fixed64":
-            case "google.protobuf.UInt64Value":
-                return addStringIntToForm(
-                    container,
-                    parent,
-                    value,
-                    fld,
-                    "0",
-                    MAX_UINT64
-                );
+            case "uint64": case "fixed64": case "google.protobuf.UInt64Value":
+            return addStringIntToForm(container, parent, value, fld, "0", MAX_UINT64);
 
-            case "double":
-            case "float":
-            case "google.protobuf.DoubleValue":
-            case "google.protobuf.FloatValue":
-                // TODO(jh): should 32-bit floats get extra range checks
-                // (in case user is trying to use silly large magnitude
-                // that will just get converted to "infinity" for 32-bit)?
-                return addDoubleToForm(container, parent, value, fld);
+            case "double": case "float": case "google.protobuf.DoubleValue": case "google.protobuf.FloatValue":
+            // TODO(jh): should 32-bit floats get extra range checks
+            // (in case user is trying to use silly large magnitude
+            // that will just get converted to "infinity" for 32-bit)?
+            return addDoubleToForm(container, parent, value, fld);
 
-            case "string":
-            case "google.protobuf.StringValue":
-                return addStringToForm(container, parent, value, fld);
+            case "string": case "google.protobuf.StringValue":
+            return addStringToForm(container, parent, value, fld);
 
-            case "bytes":
-            case "google.protobuf.BytesValue":
-                return addBytesToForm(container, parent, value, fld);
+            case "bytes": case "google.protobuf.BytesValue":
+            return addBytesToForm(container, parent, value, fld);
 
-            case "bool":
-            case "google.protobuf.BoolValue":
-                return addBoolToForm(container, parent, value, fld);
+            case "bool": case "google.protobuf.BoolValue":
+            return addBoolToForm(container, parent, value, fld);
 
             case "google.protobuf.Timestamp":
                 return addTimestampToForm(container, parent, value, fld);
@@ -501,20 +388,11 @@ window.initGRPCForm = function (
             case "google.protobuf.Duration":
                 return addDurationToForm(container, parent, value, fld);
 
-            case "google.protobuf.Value":
-            case "google.protobuf.Struct":
-                return addJSONToForm(
-                    container,
-                    parent,
-                    value,
-                    fld,
-                    fld.type === "google.protobuf.Struct"
-                );
+            case "google.protobuf.Value": case "google.protobuf.Struct":
+            return addJSONToForm(container, parent, value, fld, fld.type === "google.protobuf.Struct");
 
             default:
-                throw new Error(
-                    "Unable to handle non-message non-enum type " + fld.type
-                );
+                throw new Error('Unable to handle non-message non-enum type ' + fld.type);
         }
     }
 
@@ -524,26 +402,13 @@ window.initGRPCForm = function (
     // represented in the schema metadata (since that is how protobuf represents
     // maps: as repeated messages, where each message has a 'key' and a 'value'
     // field).
-    function addMapToForm(
-        schema,
-        container,
-        parent,
-        pathLen,
-        value,
-        allowMissing,
-        fld
-    ) {
+    function addMapToForm(schema, container, parent, pathLen, value, allowMissing, fld) {
         var mapEntryFields = schema.messageTypes[fld.type];
-        var mapType =
-            "map<" +
-            mapEntryFields[0].type +
-            "," +
-            mapEntryFields[1].type +
-            ">";
+        var mapType = "map<" + mapEntryFields[0].type + "," + mapEntryFields[1].type + ">";
 
         if (isUnset(value)) {
             value = {};
-        } else if (typeof value !== "object" || value instanceof Array) {
+        } else if (typeof value !== 'object' || value instanceof Array) {
             throw typeError(mapType, value, "object");
         }
 
@@ -569,23 +434,14 @@ window.initGRPCForm = function (
             }
         }
 
-        input.asArray = addArrayToForm(
-            schema,
-            container,
-            input,
-            pathLen,
-            arrayVal,
-            allowMissing,
-            mapType,
-            fld
-        );
+        input.asArray = addArrayToForm(schema, container, input, pathLen, arrayVal, allowMissing, mapType, fld);
 
         // adapt value form array to map by overriding change handlers
-        input.doOnChange = function (child, revPath, val, nextFunc) {
+        input.doOnChange = function(child, revPath, val, nextFunc) {
             // translate child index to map key
-            var index = +revPath[revPath.length - 1];
+            var index = + revPath[revPath.length-1];
             var key = this.childKeys[index];
-            if (revPath.length === 2 && revPath[0] === "key") {
+            if (revPath.length === 2 && revPath[0] === 'key') {
                 // key was changed! check that all keys are unique
                 var newKey = val;
 
@@ -599,7 +455,7 @@ window.initGRPCForm = function (
                     }
                 }
 
-                var entryVal = this.asArray.children[index]["value"].value;
+                var entryVal = this.asArray.children[index]['value'].value;
                 this.parent.onAdd(this, [newKey], entryVal);
                 if (!isUnset(key)) {
                     this.parent.onDelete(this, [key]);
@@ -615,12 +471,12 @@ window.initGRPCForm = function (
 
             // otherwise, replace last two path elements
             // (array index and 'value') with the map key
-            revPath.splice(revPath.length - 1, 1);
-            revPath[revPath.length - 1] = key;
+            revPath.splice(revPath.length-1, 1);
+            revPath[revPath.length-1] = key;
 
             this.parent[nextFunc].call(this.parent, this, revPath, val);
         };
-        input.onAdd = function (child, revPath, val) {
+        input.onAdd = function(child, revPath, val) {
             if (revPath.length <= 1) {
                 // We are adding an entry to the map. We use an undefined
                 // key to means it's not in main request model yet
@@ -629,15 +485,15 @@ window.initGRPCForm = function (
                 // with existing key).
                 this.childKeys.push(undefined);
             } else {
-                this.doOnChange(child, revPath, val, "onAdd");
+                this.doOnChange(child, revPath, val, 'onAdd');
             }
         };
-        input.onChange = function (child, revPath, val) {
-            this.doOnChange(child, revPath, val, "onChange");
+        input.onChange = function(child, revPath, val) {
+            this.doOnChange(child, revPath, val, 'onChange');
         };
-        input.onDelete = function (child, revPath) {
+        input.onDelete = function(child, revPath) {
             // translate child index to map key
-            var index = revPath[revPath.length - 1];
+            var index = revPath[revPath.length-1];
             var key = this.childKeys[index];
             if (isUnset(key)) {
                 // never added to model, so nothing to delete
@@ -653,8 +509,8 @@ window.initGRPCForm = function (
 
             // otherwise, replace last two path elements
             // (array index and 'value') with the map key
-            revPath.splice(revPath.length - 1, 1);
-            revPath[revPath.length - 1] = key;
+            revPath.splice(revPath.length-1, 1);
+            revPath[revPath.length-1] = key;
             this.parent.onDelete(this, revPath);
         };
 
@@ -665,16 +521,7 @@ window.initGRPCForm = function (
     //
     // Arrays result in a table of inputs, where each row is an element in the
     // array value. The table includes buttons for adding and removing rows.
-    function addArrayToForm(
-        schema,
-        container,
-        parent,
-        pathLen,
-        value,
-        allowMissing,
-        typeName,
-        fld
-    ) {
+    function addArrayToForm(schema, container, parent, pathLen, value, allowMissing, typeName, fld) {
         if (isUnset(value)) {
             value = [];
         } else if (!(value instanceof Array)) {
@@ -682,7 +529,7 @@ window.initGRPCForm = function (
         }
 
         var table = makeTableContainer(container, pathLen);
-        table.addClass("grpc-request-table");
+        table.addClass('grpc-request-table');
         var children = [];
         var input = new Input(parent, children, value);
 
@@ -696,7 +543,7 @@ window.initGRPCForm = function (
             isArray: false,
             isMap: false,
             isMapEntry: fld.isMap,
-            isRequired: false,
+            isRequired: false
         };
 
         for (var i = 0; i < value.length; i++) {
@@ -704,55 +551,39 @@ window.initGRPCForm = function (
 
             var row = newArrayRow(input);
             table.append(row);
-            cell = $("<td>");
+            cell = $('<td>');
             row.append(cell);
 
-            var child = addElementToForm(
-                schema,
-                cell,
-                input,
-                pathLen + 1,
-                elementVal,
-                allowMissing,
-                elementFld
-            );
+            var child = addElementToForm(schema, cell, input, pathLen+1, elementVal, allowMissing, elementFld);
             child.row = row;
             children.push(child);
         }
 
-        row = $("<tr>");
+        row = $('<tr>');
         table.append(row);
-        var cell = $("<td>");
-        cell.addClass("array_button");
-        var button = $("<button>");
-        button.addClass("add");
-        button.text("+");
+        var cell = $('<td>');
+        cell.addClass('array_button');
+        var button = $('<button>');
+        button.addClass('add');
+        button.text('+');
         cell.append(button);
         row.append(cell);
-        cell = $("<td>");
+        cell = $('<td>');
         cell.html('<span class="add-row-label">Add item</span>');
         row.append(cell);
 
-        button.click(function () {
+        button.click(function() {
             // add a new element to the array
-            var tr = $(this).closest("tr");
-            var table = tr.closest("table");
+            var tr = $(this).closest('tr');
+            var table = tr.closest('table');
             var elementVal = getInitialValue(schema, elementFld);
 
             var newRow = newArrayRow(input);
             table.append(newRow);
-            var cell = $("<td>");
+            var cell = $('<td>');
             newRow.append(cell);
 
-            var child = addElementToForm(
-                schema,
-                cell,
-                input,
-                pathLen + 1,
-                elementVal,
-                true,
-                elementFld
-            );
+            var child = addElementToForm(schema, cell, input, pathLen+1, elementVal, true, elementFld);
             child.row = newRow;
             children.push(child);
 
@@ -768,15 +599,13 @@ window.initGRPCForm = function (
                 // callback. But that doesn't have convenient access to the
                 // actual TR element (which is the context for finding the
                 // first input)
-                var inputs = $("input,textarea", newRow);
+                var inputs = $('input,textarea', newRow);
                 if (inputs.length > 0) {
                     var inp = $(inputs[0]);
                     // TODO(jh): this is kind of annoying if the element is
                     // already in the viewport -- it would be nice to detect
                     // that and skip the scrolling for those cases
-                    $([document.documentElement, document.body]).scrollTop(
-                        inp.offset().top - 30
-                    );
+                    $([document.documentElement, document.body]).scrollTop(inp.offset().top-30);
                     inp.focus();
                 }
             }
@@ -786,19 +615,19 @@ window.initGRPCForm = function (
     }
 
     function newArrayRow(input) {
-        var row = $("<tr>");
-        row.addClass("array_element");
-        var cell = $("<td>");
-        cell.addClass("array_button");
-        var button = $("<button>");
-        button.addClass("delete");
-        button.text("X");
+        var row = $('<tr>');
+        row.addClass('array_element');
+        var cell = $('<td>');
+        cell.addClass('array_button');
+        var button = $('<button>');
+        button.addClass('delete');
+        button.text('X');
         cell.append(button);
         row.append(cell);
-        button.click(function () {
+        button.click(function() {
             var children = input.children;
             var removed;
-            $(this).closest("tr").remove();
+            $(this).closest('tr').remove();
             for (var idx = 0; idx < children.length; idx++) {
                 if (children[idx].row === row) {
                     removed = children[idx];
@@ -823,16 +652,8 @@ window.initGRPCForm = function (
     //
     // Messages, like repeated fields (maps and arrays), can be rendered with a
     // border, to visually group their child fields.
-    function addMessageToForm(
-        schema,
-        container,
-        parent,
-        pathLen,
-        value,
-        allowMissing,
-        fld
-    ) {
-        if (typeof value !== "object" || value instanceof Array) {
+    function addMessageToForm(schema, container, parent, pathLen, value, allowMissing, fld) {
+        if (typeof value !== 'object' || value instanceof Array) {
             throw typeError(fld.type, value, "object");
         }
 
@@ -849,35 +670,27 @@ window.initGRPCForm = function (
         for (var i = 0; i < fields.length; i++) {
             var currField = fields[i];
 
-            var row = $("<tr>");
-            row.addClass("message_field");
+            var row = $('<tr>');
+            row.addClass('message_field');
             table.append(row);
             var cell = makeFieldLabelCell(currField, schema);
             row.append(cell);
 
             if (isOneOf(currField)) {
-                cell = $("<td>");
-                cell.attr("colspan", 2);
+                cell = $('<td>');
+                cell.attr('colspan', 2);
                 row.append(cell);
-                var oneOfChildren = addOneOfFieldsToForm(
-                    schema,
-                    cell,
-                    input,
-                    pathLen,
-                    value,
-                    allowMissing,
-                    currField
-                );
+                var oneOfChildren = addOneOfFieldsToForm(schema, cell, input, pathLen, value, allowMissing, currField);
                 $.extend(children, oneOfChildren);
-                continue;
+                continue
             }
 
             var child = null;
             var fldVal = value[currField.name];
 
             if (currField.isArray || currField.isMap) {
-                cell = $("<td>");
-                cell.attr("colspan", 2);
+                cell = $('<td>');
+                cell.attr('colspan', 2);
                 row.append(cell);
                 if (isUnset(fldVal)) {
                     if (currField.isMap) {
@@ -887,142 +700,96 @@ window.initGRPCForm = function (
                     }
                     value[currField.name] = fldVal;
                 }
-                child = addElementToForm(
-                    schema,
-                    cell,
-                    input,
-                    pathLen + 1,
-                    fldVal,
-                    allowMissing,
-                    currField
-                );
+                child = addElementToForm(schema, cell, input, pathLen+1, fldVal, allowMissing, currField);
                 children[currField.name] = child;
+
             } else {
                 var required = fld.isMapEntry || currField.isRequired;
                 var checkbox = undefined;
                 if (!fld.isMapEntry) {
-                    cell = $("<td>");
-                    cell.addClass("toggle_presence");
+                    cell = $('<td>');
+                    cell.addClass('toggle_presence');
                     if (currField.isRequired) {
                         cell.html('<span class="required">*</span>');
                     } else {
-                        checkbox = $("<input>");
-                        checkbox.attr("type", "checkbox");
+                        checkbox = $('<input>');
+                        checkbox.attr('type', 'checkbox');
                         if (!isUnset(fldVal)) {
-                            checkbox.prop("checked", true);
+                            checkbox.prop('checked', true);
                         }
                         cell.append(checkbox);
                     }
                     row.append(cell);
                 }
 
-                cell = $("<td>");
+                cell = $('<td>');
                 if (isUnset(fldVal) && required) {
                     if (allowMissing) {
                         fldVal = getInitialValue(schema, currField);
                         value[currField.name] = fldVal;
                     } else {
-                        throw new Error(
-                            "value for required field " +
-                                currField.name +
-                                " is missing"
-                        );
+                        throw new Error("value for required field " + currField.name + " is missing");
                     }
                 }
                 if (!currField.isRequired && currField.isMessage) {
-                    child = addOptionalMessage(
-                        schema,
-                        cell,
-                        input,
-                        pathLen + 1,
-                        fldVal,
-                        allowMissing,
-                        currField
-                    );
+                    child = addOptionalMessage(schema, cell, input, pathLen+1, fldVal, allowMissing, currField);
                 } else {
-                    child = addElementToForm(
-                        schema,
-                        cell,
-                        input,
-                        pathLen + 1,
-                        fldVal,
-                        allowMissing,
-                        currField
-                    );
+                    child = addElementToForm(schema, cell, input, pathLen+1, fldVal, allowMissing, currField);
                 }
                 child.fld = currField;
                 children[currField.name] = child;
                 row.append(cell);
 
                 if (!isUnset(checkbox)) {
-                    (function (fld, cell) {
-                        checkbox.change(function () {
+                    (function(fld, cell) {
+                        checkbox.change(function() {
                             var checkbox = $(this);
                             cell.empty();
                             var fldVal;
-                            if (checkbox.prop("checked")) {
+                            if (checkbox.prop('checked')) {
                                 fldVal = getInitialValue(schema, fld);
                             } else {
                                 fldVal = undefined;
                             }
                             var child;
                             if (fld.isMessage) {
-                                child = addOptionalMessage(
-                                    schema,
-                                    cell,
-                                    input,
-                                    pathLen + 1,
-                                    fldVal,
-                                    true,
-                                    fld
-                                );
+                                child = addOptionalMessage(schema, cell, input, pathLen+1, fldVal, true, fld);
                             } else {
-                                child = addElementToForm(
-                                    schema,
-                                    cell,
-                                    input,
-                                    pathLen + 1,
-                                    fldVal,
-                                    true,
-                                    fld
-                                );
+                                child = addElementToForm(schema, cell, input, pathLen+1, fldVal, true, fld);
                             }
                             child.fld = fld;
                             for (var i in children) {
-                                if (
-                                    children.hasOwnProperty(i) &&
-                                    children[i].fld === fld
-                                ) {
+                                if (children.hasOwnProperty(i) && children[i].fld === fld) {
                                     children[i] = child;
                                     break;
                                 }
                             }
 
                             input.onChange(child, [], fldVal);
-                        });
+                        })
                     })(currField, cell);
                 }
             }
         }
 
         if (fields.length === 0) {
-            row = $("<tr>");
+            row = $('<tr>');
             table.append(row);
-            cell = $("<td>");
-            cell.addClass("empty_message");
-            cell.attr("colspan", 3);
+            cell = $('<td>');
+            cell.addClass('empty_message');
+            cell.attr('colspan', 3);
             row.append(cell);
-            cell.text("No fields");
+            cell.text('No fields');
         } else {
             // make sure this input's value tracks changes below
-            input.onChange = function (child, revPath, value) {
+            input.onChange = function(child, revPath, value) {
                 pushChildPath(child, this.children, revPath);
                 if (revPath.length === 1) {
                     // immediate child was changed; update our local value
                     this.value[revPath[0]] = value;
                 }
                 this.parent.onChange(this, revPath, value);
-            };
+            }
         }
 
         return input;
@@ -1031,38 +798,26 @@ window.initGRPCForm = function (
     // used to provide a unique name for all radio button groups
     var radioSeq = 0;
 
-    function addOneOfFieldsToForm(
-        schema,
-        container,
-        parent,
-        pathLen,
-        value,
-        allowMissing,
-        oneof
-    ) {
-        var div = $("<div>");
-        div.addClass("oneof");
+    function addOneOfFieldsToForm(schema, container, parent, pathLen, value, allowMissing, oneof) {
+        var div = $('<div>');
+        div.addClass('oneof');
         container.append(div);
 
-        var table = $("<table>");
+        var table = $('<table>');
         var children = {};
         var foundValue = false;
         var selected = {};
 
-        radio_name = "grpc_form_" + radioSeq;
+        radio_name = 'grpc_form_' + radioSeq;
         radioSeq++;
 
-        var clearPrevious = function () {
+        var clearPrevious = function() {
             if (!isUnset(selected.field)) {
                 // clear old selection
                 var otherCell;
                 var children = parent.children;
                 for (var j in children) {
-                    if (
-                        children.hasOwnProperty(j) &&
-                        children[j].hasOwnProperty("fld") &&
-                        children[j].fld.name === selected.field
-                    ) {
+                    if (children.hasOwnProperty(j) && children[j].hasOwnProperty("fld") && children[j].fld.name === selected.field) {
                         otherCell = children[j].cell;
                         break;
                     }
@@ -1077,25 +832,9 @@ window.initGRPCForm = function (
                 otherCell.empty();
                 var otherChild;
                 if (otherFld.isMessage) {
-                    otherChild = addOptionalMessage(
-                        schema,
-                        otherCell,
-                        parent,
-                        pathLen + 1,
-                        undefined,
-                        false,
-                        otherFld
-                    );
+                    otherChild = addOptionalMessage(schema, otherCell, parent, pathLen+1, undefined, false, otherFld);
                 } else {
-                    otherChild = addElementToForm(
-                        schema,
-                        otherCell,
-                        parent,
-                        pathLen + 1,
-                        undefined,
-                        false,
-                        otherFld
-                    );
+                    otherChild = addElementToForm(schema, otherCell, parent, pathLen+1, undefined, false, otherFld);
                 }
                 otherChild.fld = otherFld;
                 otherChild.cell = otherCell;
@@ -1118,54 +857,38 @@ window.initGRPCForm = function (
                 }
             }
 
-            var row = $("<tr>");
-            row.addClass("message_field");
+            var row = $('<tr>');
+            row.addClass('message_field');
             table.append(row);
             row.append(makeFieldLabelCell(fld, schema));
 
-            var cell = $("<td>");
-            var checkbox = $("<input>");
-            checkbox.attr("type", "radio");
-            checkbox.attr("name", radio_name);
-            checkbox.attr("value", fld.name);
+            var cell = $('<td>');
+            var checkbox = $('<input>');
+            checkbox.attr('type', 'radio');
+            checkbox.attr('name', radio_name);
+            checkbox.attr('value', fld.name);
             if (isPresent) {
-                checkbox.prop("checked", true);
+                checkbox.prop('checked', true);
                 selected.field = fld.name;
             }
             cell.append(checkbox);
             row.append(cell);
 
-            cell = $("<td>");
+            cell = $('<td>');
             row.append(cell);
 
             var child;
             if (fld.isMessage) {
-                child = addOptionalMessage(
-                    schema,
-                    cell,
-                    parent,
-                    pathLen + 1,
-                    fldVal,
-                    allowMissing,
-                    fld
-                );
+                child = addOptionalMessage(schema, cell, parent, pathLen+1, fldVal, allowMissing, fld);
             } else {
-                child = addElementToForm(
-                    schema,
-                    cell,
-                    parent,
-                    pathLen + 1,
-                    fldVal,
-                    allowMissing,
-                    fld
-                );
+                child = addElementToForm(schema, cell, parent, pathLen+1, fldVal, allowMissing, fld);
             }
             children[fld.name] = child;
             child.fld = fld;
             child.cell = cell;
 
-            (function (fld, cell) {
-                checkbox.change(function () {
+            (function(fld, cell) {
+                checkbox.change(function() {
                     clearPrevious();
                     selected.field = fld.name;
                     var fldVal = getInitialValue(schema, fld);
@@ -1173,35 +896,16 @@ window.initGRPCForm = function (
                     cell.empty();
                     var child;
                     if (fld.isMessage) {
-                        child = addOptionalMessage(
-                            schema,
-                            cell,
-                            parent,
-                            pathLen + 1,
-                            fldVal,
-                            true,
-                            fld
-                        );
+                        child = addOptionalMessage(schema, cell, parent, pathLen+1, fldVal, true, fld);
                     } else {
-                        child = addElementToForm(
-                            schema,
-                            cell,
-                            parent,
-                            pathLen + 1,
-                            fldVal,
-                            true,
-                            fld
-                        );
+                        child = addElementToForm(schema, cell, parent, pathLen+1, fldVal, true, fld);
                     }
                     child.fld = fld;
                     child.cell = cell;
 
                     var children = parent.children;
                     for (var i in children) {
-                        if (
-                            children.hasOwnProperty(i) &&
-                            children[i].fld === fld
-                        ) {
+                        if (children.hasOwnProperty(i) && children[i].fld === fld) {
                             children[i] = child;
                             break;
                         }
@@ -1211,25 +915,25 @@ window.initGRPCForm = function (
             })(fld, cell);
         }
 
-        row = $("<tr>");
-        row.addClass("message_field");
+        row = $('<tr>');
+        row.addClass('message_field');
         table.append(row);
-        cell = $("<td>");
-        cell.addClass("oneof_none");
-        cell.text("None");
+        cell = $('<td>');
+        cell.addClass('oneof_none');
+        cell.text('None');
         row.append(cell);
-        cell = $("<td>");
-        checkbox = $("<input>");
-        checkbox.attr("type", "radio");
-        checkbox.attr("name", radio_name);
-        checkbox.attr("value", "");
+        cell = $('<td>');
+        checkbox = $('<input>');
+        checkbox.attr('type', 'radio');
+        checkbox.attr('name', radio_name);
+        checkbox.attr('value', '');
         if (!foundValue) {
-            checkbox.prop("checked", true);
+            checkbox.prop('checked', true);
         }
         checkbox.change(clearPrevious);
         cell.append(checkbox);
         row.append(cell);
-        cell = $("<td>");
+        cell = $('<td>');
         row.append(cell);
 
         div.append(table);
@@ -1267,14 +971,7 @@ window.initGRPCForm = function (
                     field = currField.oneOfFields[j];
                     if (value.hasOwnProperty(field.protoName)) {
                         if (newValue.hasOwnProperty(field.name)) {
-                            throw new Error(
-                                "value for type " +
-                                    type +
-                                    " has redundant values: " +
-                                    field.name +
-                                    " and " +
-                                    field.protoName
-                            );
+                            throw new Error("value for type " + type + " has redundant values: " + field.name + " and " + field.protoName);
                         }
                         newValue[field.name] = value[field.protoName];
                         delete value[field.protoName];
@@ -1283,14 +980,7 @@ window.initGRPCForm = function (
             } else {
                 if (value.hasOwnProperty(currField.protoName)) {
                     if (newValue.hasOwnProperty(currField.name)) {
-                        throw new Error(
-                            "value for type " +
-                                type +
-                                " has redundant values: " +
-                                currField.name +
-                                " and " +
-                                currField.protoName
-                        );
+                        throw new Error("value for type " + type + " has redundant values: " + currField.name + " and " + currField.protoName);
                     }
                     newValue[currField.name] = value[currField.protoName];
                     delete value[currField.protoName];
@@ -1301,14 +991,12 @@ window.initGRPCForm = function (
         // if there are any remaining fields, they are not valid field names
         for (var p in value) {
             if (value.hasOwnProperty(p)) {
-                throw new Error(
-                    "value for type " + type + " has unrecognized field: " + p
-                );
+                throw new Error("value for type " + type + " has unrecognized field: " + p)
             }
         }
 
         // copy canonicalized fields back into value
-        return $.extend(value, newValue);
+        return $.extend(value, newValue)
     }
 
     function isOneOf(fld) {
@@ -1319,15 +1007,15 @@ window.initGRPCForm = function (
         if (pathLen === 0) {
             return container;
         }
-        var div = $("<div>");
+        var div = $('<div>');
         // add classes
-        div.addClass("input_container");
+        div.addClass('input_container');
         for (var i = 2; i <= 5; i++) {
             var idx = (pathLen % i) + 1;
             div.addClass(numberName(idx) + "-of-" + i);
         }
         container.append(div);
-        var table = $("<table>");
+        var table = $('<table>');
         div.append(table);
         return table;
     }
@@ -1336,9 +1024,9 @@ window.initGRPCForm = function (
         if (pathLen === 0) {
             // container will be the root table, so add a row and cell and
             // let that be input's container
-            var row = $("<tr>");
+            var row = $('<tr>');
             container.append(row);
-            var cell = $("<td>");
+            var cell = $('<td>');
             row.append(cell);
             return cell;
         }
@@ -1346,35 +1034,29 @@ window.initGRPCForm = function (
     }
 
     function makeFieldLabelCell(fld, schema) {
-        var cell = $("<td>");
-        cell.addClass("name");
+        var cell = $('<td>');
+        cell.addClass('name');
 
         if (fld.isMap) {
             var mapEntryFields = schema.messageTypes[fld.type];
-            cell.text(
-                "<" +
-                    mapEntryFields[0].type +
-                    "," +
-                    mapEntryFields[1].type +
-                    ">"
-            );
-            cell.prepend("<em>map</em>");
+            cell.text('<' + mapEntryFields[0].type + ',' + mapEntryFields[1].type + '>');
+            cell.prepend('<em>map</em>');
         } else {
             cell.text(fld.type);
             if (fld.isArray) {
-                cell.prepend("<em>repeated</em> ");
+                cell.prepend('<em>repeated</em> ');
             }
         }
 
-        var labelName = $("<strong>");
+        var labelName = $('<strong>');
         labelName.text(fld.protoName);
-        cell.prepend($("<br>"));
+        cell.prepend($('<br>'));
         if (fld.description) {
-            labelName.prop("title", fld.description);
+            labelName.prop('title', fld.description);
             labelName.tooltip({
                 classes: {
-                    "ui-tooltip": "grpc-field-description",
-                },
+                    "ui-tooltip": "grpc-field-description"
+                }
             });
         }
         cell.prepend(labelName);
@@ -1404,45 +1086,35 @@ window.initGRPCForm = function (
         if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
-        } else if (typeof value !== "string" && typeof value !== "number") {
+        } else if (typeof value !== 'string' && typeof value !== 'number') {
             throw typeError(fld.type, value, "string or number");
         }
 
-        var sel = $("<select>");
+        var sel = $('<select>');
         if (disabled) {
-            sel.prop("disabled", true);
+            sel.prop('disabled', true);
         }
 
-        var isNumber = typeof value === "number";
+        var isNumber = typeof value === 'number';
         var found = false;
         for (var i = 0; i < enumVals.length; i++) {
-            var opt = $("<option>");
-            opt.attr("value", enumVals[i].name);
+            var opt = $('<option>');
+            opt.attr('value', enumVals[i].name);
             opt.text(enumVals[i].name);
-            if (
-                (isNumber && enumVals[i].num === value) ||
-                (!isNumber && enumVals[i].name === value)
-            ) {
+            if (isNumber && enumVals[i].num === value || !isNumber && enumVals[i].name === value) {
                 found = true;
-                opt.prop("selected", true);
+                opt.prop('selected', true);
             }
             sel.append(opt);
         }
         if (!found) {
-            throw new Error(
-                "Field " +
-                    fld.name +
-                    " of type enum " +
-                    fld.type +
-                    " has no such value: " +
-                    value
-            );
+            throw new Error('Field ' + fld.name + ' of type enum ' + fld.type + ' has no such value: ' + value);
         }
 
         container.append(sel);
 
         var input = new Input(parent, [], value);
-        sel.change(function () {
+        sel.change(function() {
             var v = sel.val();
             if (fld.type === "google.protobuf.NullValue" && v === "NULL") {
                 v = null;
@@ -1458,53 +1130,34 @@ window.initGRPCForm = function (
             value = fld.defaultVal;
             disabled = true;
         } else {
-            if (typeof value !== "number") {
+            if (typeof value !== 'number') {
                 throw typeError(fld.type, value, "number");
             }
             if (!isInt(value)) {
-                throw new Error(
-                    "value for type " +
-                        fld.type +
-                        " is not an integer: " +
-                        value
-                );
+                throw new Error("value for type " + fld.type + " is not an integer: " + value);
             }
             if (value < min) {
-                throw new Error(
-                    "value for type " +
-                        fld.type +
-                        " is less than allowed min: " +
-                        value +
-                        " < " +
-                        min
-                );
+                throw new Error("value for type " + fld.type + " is less than allowed min: " + value + " < " + min);
             }
             if (value > max) {
-                throw new Error(
-                    "value for type " +
-                        fld.type +
-                        " is greater than allowed max: " +
-                        value +
-                        " > " +
-                        max
-                );
+                throw new Error("value for type " + fld.type + " is greater than allowed max: " + value + " > " + max);
             }
         }
 
-        var inp = $("<input>");
-        inp.attr("type", "text");
-        inp.attr("size", 28);
-        inp.attr("value", "" + value);
+        var inp = $('<input>');
+        inp.attr('type', 'text');
+        inp.attr('size', 28);
+        inp.attr('value', "" + value);
         if (disabled) {
-            inp.prop("disabled", true);
+            inp.prop('disabled', true);
         }
         container.append(inp);
 
         var input = new Input(parent, [], value);
-        inp.focus(function () {
+        inp.focus(function() {
             var inp = this;
-            setValidation(inp, function () {
-                var num = +$(inp).val();
+            setValidation(inp, function() {
+                var num = + $(inp).val();
                 if (!isInt(num)) {
                     throw new Error("integer value required");
                 }
@@ -1525,7 +1178,7 @@ window.initGRPCForm = function (
         // is not a whole number. So this detects _all_ integers (even those
         // way outside the range of 32 or even 64 bit int). We do a range
         // check elsewhere (e.g. to verify if it's in range of 32-bits).
-        return num % 1 === 0;
+        return (num % 1) === 0;
     }
 
     function addStringIntToForm(container, parent, value, fld, min, max) {
@@ -1534,8 +1187,8 @@ window.initGRPCForm = function (
             value = fld.defaultVal;
             disabled = true;
         } else {
-            if (typeof value !== "string") {
-                if (typeof value === "number") {
+            if (typeof value !== 'string') {
+                if (typeof value === 'number') {
                     value = value.toString();
                 } else {
                     throw typeError(fld.type, value, "string");
@@ -1543,48 +1196,29 @@ window.initGRPCForm = function (
             }
             // parse string/make sure it's a number
             if (!isStringInt(value)) {
-                throw new Error(
-                    "value for type " +
-                        fld.type +
-                        " is not a valid number: " +
-                        JSON.stringify(value)
-                );
+                throw new Error("value for type " + fld.type + " is not a valid number: " + JSON.stringify(value));
             }
             if (compareStringInts(value, min) < 0) {
-                throw new Error(
-                    "value for type " +
-                        fld.type +
-                        " is less than allowed min: " +
-                        value +
-                        " < " +
-                        min
-                );
+                throw new Error("value for type " + fld.type + " is less than allowed min: " + value + " < " + min);
             }
             if (compareStringInts(value, max) > 0) {
-                throw new Error(
-                    "value for type " +
-                        fld.type +
-                        " is greater than allowed max: " +
-                        value +
-                        " > " +
-                        max
-                );
+                throw new Error("value for type " + fld.type + " is greater than allowed max: " + value + " > " + max);
             }
         }
 
-        var inp = $("<input>");
-        inp.attr("type", "text");
-        inp.attr("size", 28);
-        inp.attr("value", "" + value);
+        var inp = $('<input>');
+        inp.attr('type', 'text');
+        inp.attr('size', 28);
+        inp.attr('value', "" + value);
         if (disabled) {
-            inp.prop("disabled", true);
+            inp.prop('disabled', true);
         }
         container.append(inp);
 
         var input = new Input(parent, [], value);
-        inp.focus(function () {
+        inp.focus(function() {
             var inp = this;
-            setValidation(inp, function () {
+            setValidation(inp, function() {
                 var val = $(inp).val();
                 if (!isStringInt(val)) {
                     throw new Error("integer value required");
@@ -1611,7 +1245,7 @@ window.initGRPCForm = function (
         }
         for (var i = 0; i < str.length; i++) {
             var ch = str.charAt(i);
-            if (ch < "0" || ch > "9") {
+            if (ch < '0' || ch > '9') {
                 return false;
             }
         }
@@ -1621,11 +1255,11 @@ window.initGRPCForm = function (
     function compareStringInts(a, b) {
         var aNeg = false;
         var bNeg = false;
-        if (a.charAt(0) === "-") {
+        if (a.charAt(0) === '-') {
             aNeg = true;
             a = a.slice(1);
         }
-        if (b.charAt(0) === "-") {
+        if (b.charAt(0) === '-') {
             bNeg = true;
             b = b.slice(1);
         }
@@ -1659,7 +1293,7 @@ window.initGRPCForm = function (
         if (isUnset(value)) {
             value = fld.defaultVal;
             disabled = true;
-        } else if (typeof value !== "number") {
+        } else if (typeof value !== 'number') {
             switch (value) {
                 case "Infinity":
                     value = Infinity;
@@ -1675,40 +1309,33 @@ window.initGRPCForm = function (
             }
         }
 
-        var inp = $("<input>");
-        inp.attr("type", "text");
-        inp.attr("size", 28);
-        inp.attr("value", "" + value);
+        var inp = $('<input>');
+        inp.attr('type', 'text');
+        inp.attr('size', 28);
+        inp.attr('value', "" + value);
         if (disabled) {
-            inp.prop("disabled", true);
+            inp.prop('disabled', true);
         }
         container.append(inp);
 
         var input = new Input(parent, [], value);
-        inp.focus(function () {
+        inp.focus(function() {
             var inp = this;
-            setValidation(inp, function () {
+            setValidation(inp, function() {
                 var val = $(inp).val();
-                var num = +val;
+                var num = + val;
                 if (isNaN(num)) {
                     if (typeof val === "string") {
                         val = val.trim().toLowerCase();
                     }
                     // accept a few alternate spellings and don't care about case...
                     switch (val) {
-                        case "inf":
-                        case "+inf":
-                        case "infinity":
-                        case "+infinity":
-                        case "infinite":
-                        case "+infinite":
-                            num = "Infinity";
-                            break;
-                        case "-inf":
-                        case "-infinity":
-                        case "-infinite":
-                            num = "-Infinity";
-                            break;
+                        case "inf": case "+inf": case "infinity": case "+infinity": case "infinite": case "+infinite":
+                        num = "Infinity";
+                        break;
+                        case "-inf": case "-infinity": case "-infinite":
+                        num = "-Infinity";
+                        break;
                         case "nan":
                             num = "NaN";
                             break;
@@ -1728,42 +1355,42 @@ window.initGRPCForm = function (
             value = fld.defaultVal;
             disabled = true;
         }
-        if (typeof value !== "boolean") {
+        if (typeof value !== 'boolean') {
             throw typeError(fld.type, value, "boolean");
         }
 
         var input = new Input(parent, [], value);
 
-        var name = "grpc_form_" + radioSeq;
+        var name = 'grpc_form_' + radioSeq;
         radioSeq++;
-        var div = $("<div>");
-        div.addClass("bool-input");
+        var div = $('<div>');
+        div.addClass('bool-input');
         for (var i = 0; i < 2; i++) {
             var checked = (i === 0) === value;
-            var v = i === 0 ? "true" : "false";
-            var inp = $("<input>");
-            var id = name + "_" + v;
-            inp.attr("type", "radio");
-            inp.attr("name", name);
-            inp.attr("value", v);
-            inp.attr("id", id);
+            var v = i === 0 ? 'true' : 'false';
+            var inp = $('<input>');
+            var id = name + '_' + v;
+            inp.attr('type', 'radio');
+            inp.attr('name', name);
+            inp.attr('value', v);
+            inp.attr('id', id);
             if (checked) {
-                inp.prop("checked", true);
+                inp.prop('checked', true);
             }
             if (disabled) {
-                inp.prop("disabled", true);
+                inp.prop('disabled', true);
             }
-            var lbl = $("<label>");
-            lbl.attr("for", id);
+            var lbl = $('<label>');
+            lbl.attr('for', id);
             lbl.text(v);
             if (disabled) {
-                lbl.addClass("disabled");
+                lbl.addClass('disabled');
             }
             div.append(inp);
             div.append(lbl);
 
-            (function (inp, b) {
-                inp.click(function () {
+            (function(inp, b) {
+                inp.click(function() {
                     input.setValue(b);
                 });
             })(inp, i === 0);
@@ -1779,23 +1406,23 @@ window.initGRPCForm = function (
             value = fld.defaultVal;
             disabled = true;
         }
-        if (typeof value !== "string") {
+        if (typeof value !== 'string') {
             throw typeError(fld.type, value, "string");
         }
 
-        var inp = $("<textarea>");
-        inp.attr("cols", 40);
-        inp.attr("rows", 1);
+        var inp = $('<textarea>');
+        inp.attr('cols', 40);
+        inp.attr('rows', 1);
         inp.text(value);
         if (disabled) {
-            inp.prop("disabled", true);
+            inp.prop('disabled', true);
         }
         container.append(inp);
 
         var input = new Input(parent, [], value);
-        inp.focus(function () {
+        inp.focus(function() {
             var inp = this;
-            setValidation(inp, function () {
+            setValidation(inp, function() {
                 var str = $(inp).val();
                 input.setValue(str);
             });
@@ -1809,38 +1436,33 @@ window.initGRPCForm = function (
             value = fld.defaultVal;
             disabled = true;
         }
-        if (typeof value !== "string") {
+        if (typeof value !== 'string') {
             throw typeError(fld.type, value, "string");
         }
         if (!isBase64(value)) {
-            throw new Error(
-                "value for type " +
-                    fld.type +
-                    " is not a valid base64-encoded string: " +
-                    JSON.stringify(value)
-            );
+            throw new Error("value for type " + fld.type + " is not a valid base64-encoded string: " + JSON.stringify(value));
         }
 
-        var box = $("<div>");
-        box.addClass("grpc-bytes-container");
-        var inp = $("<textarea>");
-        inp.attr("cols", 40);
-        inp.attr("rows", 1);
+        var box = $('<div>');
+        box.addClass('grpc-bytes-container')
+        var inp = $('<textarea>');
+        inp.attr('cols', 40);
+        inp.attr('rows', 1);
         inp.text(value);
         if (disabled) {
-            inp.prop("disabled", true);
+            inp.prop('disabled', true);
         }
-        var lbl = $("<label>");
-        lbl.addClass("grpc-file-button");
-        lbl.text("Choose File");
+        var lbl = $('<label>')
+        lbl.addClass('grpc-file-button');
+        lbl.text('Choose File');
         if (disabled) {
-            lbl.addClass("disabled");
+            lbl.addClass('disabled');
         }
-        var fileInput = $("<input>");
-        fileInput.attr("type", "file");
-        fileInput.attr("style", "display:none");
+        var fileInput = $('<input>');
+        fileInput.attr('type', 'file');
+        fileInput.attr('style', 'display:none');
         if (disabled) {
-            fileInput.prop("disabled", true);
+            fileInput.prop('disabled', true);
         }
         lbl.append(fileInput);
         box.append(inp);
@@ -1848,42 +1470,33 @@ window.initGRPCForm = function (
         container.append(box);
 
         var input = new Input(parent, [], value);
-        fileInput.on("change", function () {
+        fileInput.on('change', function() {
             var reader = new FileReader();
-            reader.addEventListener(
-                "load",
-                function () {
-                    var base64Str = "";
-                    if (typeof this.result == "string") {
-                        base64Str = btoa(this.result);
-                    } else if (this.result instanceof ArrayBuffer) {
-                        var bytes = new Uint8Array(this.result);
-                        var len = bytes.byteLength;
-                        var binary = "";
-                        for (var i = 0; i < len; i++) {
-                            binary += String.fromCharCode(bytes[i]);
-                        }
-                        base64Str = btoa(binary);
+            reader.addEventListener("load", function () {
+                var base64Str = '';
+                if (typeof this.result == 'string') {
+                    base64Str = btoa(this.result)
+                } else if (this.result instanceof ArrayBuffer) {
+                    var bytes = new Uint8Array(this.result);
+                    var len = bytes.byteLength;
+                    var binary = '';
+                    for (var i = 0; i < len; i++) {
+                        binary += String.fromCharCode( bytes[ i ] );
                     }
-                    inp.text(base64Str);
-                    input.setValue(base64Str);
-                },
-                false
-            );
+                    base64Str = btoa(binary);
+                }
+                inp.text(base64Str);
+                input.setValue(base64Str);
+            }, false);
             reader.readAsBinaryString(fileInput[0].files[0]);
         });
 
-        inp.focus(function () {
+        inp.focus(function() {
             var inp = this;
-            setValidation(inp, function () {
+            setValidation(inp, function() {
                 var str = $(inp).val();
                 if (!isBase64(str)) {
-                    throw new Error(
-                        "value for type " +
-                            fld.type +
-                            " is not a valid base64-encoded string: " +
-                            JSON.stringify(value)
-                    );
+                    throw new Error("value for type " + fld.type + " is not a valid base64-encoded string: " + JSON.stringify(value));
                 }
                 input.setValue(str);
             });
@@ -1891,8 +1504,7 @@ window.initGRPCForm = function (
         return input;
     }
 
-    var base64alphabet_common =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789=";
+    var base64alphabet_common = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789=";
     var base64alphabet_standard = "+/";
     var base64alphabet_websafe = "-_";
 
@@ -1927,63 +1539,52 @@ window.initGRPCForm = function (
     }
 
     var dateFormat = /^\d+-\d+-\d+T\d+:\d\d:\d\d(\.\d+)?Z(-?\d+:?\d\d)?$/;
-    var timeFormat =
-        /^\d+:\d\d(:\d\d(\.\d+)?)?(\s*(am|pm))?\s*((Z|GMT)?\s*(-|\+)?(\d+:?\d\d)?)?$/;
+    var timeFormat = /^\d+:\d\d(:\d\d(\.\d+)?)?(\s*(am|pm))?\s*((Z|GMT)?\s*(-|\+)?(\d+:?\d\d)?)?$/;
 
     function addTimestampToForm(container, parent, value, fld) {
-        if (typeof value !== "string") {
+        if (typeof value !== 'string') {
             throw typeError(fld.type, value, "string");
         }
         if (!dateFormat.test(value)) {
-            throw new Error(
-                "value for type " +
-                    fld.type +
-                    " is not a valid timestamp string: " +
-                    JSON.stringify(value)
-            );
+            throw new Error("value for type " + fld.type + " is not a valid timestamp string: " + JSON.stringify(value));
         }
         if (!isFinite(new Date(value).getDate())) {
             // value was invalid date string!
-            throw new Error(
-                "value for type " +
-                    fld.type +
-                    " is not a valid timestamp string: " +
-                    JSON.stringify(value)
-            );
+            throw new Error("value for type " + fld.type + " is not a valid timestamp string: " + JSON.stringify(value));
         }
 
-        var parts = value.split("T", 2);
+        var parts = value.split('T', 2);
 
-        var div = $("<div>");
-        div.addClass("grpc-timestamp");
-        var date = $("<input>");
-        date.attr("type", "text");
-        date.attr("size", 12);
-        date.attr("value", "" + parts[0]);
+        var div = $('<div>');
+        div.addClass('grpc-timestamp');
+        var date = $('<input>');
+        date.attr('type', 'text');
+        date.attr('size', 12);
+        date.attr('value', "" + parts[0]);
         div.append(date);
 
-        var time = $("<input>");
-        time.attr("type", "text");
-        time.attr("size", 20);
-        time.attr("value", "" + parts[1]);
+        var time = $('<input>');
+        time.attr('type', 'text');
+        time.attr('size', 20);
+        time.attr('value', "" + parts[1]);
         div.append(time);
 
-        var setNow = $("<button>Now</button>");
+        var setNow = $('<button>Now</button>');
         div.append(setNow);
         container.append(div);
 
         var input = new Input(parent, [], value);
-        var onTimeChange = function () {
+        var onTimeChange = function() {
             var timeStr = time.val();
             if (!timeFormat.test(timeStr)) {
-                throw new Error("timestamp is not valid");
+                throw new Error('timestamp is not valid');
             }
             // make sure there is whitespace between time and any 'am' or 'pm' indicator
-            timeStr = timeStr.replace("am", " am").replace("pm", " pm");
+            timeStr = timeStr.replace('am', ' am').replace('pm', ' pm');
 
             // now test with known good day, for final verification that time is valid
-            if (!isFinite(new Date("2018-10-31T" + timeStr).getDate())) {
-                throw new Error("timestamp is not valid");
+            if (!isFinite(new Date('2018-10-31T' + timeStr).getDate())) {
+                throw new Error('timestamp is not valid');
             }
 
             // now try to update value using date input
@@ -1992,7 +1593,7 @@ window.initGRPCForm = function (
                 input.setValue(dateTime.toISOString());
             }
         };
-        var onDateChange = function () {
+        var onDateChange = function() {
             // TODO(jh): Make this not suck. If a user types in garbage, this
             // will sadly prevent them from using the date picker pop-up until
             // they fix it. I can't find a reliable way to always validate the
@@ -2000,7 +1601,7 @@ window.initGRPCForm = function (
             // without this sort of spurious validation side effect :(
 
             // this will throw if date picker's text is bad
-            $.datepicker.parseDate("yy-mm-dd", date.val());
+            $.datepicker.parseDate('yy-mm-dd', date.val());
 
             // now try to update value using time input
             var dateTime = new Date(date.val() + "T" + time.val());
@@ -2008,30 +1609,30 @@ window.initGRPCForm = function (
                 input.setValue(dateTime.toISOString());
             }
         };
-        time.focus(function () {
+        time.focus(function() {
             setValidation(this, onTimeChange);
         });
-        date.focus(function () {
+        date.focus(function() {
             setValidation(this, onDateChange);
         });
-        var validateDate = function () {
+        var validateDate = function() {
             doValidation(date[0], onDateChange);
         };
         date.datepicker({
-            dateFormat: "yy-mm-dd",
-            showButtonPanel: true,
-            onClose: validateDate,
-            onSelect: validateDate,
-            nextText: "\u02C3",
-            prevText: "\u02C2",
-            beforeShow: function () {
-                $("#ui-datepicker-div").addClass("grpc-timestamp-picker");
-            },
-        });
+                            dateFormat: "yy-mm-dd",
+                            showButtonPanel: true,
+                            onClose: validateDate,
+                            onSelect: validateDate,
+                            nextText: '\u02C3',
+                            prevText: '\u02C2',
+                            beforeShow: function() {
+                                $('#ui-datepicker-div').addClass('grpc-timestamp-picker');
+                            },
+                        });
 
-        setNow.click(function () {
-            var now = new Date().toISOString();
-            var nowSplit = now.split("T", 2);
+        setNow.click(function() {
+            var now = (new Date()).toISOString();
+            var nowSplit = now.split('T', 2);
             date.val(nowSplit[0]);
             time.val(nowSplit[1]);
             input.setValue(now);
@@ -2040,34 +1641,24 @@ window.initGRPCForm = function (
     }
 
     function addDurationToForm(container, parent, value, fld) {
-        if (typeof value !== "string") {
+        if (typeof value !== 'string') {
             throw typeError(fld.type, value, "string");
         }
         if (value.slice(-1) !== "s") {
             // duration must end in "s" for seconds
-            throw new Error(
-                "value for type " +
-                    fld.type +
-                    " is not a valid duration string; " +
-                    JSON.stringify(value)
-            );
+            throw new Error("value for type " + fld.type + " is not a valid duration string; " + JSON.stringify(value));
         }
-        var secs = +value.slice(0, -1);
+        var secs = +(value.slice(0,-1));
         if (!isFinite(secs)) {
-            throw new Error(
-                "value for type " +
-                    fld.type +
-                    " is not a valid duration string: " +
-                    JSON.stringify(value)
-            );
+            throw new Error("value for type " + fld.type + " is not a valid duration string: " + JSON.stringify(value));
         }
 
-        var div = $("<div>");
-        var inp = $("<input>");
-        inp.attr("type", "text");
-        inp.attr("size", 14);
-        inp.attr("value", "" + secs);
-        var unit = $("<select>");
+        var div = $('<div>');
+        var inp = $('<input>');
+        inp.attr('type', 'text');
+        inp.attr('size', 14);
+        inp.attr('value', "" + secs);
+        var unit = $('<select>');
         unit.append('<option value="0.000000001">nanoseconds</option>');
         unit.append('<option value="0.000001">microseconds</option>');
         unit.append('<option value="0.001">milliseconds</option>');
@@ -2081,18 +1672,18 @@ window.initGRPCForm = function (
         container.append(div);
 
         var input = new Input(parent, [], value);
-        var onChange = function () {
-            var num = +inp.val();
+        var onChange = function() {
+            var num = + inp.val();
             if (isNaN(num)) {
                 throw new Error("numeric value required");
             }
             num = num * unit.val();
-            input.setValue(num.toFixed(9) + "s");
+            input.setValue(num.toFixed(9) + 's');
         };
-        inp.focus(function () {
+        inp.focus(function() {
             setValidation(this, onChange);
         });
-        unit.change(function () {
+        unit.change(function() {
             try {
                 onChange();
             } catch (ex) {
@@ -2104,33 +1695,27 @@ window.initGRPCForm = function (
     }
 
     function addJSONToForm(container, parent, value, fld, mustBeObject) {
-        if (
-            mustBeObject &&
-            (typeof value !== "object" || value instanceof Array)
-        ) {
+        if (mustBeObject && (typeof value !== 'object' || value instanceof Array)) {
             throw typeError(fld.type, value, "object");
         }
 
         var div = $('<div class="json-entry">');
-        div.append("<h4>JSON</h4>");
+        div.append('<h4>JSON</h4>');
 
-        var inp = $("<textarea>");
-        inp.attr("cols", 40);
-        inp.attr("rows", 5);
+        var inp = $('<textarea>');
+        inp.attr('cols', 40);
+        inp.attr('rows', 5);
         inp.val(JSON.stringify(value));
         div.append(inp);
 
         container.append(div);
 
         var input = new Input(parent, [], value);
-        inp.focus(function () {
+        inp.focus(function() {
             var inp = this;
-            setValidation(inp, function () {
+            setValidation(inp, function() {
                 var o = JSON.parse($(inp).val());
-                if (
-                    mustBeObject &&
-                    (typeof o !== "object" || o instanceof Array)
-                ) {
+                if (mustBeObject && (typeof o !== 'object' || o instanceof Array)) {
                     throw typeError(fld.type, o, "object");
                 }
                 input.setValue(o);
@@ -2139,16 +1724,8 @@ window.initGRPCForm = function (
         return input;
     }
 
-    function addAnyToForm(
-        schema,
-        container,
-        parent,
-        pathLen,
-        value,
-        allowMissing,
-        fld
-    ) {
-        if (typeof value !== "object" || value instanceof Array) {
+    function addAnyToForm(schema, container, parent, pathLen, value, allowMissing, fld) {
+        if (typeof value !== 'object' || value instanceof Array) {
             throw typeError(fld.type, value, "object");
         }
         var typeUrl = value["@type"];
@@ -2156,61 +1733,56 @@ window.initGRPCForm = function (
             typeUrl = "type.googleapis.com/google.protobuf.StringValue";
             value["@type"] = typeUrl;
         }
-        if (typeof typeUrl !== "string") {
-            throw new Error(
-                "value for type " + fld.type + " must have attribute '@type'"
-            );
+        if (typeof typeUrl !== 'string') {
+            throw new Error("value for type " + fld.type + " must have attribute '@type'");
         }
 
         var typeName = typeUrl.split("/").slice(-1)[0];
-        if (typeName === "google.protobuf.Any") {
-            throw new Error(
-                "Any message cannot directly contain an Any message"
-            );
+        if (typeName === 'google.protobuf.Any') {
+            throw new Error('Any message cannot directly contain an Any message');
         }
 
         var table = makeTableContainer(container, pathLen);
         var children = {};
         var input = new Input(parent, children, value);
 
-        var row = $("<tr>");
-        row.addClass("message_field");
+        var row = $('<tr>');
+        row.addClass('message_field');
         table.append(row);
-        var cell = makeFieldLabelCell({ name: "@type", type: "" }, schema);
+        var cell = makeFieldLabelCell({name:'@type', type:''}, schema);
         row.append(cell);
 
-        cell = $("<td>");
-        var inp = $("<input>");
-        inp.attr("type", "text");
-        inp.attr("size", 42);
-        inp.attr("list", "grpc-message-types");
+        cell = $('<td>');
+        var inp = $('<input>');
+        inp.attr('type', 'text');
+        inp.attr('size', 42);
+        inp.attr('list', 'grpc-message-types');
         inp.val(typeName);
         cell.append(inp);
         row.append(cell);
 
-        var updateVal = function (typeName, allowMissing) {
+        var updateVal = function(typeName, allowMissing) {
             var wellKnown = isWellKnown(typeName);
-            var knownType =
-                wellKnown || schema.messageTypes.hasOwnProperty(typeName);
+            var knownType = wellKnown || schema.messageTypes.hasOwnProperty(typeName);
 
             var row;
             var cell;
             if (!knownType) {
                 row = $('<tr class="unknown">');
                 table.append(row);
-                cell = $("<td>");
+                cell = $('<td>');
                 row.append(cell);
-                cell = $("<td>");
+                cell = $('<td>');
                 row.append(cell);
                 cell.append('<h4 class="unknown">unrecognized</h4>');
             }
 
-            row = $("<tr>");
-            row.addClass("message_field");
+            row = $('<tr>');
+            row.addClass('message_field');
             table.append(row);
-            cell = makeFieldLabelCell({ name: "value", type: "" }, schema);
+            cell = makeFieldLabelCell({name:'value', type:''}, schema);
             row.append(cell);
-            cell = $("<td>");
+            cell = $('<td>');
             row.append(cell);
 
             if (wellKnown) {
@@ -2232,39 +1804,25 @@ window.initGRPCForm = function (
                 isEnum: false,
                 isArray: false,
                 isMap: false,
-                isRequired: false,
+                isRequired: false
             };
             if (knownType) {
-                input.child = addElementToForm(
-                    schema,
-                    cell,
-                    input,
-                    pathLen,
-                    input.anyValue,
-                    allowMissing,
-                    valFld
-                );
+                input.child = addElementToForm(schema, cell, input, pathLen, input.anyValue, allowMissing, valFld);
                 if (!wellKnown && allowMissing) {
                     // if we added any required fields to anyValue, make sure we also
                     // add them to given value
                     $.extend(value, input.anyValue);
                 }
             } else {
-                input.child = addJSONToForm(
-                    cell,
-                    input,
-                    input.anyValue,
-                    valFld,
-                    true
-                );
+                input.child = addJSONToForm(cell, input, input.anyValue, valFld, true);
             }
         };
 
-        inp.focus(function () {
+        inp.focus(function() {
             var inp = this;
-            setValidation(inp, function () {
+            setValidation(inp, function() {
                 // remove all but first row
-                var rows = $("tr", table);
+                var rows = $('tr', table);
                 for (var i = 1; i < rows.length; i++) {
                     $(rows[i]).remove();
                 }
@@ -2276,35 +1834,35 @@ window.initGRPCForm = function (
                     }
                 }
                 var typeName = $(inp).val();
-                value["@type"] = "type.googleapis.com/" + typeName;
+                value['@type'] = 'type.googleapis.com/' + typeName;
                 updateVal(typeName, true);
 
                 parent.onChange(input, [], value);
             });
         });
 
-        input.onChange = function (child, revPath, value) {
+        input.onChange = function(child, revPath, value) {
             var typeName = $(inp).val();
             if (isWellKnown(typeName)) {
-                revPath.push("value");
+                revPath.push('value');
             } else if (revPath.length === 0) {
                 // replace this value completely? don't forget @type
                 value = $.extend({}, value);
-                value["@type"] = "type.googleapis.com/" + typeName;
+                value['@type'] = 'type.googleapis.com/' + typeName;
             }
             this.parent.onChange(this, revPath, value);
         };
-        input.onAdd = function (child, revPath, value) {
+        input.onAdd = function(child, revPath, value) {
             var typeName = $(inp).val();
             if (isWellKnown(typeName)) {
-                revPath.push("value");
+                revPath.push('value');
             }
             this.parent.onAdd(this, revPath, value);
         };
-        input.onDelete = function (child, revPath) {
+        input.onDelete = function(child, revPath) {
             var typeName = $(inp).val();
             if (isWellKnown(typeName)) {
-                revPath.push("value");
+                revPath.push('value');
             }
             this.parent.onDelete(this, revPath);
         };
@@ -2315,16 +1873,8 @@ window.initGRPCForm = function (
         return input;
     }
 
-    function addOptionalMessage(
-        schema,
-        container,
-        parent,
-        pathLen,
-        value,
-        allowMissing,
-        fld
-    ) {
-        var div = $("<div>");
+    function addOptionalMessage(schema, container, parent, pathLen, value, allowMissing, fld) {
+        var div = $('<div>');
         container.append(div);
 
         if (isUnset(value)) {
@@ -2332,15 +1882,7 @@ window.initGRPCForm = function (
             return new Input(parent, [], undefined);
         }
 
-        return addElementToForm(
-            schema,
-            container,
-            parent,
-            pathLen,
-            value,
-            allowMissing,
-            fld
-        );
+        return addElementToForm(schema, container, parent, pathLen, value, allowMissing, fld);
     }
 
     function typeName(v) {
@@ -2348,7 +1890,7 @@ window.initGRPCForm = function (
             return "null";
         }
         var t = typeof v;
-        if (t === "object") {
+        if (t === 'object') {
             return v.constructor.name;
         }
         return t;
@@ -2359,16 +1901,7 @@ window.initGRPCForm = function (
         if ("aeiou".indexOf(expectedType.charAt(0)) !== -1) {
             article = "an";
         }
-        return new Error(
-            "value for type " +
-                type +
-                " should be " +
-                article +
-                " " +
-                expectedType +
-                "; instead got " +
-                typeName(val)
-        );
+        return new Error("value for type " + type + " should be " + article + " " + expectedType + "; instead got " + typeName(val))
     }
 
     function Input(parent, children, value) {
@@ -2376,7 +1909,7 @@ window.initGRPCForm = function (
         this.children = children;
         this.value = value;
 
-        this.setValue = function (value) {
+        this.setValue = function(value) {
             // TODO(jh): filter out no-op changes?
             // We can't do that as is because of how maps work: when we add a
             // row, we don't immediately check it (because it would be obnoxious
@@ -2388,20 +1921,20 @@ window.initGRPCForm = function (
             this.parent.onChange(this, [], value);
         };
 
-        this.onAdd = function (child, revPath, value) {
+        this.onAdd = function(child, revPath, value) {
             pushChildPath(child, this.children, revPath);
             this.parent.onAdd(this, revPath, value);
         };
 
-        this.onChange = function (child, revPath, value) {
+        this.onChange = function(child, revPath, value) {
             pushChildPath(child, this.children, revPath);
             this.parent.onChange(this, revPath, value);
         };
 
-        this.onDelete = function (child, revPath) {
+        this.onDelete = function(child, revPath) {
             pushChildPath(child, this.children, revPath);
             this.parent.onDelete(this, revPath);
-        };
+        }
     }
 
     function pushChildPath(child, children, path) {
@@ -2418,13 +1951,13 @@ window.initGRPCForm = function (
 
     function newRootInput() {
         var root = new Input();
-        root.onAdd = function (child, revPath, val) {
+        root.onAdd = function(child, revPath, val) {
             onInputChange(revPath.reverse(), val);
         };
-        root.onChange = function (child, revPath, val) {
+        root.onChange = function(child, revPath, val) {
             onInputChange(revPath.reverse(), val);
         };
-        root.onDelete = function (child, revPath) {
+        root.onDelete = function(child, revPath) {
             onInputDelete(revPath.reverse());
         };
         return root;
@@ -2432,13 +1965,13 @@ window.initGRPCForm = function (
 
     function getInitialValue(schema, fld) {
         if (fld.isMap) {
-            return {};
+            return {}
         }
         if (fld.isArray) {
-            return [];
+            return []
         }
         if (fld.isMessage) {
-            return getInitialMessageValue(fld.type);
+            return getInitialMessageValue(fld.type)
         }
         if (!isUnset(fld.defaultVal)) {
             return fld.defaultVal;
@@ -2470,9 +2003,7 @@ window.initGRPCForm = function (
             case "bool":
                 return false;
             default:
-                throw new Error(
-                    "unknown non-message non-enum type: " + fld.type
-                );
+                throw new Error('unknown non-message non-enum type: ' + fld.type);
         }
     }
 
@@ -2537,12 +2068,7 @@ window.initGRPCForm = function (
 
     function onInputChange(path, value) {
         if (debug) {
-            console.log(
-                "changing " +
-                    JSON.stringify(path) +
-                    " to " +
-                    JSON.stringify(value)
-            );
+            console.log("changing " + JSON.stringify(path) + " to " + JSON.stringify(value));
         }
         var req;
         if (path.length === 0) {
@@ -2587,9 +2113,7 @@ window.initGRPCForm = function (
 
     let gRPCurlTextArea = $("#grpc-curl-text");
     function updateCurlCommand(requestDataJson) {
-        const grpcOpts = window.gRPCurlOptions
-            ? " " + window.gRPCurlOptions
-            : "";
+        const grpcOpts = window.gRPCurlOptions ? ' ' + window.gRPCurlOptions : '';
 
         let metadataStr = "";
 
@@ -2609,27 +2133,24 @@ window.initGRPCForm = function (
             }
         }
 
-        let requestDataJson = JSON.stringify(reqObj);
-        gRPCurlTextArea.html(
-            `<div>grpcurl -plaintext${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}</div>`
-        );
+        gRPCurlTextArea.text(`grpcurl${grpcOpts}${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}`);
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");
-    function updateJSONRequest(reqObj) {
-        let requestDataJson = JSON.stringify(reqObj, null, 2);
+    function updateJSONRequest(req) {
+        let requestDataJson = JSON.stringify(req, null, 2);
         jsonRawTextArea.val(requestDataJson);
-        updateCurlCommand(reqObj);
+        updateCurlCommand(requestDataJson);
     }
 
     function validateJSON() {
         let requestDataJson = jsonRawTextArea.val();
+        updateCurlCommand(requestDataJson);
         var reqObj = JSON.parse(requestDataJson);
-        updateCurlCommand(reqObj);
         rebuildRequestForm(reqObj, false);
     }
 
-    jsonRawTextArea.focus(function () {
+    jsonRawTextArea.focus(function() {
         setValidation(this, validateJSON);
     });
 
@@ -2641,20 +2162,20 @@ window.initGRPCForm = function (
     var MAX_UINT32 = 4294967295;
 
     // Adds a row to the request metadata table.
-    function addMetadataRow(name = "", value = "") {
+    function addMetadataRow(name = '', value = '') {
         tr = $('<tr class="metadataRow">');
         $("#grpc-request-metadata-form tr:last-of-type").before(tr);
 
         tr.append('<td><button class="delete">X</button></td>');
-        $("button.delete", tr).click(function () {
-            $(this).closest("tr").remove();
+        $("button.delete", tr).click(function() {
+            $(this).closest('tr').remove();
         });
 
-        const td = $("<td>");
+        const td = $('<td>');
         const nameInput = $('<input class="name" size="24" />');
         const valueInput = $('<input class="value" size="40" />');
-        const nameTd = $("<td />").append(nameInput);
-        const valueTd = $("<td />").append(valueInput);
+        const nameTd = $('<td />').append(nameInput);
+        const valueTd = $('<td />').append(valueInput);
 
         if (name) {
             nameInput.val(name);
@@ -2686,8 +2207,7 @@ window.initGRPCForm = function (
 
         var timeoutStr = $("#grpc-request-timeout input").val();
         var timeout = Number(timeoutStr);
-        timeout =
-            timeoutStr === "" || Number.isNaN(timeout) ? undefined : timeout;
+        timeout = (timeoutStr === "" || Number.isNaN(timeout)) ? undefined : timeout;
 
         const originalData = requestForm.data("request");
         let data = originalData;
@@ -2704,7 +2224,7 @@ window.initGRPCForm = function (
             var name = $(cells[0]).val();
             var val = $(cells[1]).val();
             if (name !== "") {
-                metadata.push({ name: name, value: val });
+                metadata.push({name: name, value: val });
             }
         }
 
@@ -2712,38 +2232,35 @@ window.initGRPCForm = function (
         $(".grpc-invoke").prop("disabled", true);
 
         if (originalData instanceof Array) {
-            cloneData = $.extend(true, [], originalData);
+            cloneData = $.extend(true, [], originalData)
         } else {
-            cloneData = $.extend(true, {}, originalData);
+            cloneData = $.extend(true, {}, originalData)
         }
         const historyItem = {
             request: {
                 timeout_seconds: timeout,
                 metadata: $.extend([], metadata),
-                data: cloneData,
+                data: cloneData
             },
             service: service,
             method: method,
             startTime: new Date().toISOString(),
-        };
+        }
 
         const startTime = window.performance.now();
 
-        $.ajax({
-            type: "POST",
-            url: invokeURI + "/" + service + "." + method,
-            contentType: "application/json",
-            data: JSON.stringify({
-                timeout_seconds: timeout,
-                metadata: metadata,
-                data: data,
-            }),
-        })
-            .done(function (responseData) {
+        $.ajax(
+            {
+                type: "POST",
+                url: invokeURI + "/" + service + "." + method,
+                contentType: "application/json",
+                data: JSON.stringify({timeout_seconds: timeout, metadata: metadata, data: data}),
+            })
+            .done(function(responseData) {
                 var durationMs = window.performance.now() - startTime;
                 renderResponse(historyItem, durationMs, responseData);
             })
-            .fail(function (failureData, status) {
+            .fail(function(failureData, status) {
                 addHistory({
                     ...historyItem,
                     durationMS: window.performance.now() - startTime,
@@ -2754,47 +2271,33 @@ window.initGRPCForm = function (
                     console.trace(failureData.responseText);
                 }
             })
-            .always(function () {
+            .always(function() {
                 $(".grpc-invoke").prop("disabled", false);
             });
     }
 
     function renderResponse(historyItem, durationMs, responseData) {
-        if (
-            responseData.headers instanceof Array &&
-            responseData.headers.length > 0
-        ) {
+        if (responseData.headers instanceof Array && responseData.headers.length > 0) {
             var hdrs = $("#grpc-response-headers");
             hdrs.empty();
             for (var i = 0; i < responseData.headers.length; i++) {
-                var hdrRow = $("<tr>");
+                var hdrRow = $('<tr>');
                 hdrs.append(hdrRow);
-                var hdrCell = $("<td>");
+                var hdrCell = $('<td>');
                 hdrCell.text(responseData.headers[i].name);
                 hdrRow.append(hdrCell);
-                hdrCell = $("<td>");
+                hdrCell = $('<td>');
                 hdrCell.text(responseData.headers[i].value);
                 hdrRow.append(hdrCell);
             }
         } else {
-            $("#grpc-response-headers").html(
-                '<tr><td class="none">None</td></tr>'
-            );
+            $("#grpc-response-headers").html('<tr><td class="none">None</td></tr>');
         }
 
-        if (
-            responseData.requests &&
-            responseData.requests.total !== responseData.requests.sent
-        ) {
+        if (responseData.requests && responseData.requests.total !== responseData.requests.sent) {
             var stats = $("#grpc-response-req-stats");
             stats.show();
-            stats.text(
-                "Only " +
-                    responseData.requests.sent +
-                    " of " +
-                    responseData.requests.total +
-                    " requests accepted"
-            );
+            stats.text('Only ' + responseData.requests.sent + ' of ' + responseData.requests.total + ' requests accepted');
         } else {
             $("#grpc-response-req-stats").hide();
         }
@@ -2804,14 +2307,12 @@ window.initGRPCForm = function (
         // to render maps a little differently and also to omit unset one-of fields
         // (or even better, be able to render unset fields differently).
         // But we need response schema info to do that...
-        renderMessages($("#grpc-response-data"), responseData.responses);
+        renderMessages($("#grpc-response-data"), responseData.responses)
 
         if (responseData.error) {
             $("#grpc-response-error").show();
             $("#grpc-response-error-desc").text(responseData.error.name);
-            $("#grpc-response-error-num").text(
-                "(" + responseData.error.code + ")"
-            );
+            $("#grpc-response-error-num").text('(' + responseData.error.code + ')');
             if (responseData.error.message !== responseData.error.name) {
                 var msg = $("#grpc-response-error-msg");
                 msg.show();
@@ -2819,12 +2320,7 @@ window.initGRPCForm = function (
             } else {
                 $("#grpc-response-error-msg").hide();
             }
-            if (
-                renderMessages(
-                    $("#grpc-response-error-details"),
-                    responseData.error.details
-                )
-            ) {
+            if (renderMessages($("#grpc-response-error-details"), responseData.error.details)) {
                 $("#grpc-response-error-details-container").show();
             } else {
                 $("#grpc-response-error-details-container").hide();
@@ -2847,26 +2343,21 @@ window.initGRPCForm = function (
         // way to paste in a grpcurl command-line which would then select
         // the right method, and populate the request responseData and metadata.
 
-        if (
-            responseData.trailers instanceof Array &&
-            responseData.trailers.length > 0
-        ) {
+        if (responseData.trailers instanceof Array && responseData.trailers.length > 0) {
             var tlrs = $("#grpc-response-trailers");
             tlrs.empty();
             for (i = 0; i < responseData.trailers.length; i++) {
-                var tlrRow = $("<tr>");
+                var tlrRow = $('<tr>');
                 tlrs.append(tlrRow);
-                var tlrCell = $("<td>");
+                var tlrCell = $('<td>');
                 tlrCell.text(responseData.trailers[i].name);
                 tlrRow.append(tlrCell);
-                tlrCell = $("<td>");
+                tlrCell = $('<td>');
                 tlrCell.text(responseData.trailers[i].value);
                 tlrRow.append(tlrCell);
             }
         } else {
-            $("#grpc-response-trailers").html(
-                '<tr><td class="none">None</td></tr>'
-            );
+            $("#grpc-response-trailers").html('<tr><td class="none">None</td></tr>');
         }
 
         var t = $("#grpc-request-response");
@@ -2879,17 +2370,13 @@ window.initGRPCForm = function (
         if (messages instanceof Array && messages.length > 0) {
             enclosingDiv.show();
             for (const msg of messages) {
-                const container = $("<div>");
+                const container = $('<div>');
                 if (msg.isError) {
-                    container.html(
-                        '<div class="error">Server error processing message #' +
-                            (i + 1) +
-                            "</div>"
-                    );
+                    container.html('<div class="error">Server error processing message #' + (i+1) + '</div>');
                 } else {
-                    const textArea = $("<textarea>");
+                    const textArea = $('<textarea>');
                     textArea.val(JSON.stringify(msg.message, null, 2));
-                    textArea.addClass("grpc-response-textarea");
+                    textArea.addClass('grpc-response-textarea');
                     container.append(textArea);
                 }
                 enclosingDiv.append(container);
@@ -2922,48 +2409,44 @@ window.initGRPCForm = function (
     function populateResultContainer(div, depth, val) {
         if (val === null) {
             div.html('<span class="null">null</span>');
-        } else if (typeof val === "object") {
+        } else if (typeof val === 'object') {
             var container = makeResultContainer(div, depth);
             depth++;
-            var table = $("<table>");
+            var table = $('<table>');
             container.append(table);
             if (val instanceof Array) {
                 for (var i = 0; i < val.length; i++) {
-                    var element = $("<tr>");
+                    var element = $('<tr>');
                     table.append(element);
-                    var td = $("<td>");
+                    var td = $('<td>');
                     element.append(td);
                     populateResultContainer(td, depth, val[i]);
                 }
                 if (val.length === 0) {
-                    table.append(
-                        '<tr><td><span class="null">No elements</span></td></tr>'
-                    );
+                    table.append('<tr><td><span class="null">No elements</span></td></tr>');
                 }
             } else {
                 var count = 0;
                 for (var p in val) {
                     if (val.hasOwnProperty(p)) {
                         count++;
-                        var row = $("<tr>");
+                        var row = $('<tr>');
                         table.append(row);
-                        var cell = $("<td>");
+                        var cell = $('<td>');
                         cell.addClass("name");
                         row.append(cell);
                         cell.text(p);
-                        cell = $("<td>");
+                        cell = $('<td>');
                         row.append(cell);
                         populateResultContainer(cell, depth, val[p]);
                     }
                 }
                 if (count === 0) {
-                    table.append(
-                        '<tr><td><span class="null">No fields</span></td></tr>'
-                    );
+                    table.append('<tr><td><span class="null">No fields</span></td></tr>');
                 }
             }
         } else {
-            div.text("" + val);
+            div.text('' + val);
         }
     }
 
@@ -2971,9 +2454,9 @@ window.initGRPCForm = function (
         if (depth === 0) {
             return div;
         }
-        var container = $("<div>");
+        var container = $('<div>');
         // add classes
-        container.addClass("output_container");
+        container.addClass('output_container');
         for (var i = 2; i <= 5; i++) {
             var idx = (depth % i) + 1;
             container.addClass(numberName(idx) + "-of-" + i);
@@ -3025,7 +2508,7 @@ window.initGRPCForm = function (
     // if it failed validation.
     function checkValidation() {
         if (!isUnset(validation)) {
-            var err = "";
+            var err = '';
             try {
                 validation.func(validation.element);
             } catch (ex) {
@@ -3033,7 +2516,7 @@ window.initGRPCForm = function (
                     console.trace(ex);
                 }
                 if (ex.message) {
-                    err = ex.message;
+                    err = ex.message
                 } else {
                     err = ex.toString();
                 }
@@ -3042,10 +2525,10 @@ window.initGRPCForm = function (
             var el = $(validation.element);
             if (err) {
                 alert(err);
-                el.addClass("invalid-input");
+                el.addClass('invalid-input');
                 return false;
             } else {
-                el.removeClass("invalid-input");
+                el.removeClass('invalid-input');
             }
         }
         return true;
@@ -3061,9 +2544,7 @@ window.initGRPCForm = function (
             var badInputs = $(".invalid-input").filter(":visible");
             if (badInputs.length > 0) {
                 var badInput = $(badInputs[0]);
-                $([document.documentElement, document.body]).scrollTop(
-                    badInput.offset().top
-                );
+                $([document.documentElement, document.body]).scrollTop(badInput.offset().top);
                 badInput.focus();
 
                 isValid = false;
@@ -3089,7 +2570,7 @@ window.initGRPCForm = function (
     let examples = [];
     // TODO: add ability to customize these max history values
     const maxHistory = 100;
-    const maxHistorySize = 1024 * 1024; // 1mb
+    const maxHistorySize = 1024*1024; // 1mb
     const target = $(".target").text();
 
     const historyStorageKey = `grpcui-history-${window.location.host}-${target}`;
@@ -3097,54 +2578,54 @@ window.initGRPCForm = function (
 
     const loadExamples = () => {
         $.ajax({
-            url: "examples",
-            type: "GET",
-            success: function (data) {
+            url: 'examples',
+            type: 'GET',
+            success: function(data) {
                 examples = data;
                 // only populate the example list if we have some
                 if (examples && examples.length > 0) {
                     showExamplesUI();
                 }
             },
-            error: function (e) {
+            error: function(e) {
                 console.log("Failed to load examples: " + e);
-            },
+            }
         });
-    };
+    }
 
     const showExamplesUI = () => {
         let examplesList = $("#grpc-request-examples");
-        examples.forEach((example) => {
+        examples.forEach(example => {
             let exampleItem = $('<li class="grpc-request-example">');
             exampleItem.addClass("grpc-request-example");
             exampleItem.text(example.name);
             if (example.description) {
-                exampleItem.prop("title", example.description);
+                exampleItem.prop('title', example.description);
                 exampleItem.tooltip();
             }
             examplesList.append(exampleItem);
-        });
+        })
         examplesList.selectable({
-            stop: function () {
-                $(".ui-selected", this).each(function () {
+            stop: function() {
+                $(".ui-selected", this).each(function() {
                     const index = $("li", examplesList).index(this);
-                    loadRequest(examples[index]);
+                    loadRequest(examples[index])
                 });
-            },
+            }
         });
         $("#grpc-request-examples-container").show();
-    };
+    }
 
     const loadHistory = () => {
         const json = localStorage.getItem(historyStorageKey);
         if (json) {
-            history = JSON.parse(json);
+            history = (JSON.parse(json));
         }
         updateHistoryUI();
-    };
+    }
 
     const onHistoryChange = () => {
-        let data = "";
+        let data = '';
         while (true) {
             data = JSON.stringify(history);
             if (data.length <= maxHistorySize) {
@@ -3166,83 +2647,71 @@ window.initGRPCForm = function (
             console.trace(e);
         }
         updateHistoryUI();
-    };
+    }
 
     const clearHistory = () => {
-        if (
-            confirm(
-                "Are you sure you wish to delete all history? This action is permanent and cannot be undone."
-            )
-        ) {
+        if (confirm('Are you sure you wish to delete all history? This action is permanent and cannot be undone.')) {
             history = [];
             onHistoryChange();
         }
-    };
+    }
 
     const download = (filename, text) => {
-        let element = document.createElement("a");
-        element.setAttribute(
-            "href",
-            "data:text/plain;charset=utf-8," + encodeURIComponent(text)
-        );
-        element.setAttribute("download", filename);
+        let element = document.createElement('a');
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
 
-        element.style.display = "none";
+        element.style.display = 'none';
         document.body.appendChild(element);
 
         element.click();
 
         document.body.removeChild(element);
-    };
+    }
 
     const saveHistory = () => {
         let savedHistory = [];
         for (let i = 0; i < history.length; i++) {
             let item = $.extend({}, history[i]); // make a copy before mutating
-            item.name = "Example #" + (i + 1) + " @ " + item.startTime;
+            item.name = "Example #" + (i+1) + " @ " + item.startTime;
             item.description = "";
             delete item.startTime;
             delete item.durationMS;
             delete item.responseData;
             let req = item.request;
-            if (req.hasOwnProperty("timeout")) {
+            if (req.hasOwnProperty('timeout')) {
                 req = $.extend({}, req); // make a copy before mutating
                 item.request = req;
                 // if old history item has 'timeout' property, convert it to 'timeout_seconds'
                 let timeout = Number(req.timeout);
-                timeout =
-                    timeoutStr === "" || Number.isNaN(timeout)
-                        ? undefined
-                        : timeout;
+                timeout = (timeoutStr === "" || Number.isNaN(timeout)) ? undefined : timeout;
                 req.timeout_seconds = timeout;
                 delete req.timeout;
             }
             savedHistory.push(item);
         }
 
-        download("history.json", JSON.stringify(savedHistory, null, 2));
-    };
+        download('history.json', JSON.stringify(savedHistory, null, 2));
+    }
 
     const addHistory = (item) => {
         history = history.slice(0, maxHistory - 1);
         history.unshift(item);
         onHistoryChange();
-    };
+    }
 
     const updateHistoryUI = () => {
-        const list = $("#grpc-history-list");
+        const list = $('#grpc-history-list');
         list.empty();
-        const accordion = $("<div>");
+        const accordion = $('<div>');
         list.append(accordion);
         for (let i = 0; i < history.length; i++) {
             const item = history[i];
             const id = `grpc-history-item-${i}`;
             const dataString = JSON.stringify(item.request.data, null, 4);
-            const valid =
-                services[item.service] &&
-                services[item.service].includes(item.method);
-            let result = "";
-            let messages = "&nbsp;";
+            const valid = services[item.service] && services[item.service].includes(item.method);
+            let result = '';
+            let messages = '&nbsp;';
             let err = false;
             if (item.failureStatus) {
                 result = `Failure: ${item.failureStatus}`;
@@ -3255,40 +2724,23 @@ window.initGRPCForm = function (
                 } else if (numMsgs > 1) {
                     messages = `${numMsgs} response messages`;
                 }
-                result = item.responseData.error.name ?? "FAILED";
+                result = item.responseData.error.name ?? 'FAILED';
                 err = true;
             } else {
                 // on success, only show number of response messages if not one (e.g. a stream)
-                messages =
-                    (item.responseData?.responseMsgCount ?? 1) !== 1
-                        ? `${item.responseData.responseMsgCount} response messages`
-                        : "";
-                result = "OK";
+                messages = (item.responseData?.responseMsgCount ?? 1) !== 1 ? `${item.responseData.responseMsgCount } response messages` : '';
+                result = 'OK';
             }
             accordion.append(`<div class="history-item-header" id="${id}">
                 <span class="history-item-delete"><button class="delete" id="delete-${id}">X</button></span>
                 <span class="history-item-load">
-                    <button class="load" ${
-                        valid ? "" : "disabled"
-                    } id="load-${id}">Load</button>
+                    <button class="load" ${valid ? '' : 'disabled'} id="load-${id}">Load</button>
                 </span>
-                <span class="history-item-time">${new Date(
-                    item.startTime
-                ).toLocaleString()}</span>
-                <span class="history-item-duration">${item.durationMS.toFixed(
-                    2
-                )}ms</span>
-                <span class="history-item-result ${
-                    err ? "error" : ""
-                }">${result}</span>
-                <span class="history-item-method ${
-                    valid ? "" : "invalid-history"
-                }"
-                      ${
-                          valid
-                              ? ""
-                              : 'title="Service or method no longer available"'
-                      }
+                <span class="history-item-time">${new Date(item.startTime).toLocaleString()}</span>
+                <span class="history-item-duration">${item.durationMS.toFixed(2)}ms</span>
+                <span class="history-item-result ${err ? 'error' : ''}">${result}</span>
+                <span class="history-item-method ${valid ? '' : 'invalid-history'}"
+                      ${valid ? '' : 'title="Service or method no longer available"'}
                 >
                     ${item.service}.${item.method}
                 </span>
@@ -3299,27 +2751,17 @@ window.initGRPCForm = function (
                     <div class="history-detail-heading">Request</div>
                     <span><pre class="request-json"></pre></span>
                 </div>
-                ${
-                    item.request.metadata.length === 0
-                        ? ""
-                        : `
+                ${item.request.metadata.length === 0 ? '' : `
                 <div class="history-detail-metadata">
                     <div class="history-detail-heading">Metadata</div>
                     <table>
-                        ${item.request.metadata
-                            .map(
-                                (item) => `
+                        ${item.request.metadata.map((item) => `
                         <tr><th>${item.name.text}</th><td>${item.value.text}</td></tr>
-                        `
-                            )
-                            .join("\n")}
+                        `).join('\n')}
                     </table>
-                </div>`
-                }
+                </div>`}
             </div>`);
-            document.querySelector(".request-json").textContent =
-                dataString.slice(0, 250) +
-                (dataString.length > 250 ? "..." : "");
+            document.querySelector(".request-json").textContent = dataString.slice(0, 250) + (dataString.length > 250 ? "..." : "");
             $(`#delete-${id}`).click((evt) => {
                 deleteHistoryItem(i);
                 evt.preventDefault();
@@ -3340,7 +2782,7 @@ window.initGRPCForm = function (
             header: ".history-item-header",
             heightStyle: "content",
         });
-    };
+    }
 
     const loadRequest = (item) => {
         const t = $("#grpc-request-response");
@@ -3359,10 +2801,10 @@ window.initGRPCForm = function (
         formServiceSelected(() => {
             $("#grpc-method").val(item.method);
             formMethodSelected(() => {
-                updateJSONRequest(item.request.data);
+                updateJSONRequest(item.request.data)
                 validateJSON();
                 // remove all rows
-                $("tr").remove(".metadataRow");
+                $("tr").remove('.metadataRow');
                 // item.request.metadata will be undefined when using -examples
                 // and without setting in json file, here it needs to be verified
                 if (item.request.metadata) {
@@ -3372,25 +2814,25 @@ window.initGRPCForm = function (
                 }
             });
         });
-    };
+    }
 
     const clearExampleSelection = () => {
-        $("#grpc-request-examples .ui-selected").removeClass("ui-selected");
-    };
+        $('#grpc-request-examples .ui-selected').removeClass('ui-selected')
+    }
 
     const loadHistoryItem = (index) => {
         clearExampleSelection();
         loadRequest(history[index]);
-    };
+    }
 
     const deleteHistoryItem = (index) => {
         history.splice(index, 1);
         onHistoryChange();
-    };
+    }
 
-    $("#grpc-request-timeout input").focus(function () {
+    $("#grpc-request-timeout input").focus(function() {
         var inp = this;
-        setValidation(inp, function () {
+        setValidation(inp, function() {
             var val = $(inp).val();
             if (val === "" || val === undefined) {
                 return;
@@ -3406,11 +2848,12 @@ window.initGRPCForm = function (
         });
     });
 
-    $("#grpc-request-response").tabs({
-        beforeActivate: function (e) {
-            onlyIfValid(e);
-        },
-    });
+    $("#grpc-request-response").tabs(
+        {
+            beforeActivate: function(e) {
+                onlyIfValid(e);
+            }
+        });
 
     $("#grpc-service").change(() => formServiceSelected());
     $("#grpc-method").change(() => {
@@ -3418,10 +2861,10 @@ window.initGRPCForm = function (
         formMethodSelected();
     });
 
-    $("#grpc-request-metadata-add-row").click(function () {
+    $("#grpc-request-metadata-add-row").click(function() {
         addMetadataRow();
     });
-    $(".grpc-invoke").click(function (e) {
+    $(".grpc-invoke").click(function(e) {
         if (onlyIfValid(e)) {
             invoke();
         }
@@ -3429,24 +2872,24 @@ window.initGRPCForm = function (
 
     if (localStorage.getItem(expandDescStorageKey) === "true") {
         descriptionsShown = true;
-        $("#grpc-descriptions-toggle").text("«");
+        $("#grpc-descriptions-toggle").text("«")
     } else {
         $("#grpc-descriptions pre").hide();
     }
     $("#grpc-descriptions-toggle").click(() => {
         if (descriptionsShown) {
             $("#grpc-descriptions pre").hide();
-            $("#grpc-descriptions-toggle").text("»");
+            $("#grpc-descriptions-toggle").text("»")
         } else {
             $("#grpc-descriptions pre").show();
-            $("#grpc-descriptions-toggle").text("«");
+            $("#grpc-descriptions-toggle").text("«")
         }
         descriptionsShown = !descriptionsShown;
-        localStorage.setItem(expandDescStorageKey, descriptionsShown + "");
+        localStorage.setItem(expandDescStorageKey, descriptionsShown+"");
     });
 
-    $("#grpc-history-clear").click(() => clearHistory());
-    $("#grpc-history-save").click(() => saveHistory());
+    $('#grpc-history-clear').click(() => clearHistory());
+    $('#grpc-history-save').click(() => saveHistory());
 
     loadExamples();
     loadHistory();
