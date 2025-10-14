@@ -1,4 +1,10 @@
 <div id="grpc-form">
+  <div class="grpc-theme-container">
+    <span class="grpc-theme-label">Theme:</span>
+    <button id="grpc-theme-toggle" class="grpc-theme-btn" title="Toggle theme">
+      <span class="grpc-theme-icon">☀️</span>
+    </button>
+  </div>
   <table class="grpc-desc">
     <tr>
       <td>
@@ -30,7 +36,9 @@
         </table>
       </td>
       <td id="grpc-descriptions">
-        <button id="grpc-descriptions-toggle">»</button>
+        <div class="grpc-descriptions-header">
+          <button id="grpc-descriptions-toggle">»</button>
+        </div>
         <pre id="grpc-service-description"></pre>
         <pre id="grpc-method-description"></pre>
         <pre id="grpc-service-description-end"></pre>
