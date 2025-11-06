@@ -763,3 +763,42 @@ button#grpc-history-clear, button#grpc-history-save {
     padding: 1em;
     margin-bottom: 1em;
 }
+
+/* Style for the checkbox and label */
+.toggle-label {
+    display: block;
+    cursor: pointer;
+    padding: 3px 5px 3px 5px;
+}
+
+/* Default state of the toggle-content (hidden) */
+.toggle-content {
+    display: none;
+    padding: 5px 20px;
+}
+
+/* Style for the arrow */
+.arrow {
+    float: left;
+    transition: transform 0.2s ease-in-out; /* Added transition */
+}
+
+/* Hide the checkbox */
+.markdown-collapsible input[type="checkbox"] {
+    display: none;
+}
+
+/* Show content when checkbox is checked */
+.markdown-collapsible input[type="checkbox"]:checked ~ .toggle-content {
+    display: block;
+}
+
+/* Rotate arrow for checked state */
+.markdown-collapsible input[type="checkbox"]:checked + .toggle-label .arrow {
+    transform: rotate(90deg);
+}
+
+/* Rotate arrow for unchecked state */
+.markdown-collapsible input[type="checkbox"]:not(:checked) + .toggle-label .arrow {
+    transform: rotate(0deg);
+}
