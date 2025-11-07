@@ -2869,6 +2869,15 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             invoke();
         }
     });
+    $(".button-header").click(function(e) {
+        if (onlyIfValid(e)) {
+            $('.metadataRow').closest("tr").remove();
+            $.each($('#grpc-request-raw-header').val().split(/\n/), function(i, line) {
+                let pair = line.split(':');
+                addMetadataRow(pair[0], pair[1]);
+            });
+        }
+    });
 
     if (localStorage.getItem(expandDescStorageKey) === "true") {
         descriptionsShown = true;
