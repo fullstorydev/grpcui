@@ -2,9 +2,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     var descriptionsShown = false;
     var requestForm = $("#grpc-request-form");
-    var formRoot = $("#grpc-form");
-
-    initTheme();
 
     function formServiceSelected(callback) {
         var svcName = $("#grpc-service").val();
@@ -64,42 +61,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         t.tabs("disable", 2);
         $(".grpc-invoke").prop("disabled", !enabled);
-    }
-
-    function initTheme() {
-        var themeBtn = $("#grpc-theme-toggle");
-        var themeIcon = $(".grpc-theme-icon");
-        var darkClass = "grpc-theme-dark";
-        var storageKey = "grpc-theme";
-
-        // Check for saved preference, fallback to system preference
-        var savedTheme = null;
-        try {
-            savedTheme = localStorage.getItem(storageKey);
-        } catch (err) {}
-
-        var isDark = false;
-        if (savedTheme) {
-            isDark = savedTheme === "dark";
-        } else if (window.matchMedia) {
-            isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        }
-
-        applyTheme(isDark);
-
-        themeBtn.on("click", function() {
-            isDark = !isDark;
-            applyTheme(isDark);
-            try {
-                localStorage.setItem(storageKey, isDark ? "dark" : "light");
-            } catch (err) {}
-        });
-
-        function applyTheme(dark) {
-            formRoot.toggleClass(darkClass, dark);
-            $("body").toggleClass("grpc-dark-mode", dark);
-            themeIcon.text(dark ? "🌙" : "☀️");
-        }
     }
 
     /*
