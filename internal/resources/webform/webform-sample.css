@@ -27,7 +27,7 @@
     color: #777;
 }
 
-.grpc-desc button#grpc-descriptions-toggle {
+button#grpc-descriptions-toggle {
     position: absolute;
     z-index: 3;
     padding: 0;
@@ -762,4 +762,367 @@ button#grpc-history-clear, button#grpc-history-save {
     border: 1px solid #dddddd;
     padding: 1em;
     margin-bottom: 1em;
+}
+
+/* Dark mode - automatically detects system preference */
+@media (prefers-color-scheme: dark) {
+    #grpc-form {
+        background-color: #1a1a1a;
+        color: #e1e4e8;
+        color-scheme: dark;
+    }
+
+    body {
+        background-color: #1a1a1a;
+        color: #e1e4e8;
+    }
+
+    #grpc-form a {
+        color: #63a4ff;
+    }
+
+    #grpc-form .grpc-form-label,
+    #grpc-form h3,
+    #grpc-form h4 {
+        color: #f0f6fc;
+    }
+
+    #grpc-form .grpc-desc pre {
+        border-left: 1px solid #333;
+        color: #6e7681;
+    }
+
+    #grpc-form #grpc-method-description {
+        color: #f0f6fc;
+    }
+
+    button#grpc-descriptions-toggle {
+        background: #21262d;
+        color: #e1e4e8;
+    }
+
+    #grpc-form select,
+    #grpc-form input,
+    #grpc-form textarea {
+        background-color: #21262d;
+        color: #e1e4e8;
+        border: 1px solid #444c56;
+    }
+
+    #grpc-form textarea:disabled,
+    #grpc-form input[type=text]:disabled,
+    #grpc-form select:disabled {
+        background-color: #2a2a2a;
+        color: #777;
+        border-color: #2f2f2f;
+    }
+
+    #grpc-form button {
+        background: #21262d;
+        border: 1px solid #444c56;
+        color: #e1e4e8;
+    }
+
+    #grpc-form button:hover {
+        background: #30363d;
+        border-color: #606166;
+    }
+
+    #grpc-form button:disabled {
+        background: #2a2a2a;
+        border: 1px solid #2f2f2f;
+        color: #555;
+    }
+
+    #grpc-form #grpc-request-response ul.ui-tabs-nav {
+        background: #161b22;
+        border: none;
+        padding: 0;
+    }
+
+    #grpc-form #grpc-request-response ul.ui-tabs-nav .ui-tabs-anchor {
+        color: inherit;
+    }
+
+    #grpc-form #grpc-request-response li.ui-tabs-tab {
+        border-color: #444c56;
+        background: #21262d;
+        color: #8b949e;
+    }
+
+    #grpc-form #grpc-request-response li.ui-tabs-tab.ui-tabs-disabled {
+        background: #161b22;
+        color: #484f58;
+        border-color: #30363d;
+    }
+
+    #grpc-form #grpc-request-response li.ui-tabs-tab.ui-tabs-disabled a {
+        color: #484f58 !important;
+        cursor: not-allowed;
+    }
+
+    #grpc-form #grpc-request-response li.ui-tabs-active {
+        border-color: #444c56;
+        border-bottom-color: #1a1a1a;
+        color: #f0f6fc;
+        background: #1a1a1a;
+    }
+
+    #grpc-form #grpc-request-response li.ui-tabs-active a {
+        color: #ffffff;
+    }
+
+    #grpc-form #grpc-request-response .grpc-tabcontent.ui-tabs-panel {
+        border-color: #444c56;
+        background-color: #1a1a1a !important;
+        color: #e1e4e8;
+    }
+
+    #grpc-form .ui-tabs-panel {
+        background-color: #1a1a1a !important;
+        color: #e1e4e8;
+    }
+
+    #grpc-form #grpc-request-examples-container {
+        border-color: #333;
+        background-color: #1a1a1a;
+    }
+
+    #grpc-form #grpc-request-examples-container h3 {
+        border-bottom-color: #333;
+    }
+
+    #grpc-form #grpc-request-examples li:hover {
+        background-color: #242424;
+    }
+
+    #grpc-form #grpc-request-examples .ui-selected {
+        background: #2d2d2d;
+    }
+
+    #grpc-form #grpc-request-metadata-form th {
+        background-color: #1f1f1f;
+        border-bottom-color: #333;
+        color: #f2f2f2;
+    }
+
+    #grpc-form #grpc-request-metadata-form td {
+        color: #f2f2f2;
+    }
+
+    #grpc-form #grpc-request-form div.input_container {
+        background-color: #1a1a1a;
+    }
+
+    #grpc-form #grpc-request-form div.oneof {
+        border-left-color: #444;
+    }
+
+    #grpc-form #grpc-request-form div.one-of-3 {
+        border-color: #444;
+    }
+
+    #grpc-form #grpc-request-form div.two-of-3 {
+        border-color: #444;
+    }
+
+    #grpc-form #grpc-request-form div.three-of-3 {
+        border-color: #555;
+    }
+
+    #grpc-form #grpc-request-form .grpc-bytes-container label.grpc-file-button {
+        background: #2a2a2a;
+        border-color: #3c3c3c;
+        color: #f2f2f2;
+    }
+
+    #grpc-form #grpc-request-form .grpc-bytes-container label.grpc-file-button.disabled {
+        background: #242424;
+        border-color: #333;
+        color: #666;
+    }
+
+    #grpc-form #grpc-request-form .invalid-input {
+        border-color: #d56a8a;
+        background-color: #4a1d2b;
+    }
+
+    #grpc-form #grpc-request-form td.name {
+        color: #c9d1d9;
+    }
+
+    #grpc-form #grpc-request-form td.name strong {
+        color: #f2f2f2;
+    }
+
+    #grpc-form .grpc-metadata-table th {
+        background-color: #1f1f1f;
+        border-bottom-color: #333;
+        color: #f2f2f2;
+    }
+
+    #grpc-form .grpc-metadata-table td,
+    #grpc-form .grpc-metadata-table th {
+        border-color: #333;
+    }
+
+    #grpc-form #grpc-response-data div.output_container {
+        background-color: #1a1a1a;
+        color: #e1e4e8;
+    }
+
+    #grpc-form #grpc-response-data,
+    #grpc-form #grpc-response-data pre,
+    #grpc-form #grpc-response-data code {
+        color: #e1e4e8;
+        background-color: #1a1a1a;
+    }
+
+    #grpc-form #grpc-response-data .null {
+        color: #999999;
+    }
+
+    #grpc-form #grpc-response-data div.one-of-3 {
+        border-color: #444;
+    }
+
+    #grpc-form #grpc-response-data div.two-of-3 {
+        border-color: #444;
+    }
+
+    #grpc-form #grpc-response-data div.three-of-3 {
+        border-color: #555;
+    }
+
+    #grpc-form #grpc-response-error {
+        color: #ff6b6b;
+    }
+
+    #grpc-form #grpc-response-error #grpc-response-error-num,
+    #grpc-form #grpc-response-error #grpc-response-error-msg {
+        color: #ff8787;
+    }
+
+    #grpc-form #grpc-history-list .history-item-header {
+        border-bottom-color: #333;
+        color: #f2f2f2;
+    }
+
+    #grpc-form #grpc-history-list > .ui-accordion:first-child {
+        border-top-color: #333;
+    }
+
+    #grpc-form #grpc-history-list .history-item-header .history-item-result.error {
+        color: #ff8787;
+    }
+
+    #grpc-form #grpc-history-list .history-item-header .history-item-messages {
+        color: #bbbbbb;
+    }
+
+    #grpc-form #grpc-history-list .history-item-panel {
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+    }
+
+    #grpc-form .grpc-curl-panel {
+        background-color: #1a1a1a;
+        border-color: #333;
+    }
+
+    #grpc-form #grpc-request-form .duration-unit,
+    #grpc-form #grpc-request-form label.disabled,
+    #grpc-form #grpc-request-form td.empty_message {
+        color: #bbbbbb;
+    }
+
+    /* Dark mode styles for jQuery UI datepicker */
+    .ui-datepicker {
+        background: #21262d !important;
+        border: 1px solid #444c56 !important;
+        color: #e1e4e8 !important;
+    }
+
+    .ui-datepicker-header {
+        background: #30363d !important;
+        border: 1px solid #444c56 !important;
+        color: #f0f6fc !important;
+    }
+
+    .ui-datepicker-title {
+        color: #f0f6fc !important;
+    }
+
+    .ui-datepicker-prev,
+    .ui-datepicker-next {
+        background: #30363d !important;
+        border: 1px solid #444c56 !important;
+        color: #e1e4e8 !important;
+    }
+
+    .ui-datepicker-prev:hover,
+    .ui-datepicker-next:hover {
+        background: #484f58 !important;
+        border-color: #606166 !important;
+    }
+
+    .ui-datepicker-calendar {
+        background: #21262d !important;
+    }
+
+    .ui-datepicker-calendar th {
+        background: #30363d !important;
+        color: #f0f6fc !important;
+        border: 1px solid #444c56 !important;
+    }
+
+    .ui-datepicker-calendar td {
+        background: #21262d !important;
+        border: 1px solid #444c56 !important;
+    }
+
+    .ui-datepicker-calendar td a {
+        color: #e1e4e8 !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .ui-datepicker-calendar td a:hover {
+        background: #30363d !important;
+        color: #f0f6fc !important;
+    }
+
+    .ui-datepicker-calendar .ui-datepicker-today a {
+        background: #1f6feb !important;
+        color: #ffffff !important;
+    }
+
+    .ui-datepicker-calendar .ui-state-active a {
+        background: #238636 !important;
+        color: #ffffff !important;
+    }
+
+    .ui-datepicker-buttonpane {
+        background: #30363d !important;
+        border: 1px solid #444c56 !important;
+    }
+
+    .ui-datepicker-buttonpane button {
+        background: #21262d !important;
+        border: 1px solid #444c56 !important;
+        color: #e1e4e8 !important;
+    }
+
+    .ui-datepicker-buttonpane button:hover {
+        background: #30363d !important;
+        border-color: #606166 !important;
+    }
+
+    .ui-widget-content {
+        background: #30363d !important;
+    }
+
+    hr {
+        border-color: #606166 !important;
+    }
 }
