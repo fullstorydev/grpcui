@@ -1117,4 +1117,12 @@ button#grpc-history-clear, button#grpc-history-save {
         background: #30363d !important;
         border-color: #606166 !important;
     }
+
+    .ui-widget-content {
+        background: #30363d !important;
+    }
+
+    hr {
+        border-color: #606166 !important;
+    }
 }
