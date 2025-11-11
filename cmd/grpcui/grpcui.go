@@ -49,6 +49,16 @@ import (
 var version = "dev build <no version set>"
 
 var (
+	grpcCurlFlags = []string{
+		"key",
+		"cert",
+		"cacert",
+		"plaintext",
+		"insecure",
+	}
+)
+
+var (
 	exit = os.Exit
 
 	isUnixSocket func() bool // nil when run on non-unix platform
@@ -351,6 +361,18 @@ func main() {
 	flags.Usage = usage
 	flags.Parse(os.Args[1:])
 
+	var gRPCOptions []string
+	for _, flagName := range grpcCurlFlags {
+		f := flags.Lookup(flagName)
+		if f.Value.String() != f.DefValue {
+			if getter, ok := f.Value.(flag.Getter); ok && getter.Get() == true {
+				gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s", f.Name))
+			} else {
+				gRPCOptions = append(gRPCOptions, fmt.Sprintf("-%s=%s", f.Name, strconv.Quote(f.Value.String())))
+			}
+		}
+	}
+
 	if *help {
 		usage()
 		os.Exit(0)
@@ -632,6 +654,7 @@ func main() {
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraJS, standalone.AddJSFile)...)
 	handlerOpts = append(handlerOpts, configureJSandCSS(extraCSS, standalone.AddCSSFile)...)
 	handlerOpts = append(handlerOpts, configureAssets(otherAssets)...)
+	handlerOpts = append(handlerOpts, standalone.WithGRPCOptions(gRPCOptions))
 
 	handler := standalone.Handler(cc, target, methods, allFiles, handlerOpts...)
 	if *maxTime > 0 {

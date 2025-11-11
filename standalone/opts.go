@@ -219,6 +219,12 @@ func WithClientDebug(debug bool) HandlerOption {
 	})
 }
 
+func WithGRPCOptions(options []string) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.gRPCurlOptions = options
+	})
+}
+
 // optFunc implements HandlerOption
 type optFunc func(opts *handlerOptions)
 
@@ -239,6 +245,7 @@ type handlerOptions struct {
 	emitDefaults        bool
 	invokeVerbosity     int
 	debug               *bool
+	gRPCurlOptions      []string
 }
 
 func (opts *handlerOptions) addlServedResources() []*resource {
