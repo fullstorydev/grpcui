@@ -1,6 +1,6 @@
 module github.com/fullstorydev/grpcui
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.1
 
@@ -10,7 +10,7 @@ require (
 	github.com/jhump/protoreflect v1.17.0
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	golang.org/x/net v0.43.0
-	golang.org/x/term v0.34.0
+	golang.org/x/term v0.37.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17
 	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.36.10
@@ -27,7 +27,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.0.2 // indirect
 	golang.org/x/oauth2 v0.27.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	google.golang.org/genproto v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
