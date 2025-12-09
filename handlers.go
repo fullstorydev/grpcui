@@ -436,7 +436,7 @@ func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterfa
 		req := input.Data[0]
 		input.Data = input.Data[1:]
 		if err := jsonpb.Unmarshal(bytes.NewReader(req), m); err != nil {
-			return status.Errorf(codes.InvalidArgument, err.Error())
+			return status.Error(codes.InvalidArgument, err.Error())
 		}
 		return nil
 	}
