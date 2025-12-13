@@ -2113,9 +2113,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     let gRPCurlTextArea = $("#grpc-curl-text");
     function updateCurlCommand(requestDataJson) {
-        const grpcOpts = window.gRPCurlOptions ? ' ' + window.gRPCurlOptions : '';
-
-        let metadataStr = "";
+        let grpcCmd = window.gRPCurlCmd;
 
         const service = $("#grpc-service").val();
         const method = $("#grpc-method").val();
@@ -2129,11 +2127,11 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             const name = $(cells[0]).val();
             const val = $(cells[1]).val();
             if (name !== "") {
-                metadataStr += ` -H "${name}: ${val}"`;
+                grpcCmd += ` -H "${name}: ${val}"`;
             }
         }
 
-        gRPCurlTextArea.text(`grpcurl${grpcOpts}${metadataStr} -d '${requestDataJson}' ${window.target} ${service}.${method}`);
+        gRPCurlTextArea.text(`${grpcCmd} -d '${requestDataJson}' ${window.target} ${service}.${method}`);
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");
