@@ -199,7 +199,7 @@ ol#grpc-request-examples {
 }
 
 textarea#grpc-request-raw-text {
-    height: 200px;
+    height: 360px;
 }
 
 #grpc-request-timeout {
@@ -539,11 +539,51 @@ table#grpc-request-metadata-form {
 
 textarea.grpc-response-textarea {
     font-family: "Courier New", Courier, monospace;
-    height: 200px;
+    min-height: 200px;
+    resize: vertical;
+}
+
+.grpc-response-json-controls {
+    margin-bottom: 8px;
+}
+
+.grpc-response-jsonstructured {
+    border: 1px solid #aaa;
+    background-color: #fff;
+    padding: 10px;
+    margin-bottom: 16px;
+    height: 360px;
+    min-height: 200px;
+    overflow: auto;
+    resize: vertical;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+}
+
+.grpc-response-raw-json {
+    width: 100%;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+    border: 1px solid #aaa;
+    background-color: #fff;
+    padding: 10px;
+    margin-bottom: 16px;
+    min-height: 200px;
+    overflow: auto;
+    resize: vertical;
 }
 
 #grpc-response-error-details textarea.grpc-response-textarea {
-    height: 100px;
+    min-height: 100px;
+}
+
+#grpc-response-error-details .grpc-response-jsonstructured {
+    min-height: 100px;
+    height: 200px;
+}
+
+#grpc-response-error-details .grpc-response-raw-json {
+    min-height: 100px;
 }
 
 #grpc-response-error-details-container h4 {

@@ -2137,9 +2137,74 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     }
 
     var jsonRawTextArea = $("#grpc-request-raw-text");
+
+    function autoSizeTextarea(textArea, minHeight) {
+        const ta = textArea.get(0);
+        if (!ta) {
+            return;
+        }
+        textArea.css('height', 'auto');
+        const nextHeight = Math.max(ta.scrollHeight, minHeight || 0);
+        textArea.css('height', nextHeight + 'px');
+    }
+
+    function hasJSONViewer() {
+        return typeof $.fn.jsonViewer === "function";
+    }
+
+    function renderStructuredJSON(container, message) {
+        if (!hasJSONViewer()) {
+            return false;
+        }
+        container.jsonViewer(message, {
+            collapsed: false,
+            rootCollapsable: true,
+            withQuotes: true,
+            withLinks: true
+        });
+        return true;
+    }
+
+    function renderJSONMessage(container, message) {
+        const messageJSON = JSON.stringify(message, null, 2);
+
+        const controls = $('<div class="grpc-response-json-controls"></div>');
+        const toggleRawButton = $('<button type="button" class="grpc-response-toggle-raw">Show Structured View</button>');
+        controls.append(toggleRawButton);
+        container.append(controls);
+
+        const structuredContainer = $('<div class="grpc-response-jsonstructured"></div>');
+        container.append(structuredContainer);
+
+        const rawText = $('<textarea class="grpc-response-raw-json" readonly></textarea>');
+        rawText.val(messageJSON);
+        container.append(rawText);
+        autoSizeTextarea(rawText, 100);
+
+        if (!renderStructuredJSON(structuredContainer, message)) {
+            toggleRawButton.hide();
+            return;
+        }
+
+        structuredContainer.hide();
+        toggleRawButton.click(function() {
+            const showingRaw = rawText.is(':visible');
+            if (showingRaw) {
+                rawText.hide();
+                structuredContainer.show();
+                toggleRawButton.text('Show Raw JSON');
+            } else {
+                structuredContainer.hide();
+                rawText.show();
+                toggleRawButton.text('Show Structured View');
+            }
+        });
+    }
+
     function updateJSONRequest(req) {
         let requestDataJson = JSON.stringify(req, null, 2);
         jsonRawTextArea.val(requestDataJson);
+        autoSizeTextarea(jsonRawTextArea, 200);
         updateCurlCommand(requestDataJson);
     }
 
@@ -2152,6 +2217,9 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     jsonRawTextArea.focus(function() {
         setValidation(this, validateJSON);
+    });
+    jsonRawTextArea.on('input', function() {
+        autoSizeTextarea(jsonRawTextArea, 200);
     });
 
     var MAX_INT64 = "9223372036854775807";
@@ -2369,15 +2437,13 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         enclosingDiv.empty();
         if (messages instanceof Array && messages.length > 0) {
             enclosingDiv.show();
-            for (const msg of messages) {
+            for (let i = 0; i < messages.length; i++) {
+                const msg = messages[i];
                 const container = $('<div>');
                 if (msg.isError) {
                     container.html('<div class="error">Server error processing message #' + (i+1) + '</div>');
                 } else {
-                    const textArea = $('<textarea>');
-                    textArea.val(JSON.stringify(msg.message, null, 2));
-                    textArea.addClass('grpc-response-textarea');
-                    container.append(textArea);
+                    renderJSONMessage(container, msg.message);
                 }
                 enclosingDiv.append(container);
             }
