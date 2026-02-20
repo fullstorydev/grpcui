@@ -199,7 +199,7 @@ ol#grpc-request-examples {
 }
 
 textarea#grpc-request-raw-text {
-    height: 360px;
+    height: 200px;
 }
 
 #grpc-request-timeout {
@@ -543,11 +543,6 @@ table#grpc-request-metadata-form {
 
 .grpc-response-jsonstructured {
     border: 1px solid #aaa;
-    background-color: #fff;
-    padding: 10px;
-    margin-bottom: 16px;
-    height: 360px;
-    min-height: 200px;
     overflow: auto;
     resize: vertical;
     font-family: "Courier New", Courier, monospace;
