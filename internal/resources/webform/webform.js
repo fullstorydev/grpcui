@@ -2138,16 +2138,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     var jsonRawTextArea = $("#grpc-request-raw-text");
 
-    function autoSizeTextarea(textArea, minHeight) {
-        const ta = textArea.get(0);
-        if (!ta) {
-            return;
-        }
-        textArea.css('height', 'auto');
-        const nextHeight = Math.max(ta.scrollHeight, minHeight || 0);
-        textArea.css('height', nextHeight + 'px');
-    }
-
     function hasJSONViewer() {
         return typeof $.fn.jsonViewer === "function";
     }
@@ -2179,7 +2169,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         const rawText = $('<textarea class="grpc-response-raw-json" readonly></textarea>');
         rawText.val(messageJSON);
         container.append(rawText);
-        autoSizeTextarea(rawText, 100);
 
         if (!renderStructuredJSON(structuredContainer, message)) {
             toggleRawButton.hide();
@@ -2204,7 +2193,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     function updateJSONRequest(req) {
         let requestDataJson = JSON.stringify(req, null, 2);
         jsonRawTextArea.val(requestDataJson);
-        autoSizeTextarea(jsonRawTextArea, 200);
         updateCurlCommand(requestDataJson);
     }
 
@@ -2217,9 +2205,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     jsonRawTextArea.focus(function() {
         setValidation(this, validateJSON);
-    });
-    jsonRawTextArea.on('input', function() {
-        autoSizeTextarea(jsonRawTextArea, 200);
     });
 
     var MAX_INT64 = "9223372036854775807";
@@ -2437,8 +2422,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         enclosingDiv.empty();
         if (messages instanceof Array && messages.length > 0) {
             enclosingDiv.show();
-            for (let i = 0; i < messages.length; i++) {
-                const msg = messages[i];
+            for (const msg of messages) {
                 const container = $('<div>');
                 if (msg.isError) {
                     container.html('<div class="error">Server error processing message #' + (i+1) + '</div>');
