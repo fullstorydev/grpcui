@@ -95,20 +95,18 @@
           html += '{<ul class="json-dict">';
           for (var key in json) {
             if (Object.prototype.hasOwnProperty.call(json, key)) {
-              // define a parameter of the json value first to prevent get null from key when the key changed by the function `htmlEscape(key)`
-              let jsonElement = json[key];
               key = htmlEscape(key);
               var keyRepr = options.withQuotes ?
                 '<span class="json-string">"' + key + '"</span>' : key;
 
               html += '<li>';
               // Add toggle button if item is collapsable
-              if (isCollapsable(jsonElement)) {
+              if (isCollapsable(json[key])) {
                 html += '<a href class="json-toggle">' + keyRepr + '</a>';
               } else {
                 html += keyRepr;
               }
-              html += ': ' + json2html(jsonElement, options);
+              html += ': ' + json2html(json[key], options);
               // Add comma if item is not last
               if (--keyCount > 0) {
                 html += ',';

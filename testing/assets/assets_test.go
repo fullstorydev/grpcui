@@ -44,8 +44,8 @@ func TestStandaloneIncludesRequiredAssets(t *testing.T) {
 		"jquery-3.4.1.min.js",
 		"jquery-ui-1.12.1.min.css",
 		"jquery-ui-1.12.1.min.js",
-		"jquery.json-viewer.js",
-		"jquery.json-viewer.css",
+		"jquery.json-viewer-v1.5.0.js",
+		"jquery.json-viewer-v1.5.0.css",
 	}
 	for _, name := range required {
 		if !seen[name] {
