@@ -20,6 +20,13 @@
     font-size: 14px;
 }
 
+.grpc-desc .grpc-combobox-input {
+    height: 30px;
+    font-size: 14px;
+    min-width: 280px;
+    padding: 4px 8px;
+}
+
 .grpc-desc pre {
     margin: 0 0 0 36px;
     padding-left: 20px;
