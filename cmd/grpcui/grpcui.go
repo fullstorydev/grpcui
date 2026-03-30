@@ -31,6 +31,7 @@ import (
 	"github.com/pkg/browser"
 	"golang.org/x/term"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
 	insecurecreds "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/grpclog"
@@ -1080,21 +1081,44 @@ func dial(ctx context.Context, network, addr string, creds credentials.Transport
 		opts = append(opts, grpc.WithTransportCredentials(&errCreds))
 	}
 
-	cc, err := grpc.DialContext(ctx, addr, append(opts, grpc.WithBlock(), grpc.WithContextDialer(dialer.dial))...)
-	if err == nil {
-		return cc, nil
+	cc, err := grpc.NewClient("passthrough:///"+addr, append(opts, grpc.WithContextDialer(dialer.dial))...)
+	if err != nil {
+		return nil, err
 	}
 
-	// prefer last observed TLS handshake error if there is one
-	if err := errCreds.err(); err != nil {
-		return nil, err
+	// NewClient is lazy, so explicitly connect and wait for the connection to be ready.
+	cc.Connect()
+	for {
+		state := cc.GetState()
+		if state == connectivity.Ready {
+			return cc, nil
+		}
+		if state == connectivity.TransientFailure {
+			// prefer last observed TLS handshake error if there is one
+			if err := errCreds.err(); err != nil {
+				cc.Close()
+				return nil, err
+			}
+			// otherwise, use the error the dialer last observed
+			if err := dialer.err(); err != nil {
+				cc.Close()
+				return nil, err
+			}
+		}
+		if !cc.WaitForStateChange(ctx, state) {
+			// Context expired
+			cc.Close()
+			// prefer last observed TLS handshake error if there is one
+			if err := errCreds.err(); err != nil {
+				return nil, err
+			}
+			// otherwise, use the error the dialer last observed
+			if err := dialer.err(); err != nil {
+				return nil, err
+			}
+			return nil, ctx.Err()
+		}
 	}
-	// otherwise, use the error the dialer last observed
-	if err := dialer.err(); err != nil {
-		return nil, err
-	}
-	// if we have no better source of error message, use what grpc.DialContext returned
-	return nil, err
 }
 
 type errTrackingCreds struct {
