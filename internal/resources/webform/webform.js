@@ -26,7 +26,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             methodList.val(methods[0]);
         }
         syncComboboxInput("#grpc-method");
-        persistSelectionState();
         // implicit selection of first element does not
         // generate a change event, so we have to do this
         formMethodSelected(callback);
@@ -2642,9 +2641,6 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     const setupCombobox = (selectSelector, inputId) => {
         const selectEl = $(selectSelector);
-        if (selectEl.length === 0 || selectEl.data("comboboxReady")) {
-            return;
-        }
 
         const inputEl = $("<input>", {
             id: inputId,
@@ -2654,16 +2650,17 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             "aria-haspopup": "listbox",
         }).insertAfter(selectEl);
 
-        const readSource = () => getSelectOptions(selectEl);
         inputEl.val(selectEl.val() || "");
 
         inputEl.autocomplete({
             minLength: 0,
             delay: 0,
             source: function(req, resp) {
-                const options = readSource();
+                const options = getSelectOptions(selectEl);
+                // When user types an exact option value, put it first in the dropdown
+                // so it's pre-selected, then show remaining options for easy browsing
                 const exactMatchIndex = options.findIndex(item => item === req.term);
-                if (exactMatchIndex >= 0) {
+                if (exactMatchIndex !== -1) {
                     const exactMatch = options[exactMatchIndex];
                     const reordered = [exactMatch].concat(options.filter((item, index) => index !== exactMatchIndex));
                     resp(reordered);
@@ -2700,8 +2697,8 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         selectEl.on("change.comboboxSync", function() {
             syncComboboxInput(selectSelector);
         });
-        selectEl.hide();
         inputEl.width(selectEl.outerWidth());
+        selectEl.hide();
         selectEl.data("comboboxInput", inputEl);
         selectEl.data("comboboxReady", true);
     };
@@ -2743,6 +2740,13 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         if (hasMethodForService(service, method)) {
             setStorageItem(methodStorageKey, method);
+        }
+        // Update URL query params to make the current selection shareable
+        if (hasService(service) && hasMethodForService(service, method)) {
+            const url = new URL(window.location);
+            url.searchParams.set("serviceName", service);
+            url.searchParams.set("methodName", method);
+            window.history.replaceState(null, "", url.toString());
         }
     };
 
