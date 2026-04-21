@@ -34,17 +34,6 @@
     color: #777;
 }
 
-button#grpc-descriptions-toggle {
-    position: absolute;
-    z-index: 3;
-    padding: 0;
-    margin-top: 6px;
-    margin-left: 10px;
-    border: none;
-    background: white;
-    font-size: 150%;
-}
-
 .grpc-desc div.grpc-form-label {
     font-size: 110%;
     width: 124px;
@@ -203,6 +192,17 @@ ol#grpc-request-examples {
     margin-bottom: 16px;
     font-family: "Courier New", Courier, monospace;
     font-size: 14px;
+}
+
+button#grpc-descriptions-toggle {
+    position: absolute;
+    z-index: 3;
+    padding: 0;
+    margin-top: 6px;
+    margin-left: 10px;
+    border: none;
+    background: white;
+    font-size: 150%;
 }
 
 textarea#grpc-request-raw-text {
