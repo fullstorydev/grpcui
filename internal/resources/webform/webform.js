@@ -3,7 +3,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     var descriptionsShown = false;
     var requestForm = $("#grpc-request-form");
 
-    function formServiceSelected(callback) {
+    function formServiceSelected(callback, preferredMethod) {
         var svcName = $("#grpc-service").val();
         var svcDesc = svcDescs[svcName];
         var methods = services[svcName];
@@ -17,10 +17,15 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         var methodList = $("#grpc-method");
         methodList.empty();
         for (var i = 0; i < methods.length; i++) {
-            m = methods[i];
+            var m = methods[i];
             methodList.append($("<option>", {value: m, text: m}));
         }
-        $("#grpc-method option:first-of-type").select();
+        if (preferredMethod && methods.includes(preferredMethod)) {
+            methodList.val(preferredMethod);
+        } else if (methods.length > 0) {
+            methodList.val(methods[0]);
+        }
+        syncComboboxInput("#grpc-method");
         // implicit selection of first element does not
         // generate a change event, so we have to do this
         formMethodSelected(callback);
@@ -41,6 +46,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         $.ajax(metadataURI + "?method=" + fullMethod)
             .done(function(data) {
                 buildRequestForm(data);
+                persistSelectionState();
                 callback?.();
             })
             .fail(function(data, status) {
@@ -2575,6 +2581,174 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
 
     const historyStorageKey = `grpcui-history-${window.location.host}-${target}`;
     const expandDescStorageKey = `grpcui-expand-description`;
+    const serviceStorageKey = `grpcui-last-service-${window.location.host}-${target}`;
+    const methodStorageKey = `grpcui-last-method-${window.location.host}-${target}`;
+
+    const getStorageItem = (key) => {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            return null;
+        }
+    };
+
+    const setStorageItem = (key, value) => {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {}
+    };
+
+    const hasService = (serviceName) => Boolean(serviceName && services[serviceName]);
+
+    const hasMethodForService = (serviceName, methodName) =>
+        Boolean(hasService(serviceName) && methodName && services[serviceName].includes(methodName));
+
+    const getSelectOptions = (selectEl) => {
+        const options = [];
+        $(selectEl).find("option").each(function() {
+            const val = $(this).val();
+            if (val) {
+                options.push(val);
+            }
+        });
+        return options;
+    };
+
+    const resolveOptionValue = (selectEl, rawValue) => {
+        if (!rawValue) {
+            return null;
+        }
+        const options = getSelectOptions(selectEl);
+        if (options.includes(rawValue)) {
+            return rawValue;
+        }
+        const lowered = rawValue.toLowerCase();
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].toLowerCase() === lowered) {
+                return options[i];
+            }
+        }
+        return null;
+    };
+
+    const syncComboboxInput = (selectSelector) => {
+        const selectEl = $(selectSelector);
+        const inputEl = selectEl.data("comboboxInput");
+        if (inputEl && inputEl.length) {
+            inputEl.val(selectEl.val() || "");
+        }
+    };
+
+    const setupCombobox = (selectSelector, inputId) => {
+        const selectEl = $(selectSelector);
+
+        const inputEl = $("<input>", {
+            id: inputId,
+            type: "text",
+            class: "grpc-combobox-input ui-widget ui-widget-content ui-state-default ui-corner-left",
+            "aria-autocomplete": "list",
+            "aria-haspopup": "listbox",
+        }).insertAfter(selectEl);
+
+        inputEl.val(selectEl.val() || "");
+
+        inputEl.autocomplete({
+            minLength: 0,
+            delay: 0,
+            source: function(req, resp) {
+                const options = getSelectOptions(selectEl);
+                // When user types an exact option value, put it first in the dropdown
+                // so it's pre-selected, then show remaining options for easy browsing
+                const exactMatchIndex = options.findIndex(item => item === req.term);
+                if (exactMatchIndex !== -1) {
+                    const exactMatch = options[exactMatchIndex];
+                    const reordered = [exactMatch].concat(options.filter((item, index) => index !== exactMatchIndex));
+                    resp(reordered);
+                    return;
+                }
+                const term = (req.term || "").toLowerCase();
+                const matches = options.filter(item => item.toLowerCase().includes(term));
+                resp(matches);
+            },
+            select: function(_event, ui) {
+                const prev = selectEl.val();
+                const next = ui.item.value;
+                selectEl.val(next);
+                syncComboboxInput(selectSelector);
+                if (prev !== next) {
+                    selectEl.trigger("change");
+                }
+            },
+            change: function(_event, ui) {
+                const prev = selectEl.val();
+                const resolved = ui.item?.value || resolveOptionValue(selectEl, inputEl.val()) || selectEl.val();
+                selectEl.val(resolved);
+                syncComboboxInput(selectSelector);
+                if (prev !== resolved) {
+                    selectEl.trigger("change");
+                }
+            }
+        });
+
+        inputEl.on("focus", function() {
+            $(this).autocomplete("search", $(this).val());
+        });
+
+        selectEl.on("change.comboboxSync", function() {
+            syncComboboxInput(selectSelector);
+        });
+        inputEl.width(selectEl.outerWidth());
+        selectEl.hide();
+        selectEl.data("comboboxInput", inputEl);
+        selectEl.data("comboboxReady", true);
+    };
+
+    const resolveInitialSelection = () => {
+        const params = new URLSearchParams(window.location.search || "");
+        const serviceFromQuery = params.get("serviceName");
+        const methodFromQuery = params.get("methodName");
+        const serviceFromStorage = getStorageItem(serviceStorageKey);
+        const methodFromStorage = getStorageItem(methodStorageKey);
+
+        const serviceCandidates = [serviceFromQuery, serviceFromStorage, $("#grpc-service option:first").val()];
+        let service = null;
+        for (let i = 0; i < serviceCandidates.length; i++) {
+            if (hasService(serviceCandidates[i])) {
+                service = serviceCandidates[i];
+                break;
+            }
+        }
+
+        const methods = services[service] || [];
+        const methodCandidates = [methodFromQuery, methodFromStorage, methods[0]];
+        let method = null;
+        for (let i = 0; i < methodCandidates.length; i++) {
+            if (hasMethodForService(service, methodCandidates[i])) {
+                method = methodCandidates[i];
+                break;
+            }
+        }
+
+        return { service, method };
+    };
+
+    const persistSelectionState = () => {
+        const service = $("#grpc-service").val();
+        const method = $("#grpc-method").val();
+        if (hasService(service)) {
+            setStorageItem(serviceStorageKey, service);
+        }
+        if (hasMethodForService(service, method)) {
+            setStorageItem(methodStorageKey, method);
+        }
+        // Update URL query params to make the current selection shareable
+        if (hasService(service) && hasMethodForService(service, method)) {
+            const url = new URL(window.location);
+            url.searchParams.set("serviceName", service);
+            url.searchParams.set("methodName", method);
+            window.history.replaceState(null, "", url.toString());
+        }
+    };
 
     const loadExamples = () => {
         $.ajax({
@@ -2798,22 +2972,20 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         }
         $("#grpc-request-timeout input").val(timeout);
         $("#grpc-service").val(item.service);
+        syncComboboxInput("#grpc-service");
         formServiceSelected(() => {
-            $("#grpc-method").val(item.method);
-            formMethodSelected(() => {
-                updateJSONRequest(item.request.data)
-                validateJSON();
-                // remove all rows
-                $("tr").remove('.metadataRow');
-                // item.request.metadata will be undefined when using -examples
-                // and without setting in json file, here it needs to be verified
-                if (item.request.metadata) {
-                    for (let metadata of item.request.metadata) {
-                        addMetadataRow(metadata.name, metadata.value);
-                    }
+            updateJSONRequest(item.request.data)
+            validateJSON();
+            // remove all rows
+            $("tr").remove('.metadataRow');
+            // item.request.metadata will be undefined when using -examples
+            // and without setting in json file, here it needs to be verified
+            if (item.request.metadata) {
+                for (let metadata of item.request.metadata) {
+                    addMetadataRow(metadata.name, metadata.value);
                 }
-            });
-        });
+            }
+        }, item.method);
     }
 
     const clearExampleSelection = () => {
@@ -2898,8 +3070,17 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
     // data and metadata from URL hash fragment (and add a way for user to
     // get URL with hash fragment for currently selected method and data)
 
-    // initialize methods drop-down based on selected service
-    formServiceSelected();
+    setupCombobox("#grpc-service", "grpc-service-combobox");
+    setupCombobox("#grpc-method", "grpc-method-combobox");
+
+    const initialSelection = resolveInitialSelection();
+    if (hasService(initialSelection.service)) {
+        $("#grpc-service").val(initialSelection.service);
+        syncComboboxInput("#grpc-service");
+    }
+
+    // initialize methods drop-down based on selected service and preferred method
+    formServiceSelected(undefined, initialSelection.method);
 
     if (isUnset(headers) || headers.length === 0) {
         // add a single blank entry to request metadata table

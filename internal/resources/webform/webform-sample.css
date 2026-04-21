@@ -20,22 +20,18 @@
     font-size: 14px;
 }
 
+.grpc-desc .grpc-combobox-input {
+    height: 30px;
+    font-size: 14px;
+    min-width: 280px;
+    padding: 4px 8px;
+}
+
 .grpc-desc pre {
     margin: 0 0 0 36px;
     padding-left: 20px;
     border-left: 1px solid #d8d8d8;
     color: #777;
-}
-
-button#grpc-descriptions-toggle {
-    position: absolute;
-    z-index: 3;
-    padding: 0;
-    margin-top: 6px;
-    margin-left: 10px;
-    border: none;
-    background: white;
-    font-size: 150%;
 }
 
 .grpc-desc div.grpc-form-label {
@@ -196,6 +192,17 @@ ol#grpc-request-examples {
     margin-bottom: 16px;
     font-family: "Courier New", Courier, monospace;
     font-size: 14px;
+}
+
+button#grpc-descriptions-toggle {
+    position: absolute;
+    z-index: 3;
+    padding: 0;
+    margin-top: 6px;
+    margin-left: 10px;
+    border: none;
+    background: white;
+    font-size: 150%;
 }
 
 textarea#grpc-request-raw-text {
