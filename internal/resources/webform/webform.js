@@ -2653,6 +2653,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
         inputEl.val(selectEl.val() || "");
 
         inputEl.autocomplete({
+            appendTo: "#grpc-form",
             minLength: 0,
             delay: 0,
             source: function(req, resp) {

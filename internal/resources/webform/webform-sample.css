@@ -1129,6 +1129,20 @@ button#grpc-history-clear, button#grpc-history-save {
         background: #30363d !important;
     }
 
+    /* Dark mode styles for jQuery UI autocomplete (combobox dropdown) */
+    #grpc-form .ui-autocomplete,
+    #grpc-form .ui-menu .ui-menu-item-wrapper {
+        background: #21262d;
+        color: #e1e4e8;
+        border-color: #444c56;
+    }
+    #grpc-form .ui-menu .ui-state-active,
+    #grpc-form .ui-menu .ui-state-focus {
+        background: #1f6feb;
+        color: #fff;
+        border-color: #1f6feb;
+    }
+
     hr {
         border-color: #606166 !important;
     }
