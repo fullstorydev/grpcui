@@ -219,9 +219,15 @@ func WithClientDebug(debug bool) HandlerOption {
 	})
 }
 
+func WithGRPCCmd(cmdLine []string) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.gRPCurlCmd = cmdLine
+	})
+}
+
 func WithGRPCOptions(options []string) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
-		opts.gRPCurlOptions = options
+		opts.gRPCurlCmd = append([]string{"grpcurl"}, options...)
 	})
 }
 
@@ -245,7 +251,7 @@ type handlerOptions struct {
 	emitDefaults        bool
 	invokeVerbosity     int
 	debug               *bool
-	gRPCurlOptions      []string
+	gRPCurlCmd          []string
 }
 
 func (opts *handlerOptions) addlServedResources() []*resource {
