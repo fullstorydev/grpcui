@@ -2691,7 +2691,7 @@ window.initGRPCForm = function(services, svcDescs, mtdDescs, invokeURI, metadata
             }
         });
 
-        inputEl.on("focus", function() {
+        inputEl.on("focus click", function() {
             $(this).autocomplete("search", $(this).val());
         });
 
