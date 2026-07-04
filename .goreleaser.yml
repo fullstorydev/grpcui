@@ -1,3 +1,5 @@
+version: 2
+
 builds:
   - binary: grpcui
     main: ./cmd/grpcui
@@ -18,10 +20,10 @@ builds:
       - -s -w -X main.version=v{{.Version}}
 
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [zip]
     name_template: >-
       {{ .Binary }}_{{ .Version }}_
       {{- if eq .Os "darwin" }}osx{{ else }}{{ .Os }}{{ end }}_
