@@ -20,10 +20,10 @@ builds:
       - -s -w -X main.version=v{{.Version}}
 
 archives:
-  - formats: [tar.gz]
+  - format: tar.gz
     format_overrides:
       - goos: windows
-        formats: [zip]
+        format: zip
     name_template: >-
       {{ .Binary }}_{{ .Version }}_
       {{- if eq .Os "darwin" }}osx{{ else }}{{ .Os }}{{ end }}_
