@@ -72,7 +72,7 @@ type WebFormOptions struct {
 	// debug is enabled).
 	Debug *bool
 	// Any options that will be rendered before grpcurl in the grpccurl/raw request box
-	GRPCurlOptions []string
+	GRPCurlCmd []string
 }
 
 // WebFormContentsWithOptions is the same as WebFormContents except that it
@@ -93,7 +93,7 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, de
 		DefaultMetadata []metadataEntry
 		Debug           bool
 		Target          string
-		GRPCurlOptions  template.JS
+		GRPCurlCmd      template.JS
 	}{
 		InvokeURI:   invokeURI,
 		MetadataURI: metadataURI,
@@ -104,11 +104,11 @@ func WebFormContentsWithOptions(invokeURI, metadataURI string, target string, de
 		Target:      target,
 	}
 
-	gRPCOptionsJSONStr, err := json.Marshal(strings.Join(opts.GRPCurlOptions, " "))
+	gRPCOptionsJSONStr, err := json.Marshal(strings.Join(opts.GRPCurlCmd, " "))
 	if err != nil {
 		panic(fmt.Errorf("Error marshaling to JSON: %w", err))
 	}
-	params.GRPCurlOptions = template.JS(gRPCOptionsJSONStr)
+	params.GRPCurlCmd = template.JS(gRPCOptionsJSONStr)
 	if opts.Debug != nil {
 		params.Debug = *opts.Debug
 	}
