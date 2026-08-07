@@ -94,10 +94,11 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	})
 
 	invokeOpts := grpcui.InvokeOptions{
-		ExtraMetadata:   uiOpts.extraMetadata,
-		PreserveHeaders: uiOpts.preserveHeaders,
-		EmitDefaults:    uiOpts.emitDefaults,
-		Verbosity:       uiOpts.invokeVerbosity,
+		ExtraMetadata:           uiOpts.extraMetadata,
+		PreserveHeaders:         uiOpts.preserveHeaders,
+		PreserveResponseHeaders: uiOpts.preserveResponseHeaders,
+		EmitDefaults:            uiOpts.emitDefaults,
+		Verbosity:               uiOpts.invokeVerbosity,
 	}
 	rpcInvokeHandler := http.StripPrefix("/invoke", grpcui.RPCInvokeHandlerWithOptions(ch, methods, invokeOpts))
 	mux.HandleFunc("/invoke/", func(w http.ResponseWriter, r *http.Request) {
