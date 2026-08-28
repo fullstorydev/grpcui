@@ -90,6 +90,7 @@ var (
 	rpcHeaders    multiString
 	reflHeaders   multiString
 	prsvHeaders   multiString
+	prsvCookies   multiString
 	defHeaders    multiString
 	expandHeaders = flags.Bool("expand-headers", false, prettify(`
 		If set, headers may use '${NAME}' syntax to reference environment
@@ -203,6 +204,11 @@ func init() {
 		Having gRPC UI preserve these headers means that the JWTs will also be
 		sent to backend gRPC servers. These headers are only sent when RPCs are
 		invoked and are not included for reflection requests.`))
+	flags.Var(&prsvCookies, "preserve-cookie", prettify(`
+        Cookie names (no values) for cookies that should be forwarded between the
+        web browser and the gRPC server. This will forward the relevant "Set-Cookie"
+        headers from the gRPC server to the web browser and the "Cookie" headers from
+        the browser to the gRPC server.`))
 	flags.Var(&defHeaders, "default-header", prettify(`
 		Additional headers to add to metadata in the gRPCui web form. Each value
 		should be in 'name: value' format. May specify more than one via multiple
@@ -640,6 +646,9 @@ func main() {
 	}
 	if len(prsvHeaders) > 0 {
 		handlerOpts = append(handlerOpts, standalone.PreserveHeaders(prsvHeaders))
+	}
+	if len(prsvCookies) > 0 {
+		handlerOpts = append(handlerOpts, standalone.PreserveCookies(prsvCookies))
 	}
 	if verbosity > 0 {
 		handlerOpts = append(handlerOpts, standalone.WithInvokeVerbosity(verbosity))

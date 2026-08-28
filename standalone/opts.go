@@ -188,6 +188,14 @@ func PreserveHeaders(headerNames []string) HandlerOption {
 	})
 }
 
+// PreserveCookies instructs the Handler to preserve Cookie and Set-Cookie
+// HTTP headers for the given cookies.
+func PreserveCookies(cookieNames []string) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.preserveCookies = cookieNames
+	})
+}
+
 // EmitDefaults tells gRPCurl whether or not default values should be emitted
 func EmitDefaults(emit bool) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
@@ -242,6 +250,7 @@ type handlerOptions struct {
 	defaultMetadata     []string
 	extraMetadata       []string
 	preserveHeaders     []string
+	preserveCookies     []string
 	emitDefaults        bool
 	invokeVerbosity     int
 	debug               *bool

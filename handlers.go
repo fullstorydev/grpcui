@@ -58,6 +58,10 @@ type InvokeOptions struct {
 	// includes conflicting metadata, the values in the HTTP request headers
 	// will override, and the values in the request will not be sent.
 	PreserveHeaders []string
+	// A set of cookie names that will be preserved. This means that the Cookie
+	// header will be sent to the gRPC backend if the cookie name is in this set
+	// and the Set-Cookie header will be send back from it.
+	PreserveCookies []string
 	// Whether or not default values should be emitted in the JSON response
 	EmitDefaults bool
 	// If verbosity is greater than zero, the handler may log events, such as
@@ -110,6 +114,22 @@ func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.Meth
 					return
 				}
 				w.Header().Set("Content-Type", "application/json")
+				if len(options.PreserveCookies) > 0 {
+					for _, h := range results.Headers {
+						if strings.ToLower(h.Name) != "set-cookie" {
+							continue
+						}
+						cn, _, f := strings.Cut(h.Value, "=")
+						if !f {
+							continue
+						}
+						for _, c := range options.PreserveCookies {
+							if c == cn {
+								w.Header().Add("Set-Cookie", h.Value)
+							}
+						}
+					}
+				}
 				enc := json.NewEncoder(w)
 				enc.SetIndent("", "  ")
 				enc.Encode(results)
@@ -472,7 +492,11 @@ func invokeRPC(ctx context.Context, methodName string, ch grpc.ClientConnInterfa
 
 func (opts *InvokeOptions) overrideHeaders(reqHdrs http.Header) metadata.MD {
 	hdrs := grpcurl.MetadataFromHeaders(opts.ExtraMetadata)
+	preserveAllCookies := false
 	for _, name := range opts.PreserveHeaders {
+		if strings.ToLower(name) == "cookie" {
+			preserveAllCookies = true
+		}
 		vals := reqHdrs.Values(name)
 		if opts.Verbosity > 0 {
 			if existing := hdrs.Get(name); len(existing) > 0 {
@@ -480,6 +504,26 @@ func (opts *InvokeOptions) overrideHeaders(reqHdrs http.Header) metadata.MD {
 			}
 		}
 		hdrs.Set(name, vals...)
+	}
+	cookieHeaders := reqHdrs.Values("Cookie")
+	if len(cookieHeaders) > 0 && len(opts.PreserveCookies) > 0 && !preserveAllCookies {
+		var cookiesToForward []string
+		for _, chl := range cookieHeaders {
+			for ch := range strings.SplitSeq(chl, ";") {
+				key, _, found := strings.Cut(ch, "=")
+				if !found {
+					continue
+				}
+				for _, cookie := range opts.PreserveCookies {
+					if strings.Trim(key, " ") == cookie {
+						cookiesToForward = append(cookiesToForward, ch)
+					}
+				}
+			}
+		}
+		if len(cookiesToForward) > 0 {
+			hdrs.Append("Cookie", strings.Join(cookiesToForward, "; "))
+		}
 	}
 	return hdrs
 }
