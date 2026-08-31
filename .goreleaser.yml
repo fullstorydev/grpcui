@@ -31,3 +31,32 @@ archives:
       {{- with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     files:
       - LICENSE
+
+# Release notes are generated, not hand-written. "github-native" delegates to
+# GitHub's own release-notes generator, which lists each merged PR with its
+# title, link, and author, credits new contributors, and groups entries
+# according to .github/release.yml.
+changelog:
+  use: github-native
+
+release:
+  footer: |
+    ## Container images
+
+    * `docker pull fullstorydev/grpcui:{{ .Tag }}`
+    * `docker pull ghcr.io/fullstorydev/grpcui:{{ .Tag }}`
+
+brews:
+  - name: grpcui
+    # Only published when HOMEBREW_TAP_TOKEN is set to a token with write
+    # access to the tap; without it, this step is skipped.
+    skip_upload: '{{ if .Env.HOMEBREW_TAP_TOKEN }}false{{ else }}true{{ end }}'
+    repository:
+      owner: fullstorydev
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/fullstorydev/grpcui
+    description: An interactive web UI for gRPC, along the lines of postman
+    license: MIT
+    test: |
+      system "#{bin}/grpcui", "-version"
