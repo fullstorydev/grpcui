@@ -37,8 +37,9 @@ $PREFIX git checkout go.mod go.sum
 
 # make sure credentials are valid for later push steps; this might
 # be interactive since this will prompt for username and password
-# if there are no valid current credentials.
-$PREFIX docker login
+# if there are no valid current credentials. Use a GitHub personal access
+# token with the write:packages scope as the password.
+$PREFIX docker login ghcr.io
 echo "$VERSION" > VERSION
 
 # Docker Buildx support is included in Docker 19.03
@@ -48,14 +49,11 @@ $PREFIX docker run --privileged --rm tonistiigi/binfmt:qemu-v6.1.0 --install all
 # Create a new builder instance
 export DOCKER_CLI_EXPERIMENTAL=enabled
 $PREFIX docker buildx create --use --name multiarch-builder --node multiarch-builder0
-# push to docker hub, both the given version as a tag and for "latest" tag
-$PREFIX docker buildx build --platform linux/amd64,linux/arm64 --tag fullstorydev/grpcui:${VERSION} --tag fullstorydev/grpcui:latest --push --progress plain --no-cache .
+# push to GHCR, both the given version as a tag and for "latest" tag
+$PREFIX docker buildx build --platform linux/amd64,linux/arm64 --tag ghcr.io/fullstorydev/grpcui:${VERSION} --tag ghcr.io/fullstorydev/grpcui:latest --push --progress plain --no-cache .
 rm VERSION
 
 # Homebrew release
-
-URL="https://github.com/fullstorydev/grpcui/archive/refs/tags/${VERSION}.tar.gz"
-curl -L -o tmp.tgz "$URL"
-SHA="$(sha256sum < tmp.tgz | awk '{ print $1 }')"
-rm tmp.tgz
-HOMEBREW_GITHUB_API_TOKEN="$GITHUB_TOKEN" $PREFIX brew bump-formula-pr --url "$URL" --sha256 "$SHA" grpcui
+#
+# Nothing to do. Homebrew's tooling polls for new releases and opens the
+# homebrew-core bump PR on its own. See releasing/README.md.
