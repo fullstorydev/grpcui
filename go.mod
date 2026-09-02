@@ -47,6 +47,7 @@ require (
 )
 
 retract (
+	v1.5.3 // Published incorrectly.
 	v1.5.1 // Contains retractions only.
 	v1.5.0 // Published accidentally.
 )
