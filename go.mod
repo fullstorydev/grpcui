@@ -3,7 +3,7 @@ module github.com/fullstorydev/grpcui
 go 1.25.0
 
 require (
-	github.com/fullstorydev/grpcurl v1.9.3
+	github.com/fullstorydev/grpcurl v1.9.4
 	github.com/golang/protobuf v1.5.4
 	github.com/jhump/protoreflect v1.18.1
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
