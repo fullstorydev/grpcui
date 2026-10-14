@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/fullstorydev/grpcurl v1.9.4
 	github.com/golang/protobuf v1.5.4
-	github.com/jhump/protoreflect v1.18.1
+	github.com/jhump/protoreflect v1.19.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	golang.org/x/net v0.58.0
 	golang.org/x/term v0.45.0
