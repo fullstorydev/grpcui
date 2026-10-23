@@ -31,3 +31,20 @@ archives:
       {{- with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     files:
       - LICENSE
+
+# Release notes are generated, not hand-written. "github-native" delegates to
+# GitHub's own release-notes generator, which lists each merged PR with its
+# title, link, and author, credits new contributors, and groups entries
+# according to .github/release.yml.
+changelog:
+  use: github-native
+
+release:
+  footer: |
+    ## Container images
+
+    * `docker pull ghcr.io/fullstorydev/grpcui:{{ .Tag }}`
+
+# No `brews:` section on purpose. The homebrew-core formula is bumped
+# automatically by Homebrew's own tooling, which polls for new releases.
+# See releasing/README.md.
