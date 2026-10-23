@@ -96,6 +96,7 @@ func Handler(ch grpcdynamic.Channel, target string, methods []*desc.MethodDescri
 	invokeOpts := grpcui.InvokeOptions{
 		ExtraMetadata:   uiOpts.extraMetadata,
 		PreserveHeaders: uiOpts.preserveHeaders,
+		PreserveCookies: uiOpts.preserveCookies,
 		EmitDefaults:    uiOpts.emitDefaults,
 		Verbosity:       uiOpts.invokeVerbosity,
 	}
