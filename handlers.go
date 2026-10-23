@@ -58,6 +58,9 @@ type InvokeOptions struct {
 	// includes conflicting metadata, the values in the HTTP request headers
 	// will override, and the values in the request will not be sent.
 	PreserveHeaders []string
+	// The set of HTTP header names that will be preserved in the response from
+	// the GRPC server.
+	PreserveResponseHeaders []string
 	// Whether or not default values should be emitted in the JSON response
 	EmitDefaults bool
 	// If verbosity is greater than zero, the handler may log events, such as
@@ -108,6 +111,13 @@ func RPCInvokeHandlerWithOptions(ch grpc.ClientConnInterface, descs []*desc.Meth
 					}
 					http.Error(w, "Unexpected error: "+err.Error(), http.StatusInternalServerError)
 					return
+				}
+				for _, headerName := range options.PreserveResponseHeaders {
+					for _, header := range results.Headers {
+						if strings.ToLower(header.Name) == strings.ToLower(headerName) {
+							w.Header().Add(headerName, header.Value)
+						}
+					}
 				}
 				w.Header().Set("Content-Type", "application/json")
 				enc := json.NewEncoder(w)

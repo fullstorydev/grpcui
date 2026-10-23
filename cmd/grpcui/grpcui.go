@@ -83,15 +83,16 @@ var (
 	key = flags.String("key", "", prettify(`
 		File containing client private key, to present to the server. Not valid
 		with -plaintext option. Must also provide -cert option.`))
-	protoset      multiString
-	protoFiles    multiString
-	importPaths   multiString
-	addlHeaders   multiString
-	rpcHeaders    multiString
-	reflHeaders   multiString
-	prsvHeaders   multiString
-	defHeaders    multiString
-	expandHeaders = flags.Bool("expand-headers", false, prettify(`
+	protoset        multiString
+	protoFiles      multiString
+	importPaths     multiString
+	addlHeaders     multiString
+	rpcHeaders      multiString
+	reflHeaders     multiString
+	prsvHeaders     multiString
+	prsvRespHeaders multiString
+	defHeaders      multiString
+	expandHeaders   = flags.Bool("expand-headers", false, prettify(`
 		If set, headers may use '${NAME}' syntax to reference environment
 		variables. These will be expanded to the actual environment variable
 		value before sending to the server. For example, if there is an
@@ -203,6 +204,10 @@ func init() {
 		Having gRPC UI preserve these headers means that the JWTs will also be
 		sent to backend gRPC servers. These headers are only sent when RPCs are
 		invoked and are not included for reflection requests.`))
+	flags.Var(&prsvRespHeaders, "preserve-response-header", prettify(`
+        Header names (no values) for response headers that should be preserved
+        in the response from the GRPC server. May specify more than one via multiple
+        flags.`))
 	flags.Var(&defHeaders, "default-header", prettify(`
 		Additional headers to add to metadata in the gRPCui web form. Each value
 		should be in 'name: value' format. May specify more than one via multiple
@@ -640,6 +645,9 @@ func main() {
 	}
 	if len(prsvHeaders) > 0 {
 		handlerOpts = append(handlerOpts, standalone.PreserveHeaders(prsvHeaders))
+	}
+	if len(prsvRespHeaders) > 0 {
+		handlerOpts = append(handlerOpts, standalone.PreserveResponseHeaders(prsvRespHeaders))
 	}
 	if verbosity > 0 {
 		handlerOpts = append(handlerOpts, standalone.WithInvokeVerbosity(verbosity))

@@ -188,6 +188,14 @@ func PreserveHeaders(headerNames []string) HandlerOption {
 	})
 }
 
+// PreserveResponseHeaders instructs the Handler to forward the named headers
+// in the response from the GRPC server to the web UI.
+func PreserveResponseHeaders(headerNames []string) HandlerOption {
+	return optFunc(func(opts *handlerOptions) {
+		opts.preserveResponseHeaders = headerNames
+	})
+}
+
 // EmitDefaults tells gRPCurl whether or not default values should be emitted
 func EmitDefaults(emit bool) HandlerOption {
 	return optFunc(func(opts *handlerOptions) {
@@ -233,19 +241,20 @@ func (f optFunc) apply(opts *handlerOptions) {
 }
 
 type handlerOptions struct {
-	indexTmpl           *template.Template
-	css                 []byte
-	cssPublic           bool
-	examples            []byte
-	tmplResources       []*resource
-	servedOnlyResources []*resource
-	defaultMetadata     []string
-	extraMetadata       []string
-	preserveHeaders     []string
-	emitDefaults        bool
-	invokeVerbosity     int
-	debug               *bool
-	gRPCurlOptions      []string
+	indexTmpl               *template.Template
+	css                     []byte
+	cssPublic               bool
+	examples                []byte
+	tmplResources           []*resource
+	servedOnlyResources     []*resource
+	defaultMetadata         []string
+	extraMetadata           []string
+	preserveHeaders         []string
+	preserveResponseHeaders []string
+	emitDefaults            bool
+	invokeVerbosity         int
+	debug                   *bool
+	gRPCurlOptions          []string
 }
 
 func (opts *handlerOptions) addlServedResources() []*resource {
